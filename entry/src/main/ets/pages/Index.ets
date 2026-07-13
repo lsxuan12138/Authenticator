@@ -16,6 +16,10 @@ import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { BackupMergeResult, BackupService } from '../services/BackupService';
 import { TokenIconPicker } from '../components/TokenIconPicker';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+
+const LOG_DOMAIN: number = 0xD003;
+const LOG_TAG: string = 'Index';
 
 /** 根组件内部的页面状态机，避免为少量页面额外引入路由层。 */
 enum AppView {
@@ -88,6 +92,16 @@ struct Index {
   private steamAddTokens?: SteamSessionTokens;
   private steamAddEnrollment?: SteamAuthenticatorEnrollment;
   private steamAddDeviceId: string = '';
+
+  /** Toast 失败不应中断用户操作，但需要留下可定位的日志。 */
+  private showToast(message: string, duration: number = 2000): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
+    } catch (error) {
+      const detail = error as BusinessError;
+      hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to show toast: %{public}s', detail.message ?? message);
+    }
+  }
   private steamAddTimeOffset: number = 0;
   private repository: TokenRepository = new TokenRepository();
   private timer: number = -1;
@@ -108,36 +122,52 @@ struct Index {
   }
 
   private async initialize(): Promise<void> {
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    await this.repository.open(context);
-    this.tokens = await this.repository.list();
-    this.iconPacks = await IconPackService.list(context);
-    this.activeIconPackKey = await IconPackService.activePackKey(context);
-    if (this.activeIconPackKey !== IconPackService.defaultPackKey() &&
-      !this.iconPacks.some((pack: IconPack) => IconPackService.packKey(pack) === this.activeIconPackKey)) {
-      this.activeIconPackKey = IconPackService.defaultPackKey();
-      await IconPackService.selectPack(context, this.activeIconPackKey);
-    }
-    // 自动图标不保存路径；手动图标若已随图标包删除，则回退到自动匹配。
-    let iconsChanged = false;
-    this.tokens = this.tokens.map((token: StoredToken) => {
-      if (token.iconManual !== true && token.iconPath.length > 0) {
-        token.iconPath = '';
-        token.iconManual = false;
-        iconsChanged = true;
-      } else if (token.iconManual === true && !IconPackService.pathExists(token.iconPath)) {
-        token.iconPath = '';
-        token.iconManual = false;
-        iconsChanged = true;
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      await this.repository.open(context);
+      this.tokens = await this.repository.list();
+      this.iconPacks = await IconPackService.list(context);
+      this.activeIconPackKey = await IconPackService.activePackKey(context);
+      if (this.activeIconPackKey !== IconPackService.defaultPackKey() &&
+        !this.iconPacks.some((pack: IconPack) => IconPackService.packKey(pack) === this.activeIconPackKey)) {
+        this.activeIconPackKey = IconPackService.defaultPackKey();
+        await IconPackService.selectPack(context, this.activeIconPackKey);
       }
-      return token;
-    });
-    if (iconsChanged) await this.repository.save(this.tokens);
-    this.refreshCodes();
+      // 自动图标不保存路径；手动图标若已随图标包删除，则回退到自动匹配。
+      let iconsChanged = false;
+      this.tokens = this.tokens.map((token: StoredToken) => {
+        if (token.iconManual !== true && token.iconPath.length > 0) {
+          token.iconPath = '';
+          token.iconManual = false;
+          iconsChanged = true;
+        } else if (token.iconManual === true && !IconPackService.pathExists(token.iconPath)) {
+          token.iconPath = '';
+          token.iconManual = false;
+          iconsChanged = true;
+        }
+        return token;
+      });
+      if (iconsChanged) await this.repository.save(this.tokens);
+      this.refreshCodes();
+    } catch (error) {
+      const detail = error as BusinessError;
+      hilog.error(LOG_DOMAIN, LOG_TAG, 'Application initialization failed: %{public}s',
+        detail.message ?? 'unknown');
+      this.showToast(`应用数据初始化失败：${detail.message ?? '未知错误'}`, 3500);
+    }
   }
 
   private refreshCodes(): void {
-    this.codes = this.tokens.map((token: StoredToken) => OtpEngine.generate(token, this.now));
+    this.codes = this.tokens.map((token: StoredToken): TokenCode => {
+      try {
+        return OtpEngine.generate(token, this.now);
+      } catch (error) {
+        const detail = error as BusinessError;
+        hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to generate code for %{public}s: %{public}s',
+          token.issuer, detail.message ?? 'unknown');
+        return { value: token.kind === TokenKind.STEAM ? '-----' : '------', remainingSeconds: 0, progress: 0 };
+      }
+    });
   }
 
   private currentSteamRefreshToken(): string {
@@ -206,7 +236,7 @@ struct Index {
   }
 
   private supportedSteamConfirmation(session: SteamAuthSession): SteamAllowedConfirmation | undefined {
-    // 与 KiraAuth 一致：遵循 Steam 返回的验证方式顺序，而不是由客户端重排优先级。
+    // 与上游 kdada/Authenticator 一致：遵循 Steam 返回的验证方式顺序，不由客户端重排优先级。
     for (const confirmation of session.confirmations) {
       if (confirmation.type === SteamGuardType.EMAIL_CODE || confirmation.type === SteamGuardType.DEVICE_CODE ||
         confirmation.type === SteamGuardType.DEVICE_CONFIRMATION ||
@@ -400,7 +430,7 @@ struct Index {
     await this.persist();
     this.resetForm();
     this.view = AppView.TOKENS;
-    this.getUIContext().getPromptAction().showToast({ message: message, duration: 2200 });
+    this.showToast(message, 2200);
   }
 
   private async addUri(): Promise<void> {
@@ -458,20 +488,31 @@ struct Index {
     } catch (error) {
       const detail = error as BusinessError;
       if (detail.code === 10010012 || detail.code === 10010013) return;
-      this.getUIContext().getPromptAction().showToast({
-        message: `扫码失败（${detail.code ?? 'unknown'}）：${detail.message ?? error}`, duration: 3000
-      });
+      this.showToast(`扫码失败（${detail.code ?? 'unknown'}）：${detail.message ?? error}`, 3000);
     }
   }
 
-  private copyCode(value: string): void {
-    pasteboard.getSystemPasteboard().setData(pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, value));
-    this.getUIContext().getPromptAction().showToast({ message: '验证码已复制', duration: 1600 });
+  private async copyCode(value: string): Promise<void> {
+    try {
+      await pasteboard.getSystemPasteboard().setData(
+        pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, value));
+      this.showToast('验证码已复制', 1600);
+    } catch (error) {
+      const detail = error as BusinessError;
+      this.showToast(`复制验证码失败：${detail.message ?? '未知错误'}`, 2500);
+    }
   }
 
   private async removeToken(index: number): Promise<void> {
-    this.tokens = this.tokens.filter((_item: StoredToken, itemIndex: number) => itemIndex !== index);
-    await this.persist();
+    const previous = this.tokens;
+    try {
+      this.tokens = this.tokens.filter((_item: StoredToken, itemIndex: number) => itemIndex !== index);
+      await this.persist();
+    } catch (error) {
+      this.tokens = previous;
+      this.refreshCodes();
+      this.showToast(`删除 Token 失败：${(error as Error).message}`, 3000);
+    }
   }
 
   private async moveToken(from: number, to: number): Promise<void> {
@@ -480,8 +521,15 @@ struct Index {
     const next = [...this.tokens];
     const moved = next.splice(from, 1);
     next.splice(to, 0, moved[0]);
-    this.tokens = next;
-    await this.persist();
+    const previous = this.tokens;
+    try {
+      this.tokens = next;
+      await this.persist();
+    } catch (error) {
+      this.tokens = previous;
+      this.refreshCodes();
+      this.showToast(`保存 Token 排序失败：${(error as Error).message}`, 3000);
+    }
   }
 
   private openTokenDetail(index: number): void {
@@ -566,11 +614,21 @@ struct Index {
   private async applyManualIcon(path: string): Promise<void> {
     if (this.iconPickerIndex < 0 || this.iconPickerIndex >= this.tokens.length) return;
     const token = this.tokens[this.iconPickerIndex];
+    const previousPath = token.iconPath;
+    const previousManual = token.iconManual;
+    try {
     token.iconPath = path;
     token.iconManual = path.length > 0;
     this.tokens = [...this.tokens];
     await this.persist();
     this.view = AppView.TOKENS;
+    } catch (error) {
+      token.iconPath = previousPath;
+      token.iconManual = previousManual;
+      this.tokens = [...this.tokens];
+      this.refreshCodes();
+      this.showToast(`保存图标选择失败：${(error as Error).message}`, 3000);
+    }
   }
 
   private currentIconPackName(): string {
@@ -580,33 +638,42 @@ struct Index {
   }
 
   private async selectIconPack(key: string): Promise<void> {
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    await IconPackService.selectPack(context, key);
-    this.activeIconPackKey = key;
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      await IconPackService.selectPack(context, key);
+      this.activeIconPackKey = key;
+    } catch (error) {
+      this.showToast((error as Error).message, 3000);
+    }
   }
 
   private async removeIconPack(pack: IconPack): Promise<void> {
-    await IconPackService.remove(pack);
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    if (this.activeIconPackKey === IconPackService.packKey(pack)) {
-      await this.selectIconPack(IconPackService.defaultPackKey());
-    }
-    this.tokens.forEach((token: StoredToken) => {
-      if (token.iconManual === true && token.iconPath.startsWith(`file://${pack.directory}/`)) {
-        token.iconPath = '';
-        token.iconManual = false;
+    try {
+      await IconPackService.remove(pack);
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      if (this.activeIconPackKey === IconPackService.packKey(pack)) {
+        await IconPackService.selectPack(context, IconPackService.defaultPackKey());
+        this.activeIconPackKey = IconPackService.defaultPackKey();
       }
-    });
-    await this.persist();
-    this.iconPacks = await IconPackService.list(context);
-    this.getUIContext().getPromptAction().showToast({ message: '图标包已删除', duration: 1800 });
+      this.tokens.forEach((token: StoredToken) => {
+        if (token.iconManual === true && token.iconPath.startsWith(`file://${pack.directory}/`)) {
+          token.iconPath = '';
+          token.iconManual = false;
+        }
+      });
+      await this.persist();
+      this.iconPacks = await IconPackService.list(context);
+      this.showToast('图标包已删除', 1800);
+    } catch (error) {
+      this.showToast((error as Error).message, 3000);
+    }
   }
 
   // ===== Steam 会话、移动确认与扫码登录 =====
 
   private async requestSteamConfirmations(): Promise<void> {
     if (!this.steamId || !this.steamAccessToken || !this.steamIdentitySecret || !this.steamDeviceId) {
-      this.getUIContext().getPromptAction().showToast({ message: '请填写全部 Steam 会话参数', duration: 2000 });
+      this.showToast('请填写全部 Steam 会话参数', 2000);
       return;
     }
     this.steamLoading = true;
@@ -618,10 +685,10 @@ struct Index {
       this.steamHasLoaded = true;
       this.steamLastRefresh = new Date().toLocaleTimeString();
       if (this.steamConfirmations.length === 0) {
-        this.getUIContext().getPromptAction().showToast({ message: '当前没有待确认操作', duration: 1800 });
+        this.showToast('当前没有待确认操作', 1800);
       }
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3000 });
+      this.showToast((error as Error).message, 3000);
     } finally {
       this.steamLoading = false;
     }
@@ -635,11 +702,9 @@ struct Index {
       await new SteamGuardService().respondToConfirmation(metadata.steamId, metadata.accessToken,
         metadata.refreshToken, metadata.identitySecret, metadata.deviceId, confirmation, approve);
       this.steamConfirmations = this.steamConfirmations.filter((item: SteamConfirmation) => item.id !== confirmation.id);
-      this.getUIContext().getPromptAction().showToast({
-        message: approve ? '已批准 Steam 确认' : '已拒绝 Steam 确认', duration: 1800
-      });
+      this.showToast(approve ? '已批准 Steam 确认' : '已拒绝 Steam 确认', 1800);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3000 });
+      this.showToast((error as Error).message, 3000);
     }
   }
 
@@ -655,9 +720,9 @@ struct Index {
       this.steamAccessToken = accessToken;
       this.tokens = [...this.tokens];
       await this.persist();
-      this.getUIContext().getPromptAction().showToast({ message: 'Steam Access Token 已更新', duration: 1800 });
+      this.showToast('Steam Access Token 已更新', 1800);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3000 });
+      this.showToast((error as Error).message, 3000);
     } finally {
       this.steamRefreshingSession = false;
     }
@@ -680,9 +745,9 @@ struct Index {
       this.steamLoginPassword = '';
       this.tokens = [...this.tokens];
       await this.persist();
-      this.getUIContext().getPromptAction().showToast({ message: 'Steam 会话已重新认证并更新', duration: 2000 });
+      this.showToast('Steam 会话已重新认证并更新', 2000);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3500 });
+      this.showToast((error as Error).message, 3500);
     } finally { this.steamRefreshingSession = false; }
   }
 
@@ -690,9 +755,7 @@ struct Index {
     if (this.selectedSteamIndex < 0 || this.selectedSteamIndex >= this.tokens.length) return;
     const token = this.tokens[this.selectedSteamIndex];
     if (!token.steam?.steamId || !token.steam.refreshToken || !token.secret) {
-      this.getUIContext().getPromptAction().showToast({
-        message: '请先为此 Steam Token 导入完整会话信息', duration: 2200
-      });
+      this.showToast('请先为此 Steam Token 导入完整会话信息', 2200);
       return;
     }
     try {
@@ -722,13 +785,11 @@ struct Index {
       this.steamQrLoading = true;
       await new SteamGuardService().approveQrLogin(token.steam.steamId, token.steam.refreshToken,
         Base32.decode(token.secret), challenge, false);
-      this.getUIContext().getPromptAction().showToast({ message: 'Steam 登录已批准', duration: 2200 });
+      this.showToast('Steam 登录已批准', 2200);
     } catch (error) {
       const detail = error as BusinessError;
       if (detail.code === 10010012 || detail.code === 10010013) return;
-      this.getUIContext().getPromptAction().showToast({
-        message: detail.message ?? `${error}`, duration: 3500
-      });
+      this.showToast(detail.message ?? `${error}`, 3500);
     } finally {
       this.steamQrLoading = false;
     }
@@ -773,7 +834,7 @@ struct Index {
     this.tokens = [...this.tokens];
     await this.persist();
     if (showMessage) {
-      this.getUIContext().getPromptAction().showToast({ message: 'Steam 会话已绑定到此 Token', duration: 1800 });
+      this.showToast('Steam 会话已绑定到此 Token', 1800);
     }
   }
 
@@ -796,16 +857,20 @@ struct Index {
         await this.persist();
       }
       this.steamJsonText = '';
-      this.getUIContext().getPromptAction().showToast({ message: 'Steam 数据已导入并绑定', duration: 2000 });
+      this.showToast('Steam 数据已导入并绑定', 2000);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3000 });
+      this.showToast((error as Error).message, 3000);
     }
   }
 
   private async pickSteamFile(): Promise<void> {
-    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    const content = await SteamImportService.pickAndRead(context);
-    if (content.length > 0) await this.importSteamText(content);
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const content = await SteamImportService.pickAndRead(context);
+      if (content.length > 0) await this.importSteamText(content);
+    } catch (error) {
+      this.showToast((error as Error).message, 3000);
+    }
   }
 
   // ===== 加密备份与 UUID 合并恢复 =====
@@ -832,15 +897,13 @@ struct Index {
       this.backupImportContent = content;
       this.backupMode = 2;
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({
-        message: (error as Error).message, duration: 3000
-      });
+      this.showToast((error as Error).message, 3000);
     }
   }
 
   private async exportEncryptedBackup(): Promise<void> {
     if (this.backupPassword !== this.backupConfirmPassword) {
-      this.getUIContext().getPromptAction().showToast({ message: '两次输入的备份密码不一致', duration: 2200 });
+      this.showToast('两次输入的备份密码不一致', 2200);
       return;
     }
     this.backupBusy = true;
@@ -853,14 +916,10 @@ struct Index {
         return;
       }
       this.resetBackupPanel();
-      this.getUIContext().getPromptAction().showToast({
-        message: `已导出 ${this.tokens.length} 个 Token`, duration: 2200
-      });
+      this.showToast(`已导出 ${this.tokens.length} 个 Token`, 2200);
     } catch (error) {
       this.backupBusy = false;
-      this.getUIContext().getPromptAction().showToast({
-        message: (error as Error).message, duration: 3200
-      });
+      this.showToast((error as Error).message, 3200);
     }
   }
 
@@ -877,14 +936,10 @@ struct Index {
       this.tokens = result.tokens;
       await this.persist();
       this.resetBackupPanel();
-      this.getUIContext().getPromptAction().showToast({
-        message: `恢复完成：新增 ${result.added} 个，更新 ${result.updated} 个`, duration: 2800
-      });
+      this.showToast(`恢复完成：新增 ${result.added} 个，更新 ${result.updated} 个`, 2800);
     } catch (error) {
       this.backupBusy = false;
-      this.getUIContext().getPromptAction().showToast({
-        message: (error as Error).message, duration: 3500
-      });
+      this.showToast((error as Error).message, 3500);
     }
   }
 
@@ -1019,7 +1074,7 @@ struct Index {
                 })
             }, (item: StoredToken) => item.id)
           }
-        }.layoutWeight(1).padding({ left: 16, right: 16, bottom: 8 })
+        }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 8 })
       }
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
@@ -1252,11 +1307,9 @@ struct Index {
                   const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
                   const count = await IconPackService.chooseAndImport(context);
                   this.iconPacks = await IconPackService.list(context);
-                  if (count > 0) this.getUIContext().getPromptAction().showToast({
-                    message: `已安装 ${count} 个图标包`, duration: 2000
-                  });
+                  if (count > 0) this.showToast(`已安装 ${count} 个图标包`, 2000);
                 } catch (error) {
-                  this.getUIContext().getPromptAction().showToast({ message: (error as Error).message, duration: 3000 });
+                  this.showToast((error as Error).message, 3000);
                 }
               })
             }.width('100%')
@@ -1386,17 +1439,19 @@ struct Index {
                 Button('?').type(ButtonType.Circle).width(30).height(30).fontSize(15)
                   .backgroundColor('#DDE8F2').fontColor('#183C63')
                   .onClick(() => this.showSteamTokenHelp = true)
-                  .bindSheet($$this.showSteamTokenHelp, this.steamTokenHelpSheet(), {
+                  .bindSheet(this.showSteamTokenHelp, this.steamTokenHelpSheet(), {
                     height: 440,
                     preferType: SheetType.BOTTOM,
                     dragBar: true,
-                    title: { title: 'Steam Token 是什么？' }
+                    title: { title: 'Steam Token 是什么？' },
+                    // 显式同步系统手势关闭后的状态，避免依赖 IDE 无法识别的 $$ 双向绑定宏。
+                    onDisappear: () => this.showSteamTokenHelp = false
                   })
               }.width('100%').alignItems(VerticalAlign.Center)
               Text('Steam 会话有效期').fontSize(14).fontWeight(FontWeight.Medium).width('100%')
               Text(SteamGuardService.tokenStatus(this.currentSteamRefreshToken()))
                 .fontSize(12).fontColor('#31445A').width('100%')
-              Text('由 Refresh Token 决定，与 KiraAuth 显示的过期时间一致；到期后通常需要重新登录。')
+              Text('由 Refresh Token 决定，与上游 Authenticator 的显示规则一致；到期后通常需要重新登录。')
                 .fontSize(11).fontColor('#687383').lineHeight(17).width('100%')
               Divider().color('#DDE4EC')
               Text('Access Token 有效期').fontSize(13).fontWeight(FontWeight.Medium).width('100%')

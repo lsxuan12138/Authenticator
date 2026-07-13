@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { preferences } from '@kit.ArkData';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken } from '../domain/Token';
 import { SecureTokenVault } from '../security/SecureTokenVault';
 import { TokenId } from '../core/TokenId';
@@ -15,26 +16,41 @@ export class TokenRepository {
   private readonly vault: SecureTokenVault = new SecureTokenVault();
 
   async open(context: common.UIAbilityContext): Promise<void> {
-    this.store = await preferences.getPreferences(context, TokenRepository.STORE_NAME);
+    try {
+      this.store = await preferences.getPreferences(context, TokenRepository.STORE_NAME);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`打开 Token 数据仓库失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   async list(): Promise<StoredToken[]> {
     if (!this.store) return [];
-    const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
-    if (!encrypted) return [];
-    const raw = await this.vault.decrypt(encrypted);
-    return this.parseTokens(raw);
+    try {
+      const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
+      if (!encrypted) return [];
+      const raw = await this.vault.decrypt(encrypted);
+      return this.parseTokens(raw);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`读取 Token 数据失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   async save(items: StoredToken[]): Promise<void> {
     if (!this.store) throw new Error('数据仓库尚未初始化');
-    const raw = JSON.stringify(items);
-    const encrypted = await this.vault.encrypt(raw);
-    // 写入前、flush 后各校验一次，避免损坏数据替换最后一份可用状态。
-    await this.verifyEncryptedData(encrypted, raw);
-    await this.store.put(TokenRepository.ENCRYPTED_TOKENS_KEY, encrypted);
-    await this.store.flush();
-    await this.verifyStoredData(raw);
+    try {
+      const raw = JSON.stringify(items);
+      const encrypted = await this.vault.encrypt(raw);
+      // 写入前、flush 后各校验一次，避免损坏数据替换最后一份可用状态。
+      await this.verifyEncryptedData(encrypted, raw);
+      await this.store.put(TokenRepository.ENCRYPTED_TOKENS_KEY, encrypted);
+      await this.store.flush();
+      await this.verifyStoredData(raw);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`保存 Token 数据失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   private parseTokens(raw: string): StoredToken[] {
@@ -55,8 +71,13 @@ export class TokenRepository {
 
   private async verifyStoredData(expected: string): Promise<void> {
     if (!this.store) throw new Error('数据仓库尚未初始化');
-    const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
-    if (!encrypted) throw new Error('Token 加密数据写入失败');
-    await this.verifyEncryptedData(encrypted, expected);
+    try {
+      const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
+      if (!encrypted) throw new Error('Token 加密数据写入失败');
+      await this.verifyEncryptedData(encrypted, expected);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`校验已保存的 Token 数据失败：${detail.message ?? '未知错误'}`);
+    }
   }
 }

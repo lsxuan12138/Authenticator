@@ -86,18 +86,35 @@ export class IconPackService {
   static pathExists(path: string): boolean {
     if (!path) return false;
     if (path.startsWith('rawfile://')) return true;
-    return fs.accessSync(path.startsWith('file://') ? path.substring(7) : path);
+    try {
+      return fs.accessSync(path.startsWith('file://') ? path.substring(7) : path);
+    } catch (error) {
+      const detail = error as BusinessError;
+      hilog.warn(LOG_DOMAIN, LOG_TAG, 'Failed to inspect icon path: %{public}s', detail.message ?? 'unknown');
+      return false;
+    }
   }
 
   static async activePackKey(context: common.UIAbilityContext): Promise<string> {
-    const store = await preferences.getPreferences(context, IconPackService.SETTINGS_STORE);
-    return await store.get(IconPackService.ACTIVE_PACK_KEY, IconPackService.DEFAULT_PACK_KEY) as string;
+    try {
+      const store = await preferences.getPreferences(context, IconPackService.SETTINGS_STORE);
+      return await store.get(IconPackService.ACTIVE_PACK_KEY, IconPackService.DEFAULT_PACK_KEY) as string;
+    } catch (error) {
+      const detail = error as BusinessError;
+      hilog.warn(LOG_DOMAIN, LOG_TAG, 'Failed to read active icon pack: %{public}s', detail.message ?? 'unknown');
+      return IconPackService.DEFAULT_PACK_KEY;
+    }
   }
 
   static async selectPack(context: common.UIAbilityContext, key: string): Promise<void> {
-    const store = await preferences.getPreferences(context, IconPackService.SETTINGS_STORE);
-    await store.put(IconPackService.ACTIVE_PACK_KEY, key);
-    await store.flush();
+    try {
+      const store = await preferences.getPreferences(context, IconPackService.SETTINGS_STORE);
+      await store.put(IconPackService.ACTIVE_PACK_KEY, key);
+      await store.flush();
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`保存当前图标包失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   static async chooseAndImport(context: common.UIAbilityContext): Promise<number> {
@@ -116,25 +133,33 @@ export class IconPackService {
   }
 
   static async list(context: common.UIAbilityContext): Promise<IconPack[]> {
-    const root = IconPackService.ensureRoot(context);
-    const folders = fs.listFileSync(root);
-    const result: IconPack[] = [];
-    for (const folder of folders) {
-      const directory = `${root}/${folder}`;
-      const manifest = `${directory}/pack.json`;
-      if (!fs.accessSync(manifest)) continue;
-      try {
-        const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
-        const icons = (parsed['icons'] ?? []) as IconDefinition[];
-        // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
-        const safeIcons = icons.filter((icon: IconDefinition) => IconPackService.isSafeRelativePath(icon.filename) &&
-          fs.accessSync(`${directory}/${icon.filename}`));
-        result.push({ id: `${parsed['uuid'] ?? folder}`, name: `${parsed['name'] ?? folder}`,
-          version: Number(parsed['version'] ?? 0), directory: directory, icons: safeIcons });
-      } catch (_) {
+    try {
+      const root = IconPackService.ensureRoot(context);
+      const folders = fs.listFileSync(root);
+      const result: IconPack[] = [];
+      for (const folder of folders) {
+        const directory = `${root}/${folder}`;
+        const manifest = `${directory}/pack.json`;
+        if (!fs.accessSync(manifest)) continue;
+        try {
+          const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
+          const icons = (parsed['icons'] ?? []) as IconDefinition[];
+          // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
+          const safeIcons = icons.filter((icon: IconDefinition) => IconPackService.isSafeRelativePath(icon.filename) &&
+            fs.accessSync(`${directory}/${icon.filename}`));
+          result.push({ id: `${parsed['uuid'] ?? folder}`, name: `${parsed['name'] ?? folder}`,
+            version: Number(parsed['version'] ?? 0), directory: directory, icons: safeIcons });
+        } catch (error) {
+          const detail = error as BusinessError;
+          hilog.warn(LOG_DOMAIN, LOG_TAG, 'Ignoring invalid icon pack %{public}s: %{public}s',
+            directory, detail.message ?? 'unknown');
+        }
       }
+      return result;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`读取已安装图标包失败：${detail.message ?? '未知错误'}`);
     }
-    return result;
   }
 
   private static async importZip(context: common.UIAbilityContext, uri: string): Promise<void> {
@@ -142,8 +167,8 @@ export class IconPackService {
     const target = `${root}/pack_${Date.now()}_${util.generateRandomUUID().substring(0, 8)}`;
     // 输出实际解压目录，便于设备日志定位包结构或权限问题。
     hilog.info(LOG_DOMAIN, LOG_TAG, 'Extracting icon pack to: %{public}s', target);
-    fs.mkdirSync(target);
     try {
+      fs.mkdirSync(target);
       const file = fs.openSync(uri, fs.OpenMode.READ_ONLY);
       const source = file.path;
       fs.closeSync(file.fd);
@@ -151,16 +176,27 @@ export class IconPackService {
       const pack = (await IconPackService.list(context)).find((item: IconPack) => item.directory === target);
       if (!pack || pack.icons.length === 0) throw new Error('图标包缺少有效的 pack.json 或图片');
     } catch (error) {
-      IconPackService.removeDirectory(target);
       const detail = error as BusinessError;
-      throw new Error(detail.message ?? '图标包导入失败');
+      try {
+        IconPackService.removeDirectory(target);
+      } catch (cleanupError) {
+        const cleanupDetail = cleanupError as BusinessError;
+        hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to clean icon pack directory: %{public}s',
+          cleanupDetail.message ?? 'unknown');
+      }
+      throw new Error(`图标包导入失败：${detail.message ?? '未知错误'}`);
     }
   }
 
   private static ensureRoot(context: common.UIAbilityContext): string {
     const root = `${context.filesDir}/icon_packs`;
-    if (!fs.accessSync(root)) fs.mkdirSync(root);
-    return root;
+    try {
+      if (!fs.accessSync(root)) fs.mkdirSync(root);
+      return root;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`准备图标包目录失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   private static normalize(value: string): string {
@@ -174,29 +210,50 @@ export class IconPackService {
 
   private static removeDirectory(path: string): void {
     // 图标包目录只位于应用 filesDir 下；递归删除用于兼容 ZIP 中的子目录。
-    if (!fs.accessSync(path)) return;
-    const children = fs.listFileSync(path);
-    for (const name of children) {
-      const child = `${path}/${name}`;
-      const stat = fs.statSync(child);
-      if (stat.isDirectory()) {
-        IconPackService.removeDirectory(child);
-      } else {
-        fs.unlinkSync(child);
+    try {
+      if (!fs.accessSync(path)) return;
+      const children = fs.listFileSync(path);
+      for (const name of children) {
+        const child = `${path}/${name}`;
+        const stat = fs.statSync(child);
+        if (stat.isDirectory()) {
+          IconPackService.removeDirectory(child);
+        } else {
+          fs.unlinkSync(child);
+        }
       }
+      fs.rmdirSync(path);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`删除图标包目录失败（${path}）：${detail.message ?? '未知错误'}`);
     }
-    fs.rmdirSync(path);
   }
 
   private static readText(path: string): string {
-    const file = fs.openSync(path, fs.OpenMode.READ_ONLY);
+    let file: fs.File | undefined;
+    let content = '';
+    let failure: Error | undefined;
     try {
+      file = fs.openSync(path, fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       const data = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, data);
-      return new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));
-    } finally {
-      fs.closeSync(file.fd);
+      content = new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));
+    } catch (error) {
+      const detail = error as BusinessError;
+      failure = new Error(`读取图标包清单失败：${detail.message ?? '未知错误'}`);
     }
+    if (file !== undefined) {
+      try {
+        fs.closeSync(file.fd);
+      } catch (error) {
+        if (failure === undefined) {
+          const detail = error as BusinessError;
+          failure = new Error(`关闭图标包清单失败：${detail.message ?? '未知错误'}`);
+        }
+      }
+    }
+    if (failure !== undefined) throw failure;
+    return content;
   }
 }

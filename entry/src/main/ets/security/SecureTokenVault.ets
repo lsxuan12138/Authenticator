@@ -26,49 +26,59 @@ export class SecureTokenVault {
   private readonly base64: util.Base64Helper = new util.Base64Helper();
 
   async encrypt(plaintext: string): Promise<string> {
-    const keyBytes = await this.loadOrCreateMasterKey();
-    const iv = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.IV_SIZE).data;
-    const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
-    const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
-    // AAD 不加密，但会参与认证；版本或用途不匹配时解密必然失败。
-    const params: cryptoFramework.GcmParamsSpec = {
-      iv: { data: iv },
-      aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
-      authTag: { data: new Uint8Array(SecureTokenVault.TAG_SIZE) },
-      algName: 'GcmParamsSpec'
-    };
+    try {
+      const keyBytes = await this.loadOrCreateMasterKey();
+      const iv = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.IV_SIZE).data;
+      const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
+      const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
+      // AAD 不加密，但会参与认证；版本或用途不匹配时解密必然失败。
+      const params: cryptoFramework.GcmParamsSpec = {
+        iv: { data: iv },
+        aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
+        authTag: { data: new Uint8Array(SecureTokenVault.TAG_SIZE) },
+        algName: 'GcmParamsSpec'
+      };
 
-    cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, key, params);
-    const ciphertext = cipher.updateSync({ data: this.encoder.encodeInto(plaintext) }).data;
-    const authTag = cipher.doFinalSync(null).data;
-    const payload: EncryptedTokenPayload = {
-      version: 1,
-      iv: this.base64.encodeToStringSync(iv, util.Type.BASIC),
-      authTag: this.base64.encodeToStringSync(authTag, util.Type.BASIC),
-      ciphertext: this.base64.encodeToStringSync(ciphertext, util.Type.BASIC)
-    };
-    return JSON.stringify(payload);
+      cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, key, params);
+      const ciphertext = cipher.updateSync({ data: this.encoder.encodeInto(plaintext) }).data;
+      const authTag = cipher.doFinalSync(null).data;
+      const payload: EncryptedTokenPayload = {
+        version: 1,
+        iv: this.base64.encodeToStringSync(iv, util.Type.BASIC),
+        authTag: this.base64.encodeToStringSync(authTag, util.Type.BASIC),
+        ciphertext: this.base64.encodeToStringSync(ciphertext, util.Type.BASIC)
+      };
+      return JSON.stringify(payload);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`加密 Token 数据失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   async decrypt(serialized: string): Promise<string> {
-    const payload = JSON.parse(serialized) as EncryptedTokenPayload;
-    this.validatePayload(payload);
-    const keyBytes = await this.loadExistingMasterKey();
-    const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
-    const params: cryptoFramework.GcmParamsSpec = {
-      iv: { data: this.base64.decodeSync(payload.iv, util.Type.BASIC) },
-      aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
-      authTag: { data: this.base64.decodeSync(payload.authTag, util.Type.BASIC) },
-      algName: 'GcmParamsSpec'
-    };
-    const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
-    cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, key, params);
-    const plaintext = cipher.updateSync({
-      data: this.base64.decodeSync(payload.ciphertext, util.Type.BASIC)
-    }).data;
-    // doFinalSync 会验证 GCM 认证标签；密文被修改时此处抛出异常。
-    cipher.doFinalSync(null);
-    return this.decoder.decodeToString(plaintext);
+    try {
+      const payload = JSON.parse(serialized) as EncryptedTokenPayload;
+      this.validatePayload(payload);
+      const keyBytes = await this.loadExistingMasterKey();
+      const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
+      const params: cryptoFramework.GcmParamsSpec = {
+        iv: { data: this.base64.decodeSync(payload.iv, util.Type.BASIC) },
+        aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
+        authTag: { data: this.base64.decodeSync(payload.authTag, util.Type.BASIC) },
+        algName: 'GcmParamsSpec'
+      };
+      const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
+      cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, key, params);
+      const plaintext = cipher.updateSync({
+        data: this.base64.decodeSync(payload.ciphertext, util.Type.BASIC)
+      }).data;
+      // doFinalSync 会验证 GCM 认证标签；密文被修改时此处抛出异常。
+      cipher.doFinalSync(null);
+      return this.decoder.decodeToString(plaintext);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`解密 Token 数据失败：${detail.message ?? '数据损坏或密钥不可用'}`);
+    }
   }
 
   private validatePayload(payload: EncryptedTokenPayload): void {
@@ -86,15 +96,15 @@ export class SecureTokenVault {
     const existing = await this.queryMasterKey();
     if (existing) return existing;
 
-    const generated = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.KEY_SIZE).data;
-    const attributes: asset.AssetMap = new Map();
-    attributes.set(asset.Tag.SECRET, generated);
-    attributes.set(asset.Tag.ALIAS, this.encoder.encodeInto(SecureTokenVault.MASTER_KEY_ALIAS));
-    // 首次解锁后可访问，且明确禁止跨设备同步；卸载应用时密钥随应用数据删除。
-    attributes.set(asset.Tag.ACCESSIBILITY, asset.Accessibility.DEVICE_FIRST_UNLOCKED);
-    attributes.set(asset.Tag.SYNC_TYPE, asset.SyncType.NEVER);
-    attributes.set(asset.Tag.CONFLICT_RESOLUTION, asset.ConflictResolution.THROW_ERROR);
     try {
+      const generated = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.KEY_SIZE).data;
+      const attributes: asset.AssetMap = new Map();
+      attributes.set(asset.Tag.SECRET, generated);
+      attributes.set(asset.Tag.ALIAS, this.encoder.encodeInto(SecureTokenVault.MASTER_KEY_ALIAS));
+      // 首次解锁后可访问，且明确禁止跨设备同步；卸载应用时密钥随应用数据删除。
+      attributes.set(asset.Tag.ACCESSIBILITY, asset.Accessibility.DEVICE_FIRST_UNLOCKED);
+      attributes.set(asset.Tag.SYNC_TYPE, asset.SyncType.NEVER);
+      attributes.set(asset.Tag.CONFLICT_RESOLUTION, asset.ConflictResolution.THROW_ERROR);
       await asset.add(attributes);
       return generated;
     } catch (error) {

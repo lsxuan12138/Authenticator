@@ -71,13 +71,7 @@ export class SteamGuardService {
     }
     // Steam 对 version、clientId、steamId 组成的二进制消息做 HMAC-SHA256；数值采用小端序。
     const challenge = this.parseQrChallenge(challengeUrl);
-    const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: sharedSecret });
-    const mac = cryptoFramework.createMac('SHA256');
-    mac.initSync(key);
-    mac.updateSync({ data: this.littleEndian(BigInt(challenge.version), 2) });
-    mac.updateSync({ data: this.littleEndian(BigInt(challenge.clientId), 8) });
-    mac.updateSync({ data: this.littleEndian(BigInt(steamId), 8) });
-    const signature = new util.Base64Helper().encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
+    const signature = this.qrSignature(steamId, sharedSecret, challenge);
     const accessToken = await this.generateAccessToken(steamId, refreshToken);
     const data = `steamid=${steamId}&confirm=true&persistence=${persistence ? 1 : 0}` +
       `&version=${challenge.version}&client_id=${challenge.clientId}&signature=${encodeURIComponent(signature)}`;
@@ -94,7 +88,7 @@ export class SteamGuardService {
           connectTimeout: SteamGuardService.REQUEST_TIMEOUT,
           readTimeout: SteamGuardService.REQUEST_TIMEOUT
         });
-      const eResult = `${response.header['x-eresult'] ?? ''}`;
+      const eResult = this.readEResult(response.header);
       hilog.info(LOG_DOMAIN, LOG_TAG, 'Steam QR login HTTP status: %{public}d, EResult: %{public}s',
         response.responseCode, eResult || 'missing');
       if (response.responseCode < 200 || response.responseCode >= 300) {
@@ -267,11 +261,38 @@ export class SteamGuardService {
       seconds = Math.floor(seconds / 256);
     }
     payload.set(tagBytes.slice(0, 32), 8);
-    const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: keyData });
-    const mac = cryptoFramework.createMac('SHA1');
-    mac.initSync(key);
-    mac.updateSync({ data: payload });
-    return base64.encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
+    try {
+      const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: keyData });
+      // eslint-disable-next-line @security/no-unsafe-mac -- Steam 移动确认协议固定使用 HMAC-SHA1。
+      const mac = cryptoFramework.createMac('SHA1');
+      mac.initSync(key);
+      mac.updateSync({ data: payload });
+      return base64.encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`生成 Steam 确认密钥失败：${detail.message ?? 'Identity Secret 无效'}`);
+    }
+  }
+
+  private qrSignature(steamId: string, sharedSecret: Uint8Array, challenge: SteamQrChallenge): string {
+    try {
+      const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: sharedSecret });
+      const mac = cryptoFramework.createMac('SHA256');
+      mac.initSync(key);
+      mac.updateSync({ data: this.littleEndian(BigInt(challenge.version), 2) });
+      mac.updateSync({ data: this.littleEndian(BigInt(challenge.clientId), 8) });
+      mac.updateSync({ data: this.littleEndian(BigInt(steamId), 8) });
+      return new util.Base64Helper().encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`生成 Steam 扫码登录签名失败：${detail.message ?? '二维码或密钥无效'}`);
+    }
+  }
+
+  private readEResult(header: Object): string {
+    const headerText: string = JSON.stringify(header);
+    const match: RegExpMatchArray | null = headerText.match(/"x-eresult"\s*:\s*"([^"\\]*)"/i);
+    return match !== null && match.length > 1 ? match[1] : '';
   }
 
   private parseQrChallenge(challengeUrl: string): SteamQrChallenge {

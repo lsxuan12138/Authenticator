@@ -1,4 +1,5 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { Base32 } from './Base32';
 import { TokenCode, TokenKind, TokenRecord } from '../domain/Token';
 
@@ -36,13 +37,19 @@ export class OtpEngine {
   }
 
   private static hmacSha1(secret: Uint8Array, message: Uint8Array): Uint8Array {
-    // Crypto Architecture Kit 需要先把原始密钥字节转换为 HMAC 对称密钥对象。
-    const generator = cryptoFramework.createSymKeyGenerator('HMAC');
-    const key = generator.convertKeySync({ data: secret });
-    const mac = cryptoFramework.createMac('SHA1');
-    mac.initSync(key);
-    mac.updateSync({ data: message });
-    return mac.doFinalSync().data;
+    try {
+      // Crypto Architecture Kit 需要先把原始密钥字节转换为 HMAC 对称密钥对象。
+      const generator = cryptoFramework.createSymKeyGenerator('HMAC');
+      const key = generator.convertKeySync({ data: secret });
+      // eslint-disable-next-line @security/no-unsafe-mac -- RFC 4226/6238 与 Steam Guard 要求 HMAC-SHA1。
+      const mac = cryptoFramework.createMac('SHA1');
+      mac.initSync(key);
+      mac.updateSync({ data: message });
+      return mac.doFinalSync().data;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`生成验证码摘要失败：${detail.message ?? '密钥格式无效'}`);
+    }
   }
 
   private static counterBytes(counter: number): Uint8Array {

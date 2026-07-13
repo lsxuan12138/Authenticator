@@ -2,6 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken, TokenKind } from '../domain/Token';
 import { TokenId } from '../core/TokenId';
 
@@ -42,42 +43,72 @@ export class BackupService {
 
   static async create(tokens: StoredToken[], password: string): Promise<string> {
     BackupService.validatePassword(password);
-    const salt = cryptoFramework.createRandom().generateRandomSync(BackupService.SALT_SIZE).data;
-    const iv = cryptoFramework.createRandom().generateRandomSync(BackupService.IV_SIZE).data;
-    const keyBytes = await BackupService.deriveKey(password, salt, BackupService.ITERATIONS);
-    const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
-    const params: cryptoFramework.GcmParamsSpec = {
-      iv: { data: iv },
-      aad: { data: new util.TextEncoder().encodeInto(BackupService.AAD) },
-      authTag: { data: new Uint8Array(BackupService.TAG_SIZE) },
-      algName: 'GcmParamsSpec'
-    };
-    // iconPath 是本机沙箱路径；深拷贝后清除，避免修改运行中数据并防止泄露目录结构。
-    const portableTokens = JSON.parse(JSON.stringify(tokens)) as StoredToken[];
-    portableTokens.forEach((token: StoredToken) => {
-      token.iconPath = '';
-      token.iconManual = false;
-    });
-    const content: BackupContent = { version: 1, tokens: portableTokens };
-    const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
-    cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, key, params);
-    const encrypted = cipher.updateSync({
-      data: new util.TextEncoder().encodeInto(JSON.stringify(content))
-    }).data;
-    const authTag = cipher.doFinalSync(null).data;
-    const base64 = new util.Base64Helper();
-    // 外层仅保存解密所需的公开参数；Token、密码和派生密钥均不以明文出现。
-    const backup: EncryptedBackup = {
-      format: BackupService.FORMAT,
-      version: 1,
-      createdAt: Date.now(),
-      iterations: BackupService.ITERATIONS,
-      salt: base64.encodeToStringSync(salt, util.Type.BASIC),
-      iv: base64.encodeToStringSync(iv, util.Type.BASIC),
-      authTag: base64.encodeToStringSync(authTag, util.Type.BASIC),
-      ciphertext: base64.encodeToStringSync(encrypted, util.Type.BASIC)
-    };
-    return JSON.stringify(backup);
+    try {
+      const salt = cryptoFramework.createRandom().generateRandomSync(BackupService.SALT_SIZE).data;
+      const iv = cryptoFramework.createRandom().generateRandomSync(BackupService.IV_SIZE).data;
+      const keyBytes = await BackupService.deriveKey(password, salt, BackupService.ITERATIONS);
+      const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
+      const params: cryptoFramework.GcmParamsSpec = {
+        iv: { data: iv },
+        aad: { data: new util.TextEncoder().encodeInto(BackupService.AAD) },
+        authTag: { data: new Uint8Array(BackupService.TAG_SIZE) },
+        algName: 'GcmParamsSpec'
+      };
+      // 显式复制可移植字段，既不修改运行中数据，也不会把后续新增的本机字段意外写入备份。
+      const portableTokens = tokens.map((token: StoredToken): StoredToken => {
+        const portable: StoredToken = {
+          id: token.id,
+          issuer: token.issuer,
+          account: token.account,
+          secret: token.secret,
+          digits: token.digits,
+          period: token.period,
+          kind: token.kind,
+          iconPath: '',
+          iconManual: false,
+          createdAt: token.createdAt
+        };
+        if (token.steam) {
+          portable.steam = {
+            steamId: token.steam.steamId,
+            accountName: token.steam.accountName,
+            identitySecret: token.steam.identitySecret,
+            deviceId: token.steam.deviceId,
+            accessToken: token.steam.accessToken,
+            refreshToken: token.steam.refreshToken,
+            revocationCode: token.steam.revocationCode,
+            serialNumber: token.steam.serialNumber,
+            tokenGid: token.steam.tokenGid,
+            uri: token.steam.uri,
+            secret1: token.steam.secret1
+          };
+        }
+        return portable;
+      });
+      const content: BackupContent = { version: 1, tokens: portableTokens };
+      const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
+      cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, key, params);
+      const encrypted = cipher.updateSync({
+        data: new util.TextEncoder().encodeInto(JSON.stringify(content))
+      }).data;
+      const authTag = cipher.doFinalSync(null).data;
+      const base64 = new util.Base64Helper();
+      // 外层仅保存解密所需的公开参数；Token、密码和派生密钥均不以明文出现。
+      const backup: EncryptedBackup = {
+        format: BackupService.FORMAT,
+        version: 1,
+        createdAt: Date.now(),
+        iterations: BackupService.ITERATIONS,
+        salt: base64.encodeToStringSync(salt, util.Type.BASIC),
+        iv: base64.encodeToStringSync(iv, util.Type.BASIC),
+        authTag: base64.encodeToStringSync(authTag, util.Type.BASIC),
+        ciphertext: base64.encodeToStringSync(encrypted, util.Type.BASIC)
+      };
+      return JSON.stringify(backup);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`创建加密备份失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   static async decrypt(serialized: string, password: string): Promise<StoredToken[]> {
@@ -92,8 +123,6 @@ export class BackupService {
       authTag.length !== BackupService.TAG_SIZE) {
       throw new Error('备份文件的加密参数无效');
     }
-    const keyBytes = await BackupService.deriveKey(password, salt, backup.iterations);
-    const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
     const params: cryptoFramework.GcmParamsSpec = {
       iv: { data: iv },
       aad: { data: new util.TextEncoder().encodeInto(BackupService.AAD) },
@@ -102,6 +131,8 @@ export class BackupService {
     };
     let plaintext: Uint8Array;
     try {
+      const keyBytes = await BackupService.deriveKey(password, salt, backup.iterations);
+      const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
       const cipher = cryptoFramework.createCipher('AES256|GCM|PKCS7');
       cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, key, params);
       plaintext = cipher.updateSync({
@@ -150,12 +181,26 @@ export class BackupService {
     options.fileSuffixChoices = ['Authenticator 加密备份|.authbackup'];
     const selected = await new picker.DocumentViewPicker(context).save(options);
     if (selected.length === 0) return false;
-    const file = fs.openSync(selected[0], fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
+    let file: fs.File | undefined;
+    let failure: Error | undefined;
     try {
+      file = fs.openSync(selected[0], fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
       fs.writeSync(file.fd, content);
-    } finally {
-      fs.closeSync(file.fd);
+    } catch (error) {
+      const detail = error as BusinessError;
+      failure = new Error(`写入备份文件失败：${detail.message ?? '未知错误'}`);
     }
+    if (file !== undefined) {
+      try {
+        fs.closeSync(file.fd);
+      } catch (error) {
+        if (failure === undefined) {
+          const detail = error as BusinessError;
+          failure = new Error(`关闭备份文件失败：${detail.message ?? '未知错误'}`);
+        }
+      }
+    }
+    if (failure !== undefined) throw failure;
     return true;
   }
 
@@ -165,17 +210,33 @@ export class BackupService {
     options.fileSuffixFilters = ['.authbackup', '.json'];
     const selected = await new picker.DocumentViewPicker(context).select(options);
     if (selected.length === 0) return '';
-    const file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
+    let file: fs.File | undefined;
+    let content = '';
+    let failure: Error | undefined;
     try {
+      file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       // 当前实现整文件读入内存，大小上限用于防止错误或恶意文件造成内存压力。
       if (size <= 0 || size > BackupService.MAX_FILE_SIZE) throw new Error('备份文件为空或超过 8MB');
       const buffer = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, buffer);
-      return new util.TextDecoder().decodeToString(new Uint8Array(buffer.slice(0, count)));
-    } finally {
-      fs.closeSync(file.fd);
+      content = new util.TextDecoder().decodeToString(new Uint8Array(buffer.slice(0, count)));
+    } catch (error) {
+      const detail = error as BusinessError;
+      failure = new Error(`读取备份文件失败：${detail.message ?? '未知错误'}`);
     }
+    if (file !== undefined) {
+      try {
+        fs.closeSync(file.fd);
+      } catch (error) {
+        if (failure === undefined) {
+          const detail = error as BusinessError;
+          failure = new Error(`关闭备份文件失败：${detail.message ?? '未知错误'}`);
+        }
+      }
+    }
+    if (failure !== undefined) throw failure;
+    return content;
   }
 
   private static async deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
@@ -183,7 +244,12 @@ export class BackupService {
     const spec: cryptoFramework.PBKDF2Spec = {
       algName: 'PBKDF2', password: password, salt: salt, iterations: iterations, keySize: 32
     };
-    return (await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec)).data;
+    try {
+      return (await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec)).data;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`派生备份密钥失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   private static validatePassword(password: string): void {

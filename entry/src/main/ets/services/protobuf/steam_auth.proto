@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-// 精简自 KiraAuth 使用的 Steam protobuf，只保留登录与添加 Authenticator 所需消息。
+// 精简自 kdada/Authenticator 使用的 Steam protobuf，只保留登录与添加 Authenticator 所需消息。
 // 字段号和字段类型来自 custom.proto、steammessages_auth.steamclient.proto
 // 与 service_twofactor.proto；生成文件不可手工修改，应从本文件重新生成。
 

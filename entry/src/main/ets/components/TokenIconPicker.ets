@@ -108,7 +108,7 @@ export struct TokenIconPicker {
               }, (path: string) => path)
           }
         }, (pack: IconPack) => IconPackService.packKey(pack))
-      }.layoutWeight(1).width('100%').padding({ left: 12, right: 12, bottom: 12 })
+      }.layoutWeight(1).width('100%').height('100%').padding({ left: 12, right: 12, bottom: 12 })
         .lanes({ minLength: 74, maxLength: 74 }).cachedCount(10).scrollBar(BarState.Auto)
     }.width('100%').height('100%').backgroundColor(Color.White)
   }

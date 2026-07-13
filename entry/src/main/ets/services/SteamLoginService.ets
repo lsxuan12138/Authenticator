@@ -1,6 +1,7 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { http } from '@kit.NetworkKit';
 import { util } from '@kit.ArkTS';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { SteamAuthSession, SteamGuardType, SteamProto, SteamSessionTokens } from './SteamProto';
 
 /**
@@ -21,16 +22,7 @@ export class SteamLoginService {
   async beginSession(account: string, password: string): Promise<SteamAuthSession> {
     // 多阶段协议第一步：获取临时 RSA 公钥并提交加密密码。
     const publicKey = await this.getPublicKey(account);
-    const rsaSpec: cryptoFramework.RSAPubKeySpec = {
-      algName: 'RSA', specType: cryptoFramework.AsyKeySpecType.PUBLIC_KEY_SPEC,
-      params: { algName: 'RSA', specType: cryptoFramework.AsyKeySpecType.COMMON_PARAMS_SPEC,
-        n: BigInt(`0x${publicKey['publickey_mod']}`) }, pk: BigInt(`0x${publicKey['publickey_exp']}`)
-    };
-    const rsa = cryptoFramework.createAsyKeyGeneratorBySpec(rsaSpec).generatePubKeySync();
-    const cipher = cryptoFramework.createCipher('RSA1024|PKCS1');
-    cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, rsa, null);
-    const encrypted = cipher.doFinalSync({ data: new util.TextEncoder().encodeInto(password) });
-    const encryptedPassword = new util.Base64Helper().encodeToStringSync(encrypted.data);
+    const encryptedPassword = this.encryptPassword(publicKey, password);
     const begin = await this.protobufRequest('BeginAuthSessionViaCredentials',
       SteamProto.beginRequest(account, encryptedPassword, `${publicKey['timestamp']}`));
     const session = SteamProto.decodeBegin(begin);
@@ -38,6 +30,25 @@ export class SteamLoginService {
       throw new Error(session.extendedErrorMessage || 'Steam 未返回有效登录会话');
     }
     return session;
+  }
+
+  private encryptPassword(publicKey: Record<string, Object>, password: string): string {
+    try {
+      const rsaSpec: cryptoFramework.RSAPubKeySpec = {
+        algName: 'RSA', specType: cryptoFramework.AsyKeySpecType.PUBLIC_KEY_SPEC,
+        params: { algName: 'RSA', specType: cryptoFramework.AsyKeySpecType.COMMON_PARAMS_SPEC,
+          n: BigInt(`0x${publicKey['publickey_mod']}`) }, pk: BigInt(`0x${publicKey['publickey_exp']}`)
+      };
+      const rsa = cryptoFramework.createAsyKeyGeneratorBySpec(rsaSpec).generatePubKeySync();
+      // eslint-disable-next-line @security/no-unsafe-rsa-encrypt -- Steam 登录端点固定要求服务端公钥与 PKCS#1 v1.5。
+      const cipher = cryptoFramework.createCipher('RSA1024|PKCS1');
+      cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, rsa, null);
+      const encrypted = cipher.doFinalSync({ data: new util.TextEncoder().encodeInto(password) });
+      return new util.Base64Helper().encodeToStringSync(encrypted.data);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`加密 Steam 登录密码失败：${detail.message ?? 'RSA 公钥无效'}`);
+    }
   }
 
   async submitGuardCode(session: SteamAuthSession, codeType: number, code: string): Promise<void> {
@@ -61,6 +72,9 @@ export class SteamLoginService {
         { method: http.RequestMethod.GET, expectDataType: http.HttpDataType.STRING });
       const parsed = JSON.parse(response.result as string) as Record<string, Object>;
       return parsed['response'] as Record<string, Object>;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`获取 Steam RSA 公钥失败：${detail.message ?? '未知错误'}`);
     } finally { request.destroy(); }
   }
 
@@ -74,9 +88,20 @@ export class SteamLoginService {
         extraData: `input_protobuf_encoded=${encodeURIComponent(base64)}`,
         expectDataType: http.HttpDataType.ARRAY_BUFFER, connectTimeout: 15000, readTimeout: 15000
       });
-      const result = `${response.header['x-eresult'] ?? ''}`;
+      const result = this.readEResult(response.header);
       if (result && result !== '1') throw new Error(`Steam EResult: ${result}`);
       return new Uint8Array(response.result as ArrayBuffer);
+    } catch (error) {
+      const detail = error as BusinessError;
+      const message = detail.message ?? '未知错误';
+      if (message.startsWith('Steam EResult:')) throw new Error(message);
+      throw new Error(`Steam Protobuf 请求失败：${message}`);
     } finally { request.destroy(); }
+  }
+
+  private readEResult(header: Object): string {
+    const headerText: string = JSON.stringify(header);
+    const match: RegExpMatchArray | null = headerText.match(/"x-eresult"\s*:\s*"([^"\\]*)"/i);
+    return match !== null && match.length > 1 ? match[1] : '';
   }
 }

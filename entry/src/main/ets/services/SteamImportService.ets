@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { SteamGuardMetadata } from '../domain/Token';
 
 export interface SteamImportResult {
@@ -56,15 +57,31 @@ export class SteamImportService {
     options.fileSuffixFilters = ['.maFile', '.json'];
     const selected = await new picker.DocumentViewPicker(context).select(options);
     if (selected.length === 0) return '';
-    const file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
+    let file: fs.File | undefined;
+    let content = '';
+    let failure: Error | undefined;
     try {
+      file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       const data = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, data);
-      return new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));
-    } finally {
-      fs.closeSync(file.fd);
+      content = new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));
+    } catch (error) {
+      const detail = error as BusinessError;
+      failure = new Error(`读取 Steam 导入文件失败：${detail.message ?? '未知错误'}`);
     }
+    if (file !== undefined) {
+      try {
+        fs.closeSync(file.fd);
+      } catch (error) {
+        if (failure === undefined) {
+          const detail = error as BusinessError;
+          failure = new Error(`关闭 Steam 导入文件失败：${detail.message ?? '未知错误'}`);
+        }
+      }
+    }
+    if (failure !== undefined) throw failure;
+    return content;
   }
 
   private static unwrap(root: Record<string, Object>): Record<string, Object> {

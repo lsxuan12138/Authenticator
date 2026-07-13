@@ -1,8 +1,10 @@
 # Third-Party Notices
 
-## KiraAuth
+## kdada/Authenticator
 
-Parts of the Steam authentication and mobile-confirmation protocol implementation are adapted from KiraAuth.
+Repository: https://github.com/kdada/Authenticator
+
+Parts of the Steam authentication and mobile-confirmation protocol implementation are adapted from kdada/Authenticator.
 
 Copyright (c) 2025 Wei Guo
 

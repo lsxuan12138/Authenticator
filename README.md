@@ -2,7 +2,7 @@
 
 Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标准 TOTP、Steam Guard、二维码与 URI 导入、加密备份以及可切换的第三方图标包。
 
-项目参考了 KiraAuth 中经过验证的 Steam 登录与 Steam Guard 交互流程，但重新组织了数据模型、页面结构和服务边界。Steam 协议使用与 KiraAuth 同源的 Protobuf 字段定义，并由 `protobufjs` 生成编解码代码，不再维护手写的 wire parser。
+项目参考了 [kdada/Authenticator](https://github.com/kdada/Authenticator) 中经过验证的 Steam 登录与 Steam Guard 交互流程，但重新组织了数据模型、页面结构和服务边界。Steam 协议使用与该上游项目同源的 Protobuf 字段定义，并由 `protobufjs` 生成编解码代码，不再维护手写的 wire parser。本项目不是上游项目的官方版本或分支。
 
 ## 功能
 
@@ -161,6 +161,6 @@ entry/src/main/ets/services/protobuf/steam_auth.proto
 
 ## 致谢与第三方组件
 
-Steam 相关流程参考 KiraAuth。第三方依赖及许可信息见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+Steam 相关流程参考 [kdada/Authenticator](https://github.com/kdada/Authenticator)。第三方依赖及许可信息见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 本项目与 Valve 或 Steam 无隶属、授权或背书关系。Steam 是 Valve Corporation 的商标。
