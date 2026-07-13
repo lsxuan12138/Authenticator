@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "安全、简洁的本地双重验证器"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Authenticator"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Authenticator"
+    }
+  ]
+}
