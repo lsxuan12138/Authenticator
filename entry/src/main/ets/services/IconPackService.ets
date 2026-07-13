@@ -2,11 +2,8 @@ import { common } from '@kit.AbilityKit';
 import { BusinessError, zlib } from '@kit.BasicServicesKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
-import { hilog } from '@kit.PerformanceAnalysisKit';
 import { preferences } from '@kit.ArkData';
-
-const LOG_DOMAIN: number = 0xD001;
-const LOG_TAG: string = 'IconPackService';
+import { DiagnosticLogService } from './DiagnosticLogService';
 
 export interface IconDefinition {
   filename: string;
@@ -90,7 +87,7 @@ export class IconPackService {
       return fs.accessSync(path.startsWith('file://') ? path.substring(7) : path);
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.warn(LOG_DOMAIN, LOG_TAG, 'Failed to inspect icon path: %{public}s', detail.message ?? 'unknown');
+      DiagnosticLogService.warn('IconPack', `Failed to inspect icon path: ${detail.message ?? 'unknown'}`);
       return false;
     }
   }
@@ -101,7 +98,7 @@ export class IconPackService {
       return await store.get(IconPackService.ACTIVE_PACK_KEY, IconPackService.DEFAULT_PACK_KEY) as string;
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.warn(LOG_DOMAIN, LOG_TAG, 'Failed to read active icon pack: %{public}s', detail.message ?? 'unknown');
+      DiagnosticLogService.warn('IconPack', `Failed to read active icon pack: ${detail.message ?? 'unknown'}`);
       return IconPackService.DEFAULT_PACK_KEY;
     }
   }
@@ -128,7 +125,7 @@ export class IconPackService {
   }
 
   static async remove(pack: IconPack): Promise<void> {
-    hilog.info(LOG_DOMAIN, LOG_TAG, 'Removing icon pack directory: %{public}s', pack.directory);
+    DiagnosticLogService.info('IconPack', `Removing icon pack directory: ${pack.directory}`);
     IconPackService.removeDirectory(pack.directory);
   }
 
@@ -151,8 +148,8 @@ export class IconPackService {
             version: Number(parsed['version'] ?? 0), directory: directory, icons: safeIcons });
         } catch (error) {
           const detail = error as BusinessError;
-          hilog.warn(LOG_DOMAIN, LOG_TAG, 'Ignoring invalid icon pack %{public}s: %{public}s',
-            directory, detail.message ?? 'unknown');
+          DiagnosticLogService.warn('IconPack',
+            `Ignoring invalid icon pack ${directory}: ${detail.message ?? 'unknown'}`);
         }
       }
       return result;
@@ -166,7 +163,7 @@ export class IconPackService {
     const root = IconPackService.ensureRoot(context);
     const target = `${root}/pack_${Date.now()}_${util.generateRandomUUID().substring(0, 8)}`;
     // 输出实际解压目录，便于设备日志定位包结构或权限问题。
-    hilog.info(LOG_DOMAIN, LOG_TAG, 'Extracting icon pack to: %{public}s', target);
+    DiagnosticLogService.info('IconPack', `Extracting icon pack to: ${target}`);
     try {
       fs.mkdirSync(target);
       const file = fs.openSync(uri, fs.OpenMode.READ_ONLY);
@@ -181,8 +178,8 @@ export class IconPackService {
         IconPackService.removeDirectory(target);
       } catch (cleanupError) {
         const cleanupDetail = cleanupError as BusinessError;
-        hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to clean icon pack directory: %{public}s',
-          cleanupDetail.message ?? 'unknown');
+        DiagnosticLogService.error('IconPack',
+          `Failed to clean icon pack directory: ${cleanupDetail.message ?? 'unknown'}`);
       }
       throw new Error(`图标包导入失败：${detail.message ?? '未知错误'}`);
     }

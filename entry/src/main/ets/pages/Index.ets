@@ -16,10 +16,7 @@ import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { BackupMergeResult, BackupService } from '../services/BackupService';
 import { TokenIconPicker } from '../components/TokenIconPicker';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-
-const LOG_DOMAIN: number = 0xD003;
-const LOG_TAG: string = 'Index';
+import { DiagnosticLogService, DiagnosticLogStats } from '../services/DiagnosticLogService';
 
 /** 根组件内部的页面状态机，避免为少量页面额外引入路由层。 */
 enum AppView {
@@ -87,6 +84,9 @@ struct Index {
   @State private backupConfirmPassword: string = '';
   @State private backupImportContent: string = '';
   @State private backupBusy: boolean = false;
+  @State private diagnosticLogBytes: number = 0;
+  @State private diagnosticLogFiles: number = 0;
+  @State private diagnosticLogBusy: boolean = false;
   private steamReturnView: AppView = AppView.TOKENS;
   private steamAddSession?: SteamAuthSession;
   private steamAddTokens?: SteamSessionTokens;
@@ -99,7 +99,7 @@ struct Index {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to show toast: %{public}s', detail.message ?? message);
+      DiagnosticLogService.error('UI', `Failed to show toast: ${detail.message ?? message}`);
     }
   }
   private steamAddTimeOffset: number = 0;
@@ -149,10 +149,10 @@ struct Index {
       });
       if (iconsChanged) await this.repository.save(this.tokens);
       this.refreshCodes();
+      this.refreshDiagnosticLogStats();
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Application initialization failed: %{public}s',
-        detail.message ?? 'unknown');
+      DiagnosticLogService.error('UI', `Application initialization failed: ${detail.message ?? 'unknown'}`);
       this.showToast(`应用数据初始化失败：${detail.message ?? '未知错误'}`, 3500);
     }
   }
@@ -163,8 +163,8 @@ struct Index {
         return OtpEngine.generate(token, this.now);
       } catch (error) {
         const detail = error as BusinessError;
-        hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to generate code for %{public}s: %{public}s',
-          token.issuer, detail.message ?? 'unknown');
+        DiagnosticLogService.error('OTP',
+          `Failed to generate code for issuer=${token.issuer}: ${detail.message ?? 'unknown'}`);
         return { value: token.kind === TokenKind.STEAM ? '-----' : '------', remainingSeconds: 0, progress: 0 };
       }
     });
@@ -897,6 +897,7 @@ struct Index {
       this.backupImportContent = content;
       this.backupMode = 2;
     } catch (error) {
+      DiagnosticLogService.error('Backup', `Select import file failed: ${(error as Error).message}`);
       this.showToast((error as Error).message, 3000);
     }
   }
@@ -916,9 +917,11 @@ struct Index {
         return;
       }
       this.resetBackupPanel();
+      DiagnosticLogService.info('Backup', `Encrypted backup exported, count=${this.tokens.length}`);
       this.showToast(`已导出 ${this.tokens.length} 个 Token`, 2200);
     } catch (error) {
       this.backupBusy = false;
+      DiagnosticLogService.error('Backup', `Export failed: ${(error as Error).message}`);
       this.showToast((error as Error).message, 3200);
     }
   }
@@ -936,10 +939,74 @@ struct Index {
       this.tokens = result.tokens;
       await this.persist();
       this.resetBackupPanel();
+      DiagnosticLogService.info('Backup', `Encrypted backup restored, added=${result.added}, updated=${result.updated}`);
       this.showToast(`恢复完成：新增 ${result.added} 个，更新 ${result.updated} 个`, 2800);
     } catch (error) {
       this.backupBusy = false;
+      DiagnosticLogService.error('Backup', `Restore failed: ${(error as Error).message}`);
       this.showToast((error as Error).message, 3500);
+    }
+  }
+
+  // ===== 诊断日志 =====
+
+  private refreshDiagnosticLogStats(): void {
+    const stats: DiagnosticLogStats = DiagnosticLogService.stats();
+    this.diagnosticLogBytes = stats.bytes;
+    this.diagnosticLogFiles = stats.files;
+  }
+
+  private diagnosticLogSize(): string {
+    if (this.diagnosticLogBytes < 1024) return `${this.diagnosticLogBytes} B`;
+    return `${(this.diagnosticLogBytes / 1024).toFixed(1)} KB`;
+  }
+
+  private async exportDiagnosticLogs(): Promise<void> {
+    this.diagnosticLogBusy = true;
+    try {
+      const dialog = await this.getUIContext().getPromptAction().showDialog({
+        title: '导出诊断日志',
+        message: '日志包含应用操作、错误信息和网络状态。密钥、密码、Token、Cookie、Steam ID 与 Device ID 会自动脱敏，分享前仍建议检查文件内容。',
+        alignment: DialogAlignment.Bottom,
+        buttons: [
+          { text: '取消', color: '#687383' },
+          { text: '选择导出位置', color: '#183C63' }
+        ]
+      });
+      if (dialog.index !== 1) return;
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const exported = await DiagnosticLogService.export(context);
+      this.refreshDiagnosticLogStats();
+      if (exported) this.showToast('诊断日志已导出', 2000);
+    } catch (error) {
+      DiagnosticLogService.error('Diagnostics', `Export failed: ${(error as Error).message}`);
+      this.showToast((error as Error).message, 3000);
+    } finally {
+      this.diagnosticLogBusy = false;
+    }
+  }
+
+  private async clearDiagnosticLogs(): Promise<void> {
+    this.diagnosticLogBusy = true;
+    try {
+      const dialog = await this.getUIContext().getPromptAction().showDialog({
+        title: '清除诊断日志',
+        message: '这只会删除应用运行日志，不会影响 Token、图标包或备份。',
+        alignment: DialogAlignment.Bottom,
+        buttons: [
+          { text: '取消', color: '#687383' },
+          { text: '清除', color: '#A33143' }
+        ]
+      });
+      if (dialog.index !== 1) return;
+      DiagnosticLogService.clear();
+      this.refreshDiagnosticLogStats();
+      this.showToast('诊断日志已清除', 1800);
+    } catch (error) {
+      DiagnosticLogService.error('Diagnostics', `Clear failed: ${(error as Error).message}`);
+      this.showToast((error as Error).message, 3000);
+    } finally {
+      this.diagnosticLogBusy = false;
     }
   }
 
@@ -1368,6 +1435,25 @@ struct Index {
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)')
           .padding(18).margin({ left: 16, right: 16 }).backgroundColor(Color.White).borderRadius(18)
 
+        Column({ space: 12 }) {
+          Column({ space: 4 }) {
+            Text('诊断日志').fontSize(17).fontWeight(FontWeight.Medium).width('100%')
+            Text(`本机环形日志 · ${this.diagnosticLogFiles} 个文件 · ${this.diagnosticLogSize()}`)
+              .fontSize(13).fontColor('#687383').width('100%')
+          }.alignItems(HorizontalAlign.Start).width('100%')
+          Text('用于反馈 Steam、备份、图标包和持久化问题。敏感凭据会自动脱敏，最多保留约 768KB。')
+            .fontSize(12).fontColor('#687383').lineHeight(18).width('100%')
+          Row({ space: 10 }) {
+            Button(this.diagnosticLogBusy ? '处理中…' : '导出日志').layoutWeight(1)
+              .backgroundColor('#4668E8').enabled(!this.diagnosticLogBusy)
+              .onClick(() => this.exportDiagnosticLogs())
+            Button('清除').layoutWeight(1).backgroundColor('#FBECEF').fontColor('#A33143')
+              .enabled(!this.diagnosticLogBusy && this.diagnosticLogBytes > 0)
+              .onClick(() => this.clearDiagnosticLogs())
+          }.width('100%')
+        }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)')
+          .padding(18).margin({ left: 16, right: 16 }).backgroundColor(Color.White).borderRadius(18)
+
         Column({ space: 6 }) {
           Text('本机数据保护').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
           Text('Token 数据使用系统安全主密钥和 AES-256-GCM 加密保存。应用不会启用系统自动备份。')
@@ -1563,7 +1649,10 @@ struct Index {
         .onClick(() => this.view = AppView.TOKENS)
       Button('设置').layoutWeight(1).backgroundColor(Color.Transparent)
         .fontColor(this.view === AppView.SETTINGS ? '#4668E8' : '#687383')
-        .onClick(() => this.view = AppView.SETTINGS)
+        .onClick(() => {
+          this.refreshDiagnosticLogStats();
+          this.view = AppView.SETTINGS;
+        })
     }.height(62).padding({ left: 10, right: 10 }).backgroundColor(Color.White)
       .border({ width: { top: 1 }, color: '#E7EAF0' })
   }

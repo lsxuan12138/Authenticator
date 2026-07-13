@@ -4,6 +4,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken } from '../domain/Token';
 import { SecureTokenVault } from '../security/SecureTokenVault';
 import { TokenId } from '../core/TokenId';
+import { DiagnosticLogService } from '../services/DiagnosticLogService';
 
 /**
  * Token 持久化边界。
@@ -20,6 +21,7 @@ export class TokenRepository {
       this.store = await preferences.getPreferences(context, TokenRepository.STORE_NAME);
     } catch (error) {
       const detail = error as BusinessError;
+      DiagnosticLogService.error('Storage', `Open repository failed: ${detail.message ?? 'unknown'}`);
       throw new Error(`打开 Token 数据仓库失败：${detail.message ?? '未知错误'}`);
     }
   }
@@ -33,6 +35,7 @@ export class TokenRepository {
       return this.parseTokens(raw);
     } catch (error) {
       const detail = error as BusinessError;
+      DiagnosticLogService.error('Storage', `Read encrypted tokens failed: ${detail.message ?? 'unknown'}`);
       throw new Error(`读取 Token 数据失败：${detail.message ?? '未知错误'}`);
     }
   }
@@ -47,8 +50,10 @@ export class TokenRepository {
       await this.store.put(TokenRepository.ENCRYPTED_TOKENS_KEY, encrypted);
       await this.store.flush();
       await this.verifyStoredData(raw);
+      DiagnosticLogService.info('Storage', `Encrypted token data saved, count=${items.length}`);
     } catch (error) {
       const detail = error as BusinessError;
+      DiagnosticLogService.error('Storage', `Save encrypted tokens failed: ${detail.message ?? 'unknown'}`);
       throw new Error(`保存 Token 数据失败：${detail.message ?? '未知错误'}`);
     }
   }

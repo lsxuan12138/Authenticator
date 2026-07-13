@@ -2,10 +2,7 @@ import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { http } from '@kit.NetworkKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-
-const LOG_DOMAIN: number = 0xD002;
-const LOG_TAG: string = 'SteamGuardService';
+import { DiagnosticLogService } from './DiagnosticLogService';
 
 export interface SteamConfirmation {
   type: number;
@@ -77,7 +74,7 @@ export class SteamGuardService {
       `&version=${challenge.version}&client_id=${challenge.clientId}&signature=${encodeURIComponent(signature)}`;
     const request = http.createHttp();
     try {
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Approving Steam QR login, client=%{public}s', challenge.clientId);
+      DiagnosticLogService.info('SteamGuard', 'Approving Steam QR login');
       const response = await request.request(
         `https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithMobileConfirmation/v1/` +
         `?access_token=${encodeURIComponent(accessToken)}`, {
@@ -89,8 +86,8 @@ export class SteamGuardService {
           readTimeout: SteamGuardService.REQUEST_TIMEOUT
         });
       const eResult = this.readEResult(response.header);
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Steam QR login HTTP status: %{public}d, EResult: %{public}s',
-        response.responseCode, eResult || 'missing');
+      DiagnosticLogService.info('SteamGuard',
+        `Steam QR login response: HTTP=${response.responseCode}, EResult=${eResult || 'missing'}`);
       if (response.responseCode < 200 || response.responseCode >= 300) {
         throw new Error(`Steam 扫码登录请求失败（HTTP ${response.responseCode}）`);
       }
@@ -98,8 +95,8 @@ export class SteamGuardService {
     } catch (error) {
       const detail = error as BusinessError;
       const message = detail.message ?? `${error}`;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Steam QR login failed, code=%{public}s, message=%{public}s',
-        detail.code !== undefined ? `${detail.code}` : 'unknown', message);
+      DiagnosticLogService.error('SteamGuard',
+        `Steam QR login failed: code=${detail.code !== undefined ? detail.code : 'unknown'}, message=${message}`);
       if (message.startsWith('Steam ')) throw new Error(message);
       throw new Error(`Steam 扫码登录网络异常：${message}`);
     } finally {
@@ -119,7 +116,7 @@ export class SteamGuardService {
     if (usableAccessToken.length === 0) throw new Error('Steam 会话缺少 Access Token 或 Refresh Token');
     const request = http.createHttp();
     try {
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Requesting Steam mobile confirmations');
+      DiagnosticLogService.info('SteamGuard', 'Requesting Steam mobile confirmations');
       const response = await request.request(`https://steamcommunity.com/mobileconf/getlist?${query}`, {
         method: http.RequestMethod.GET,
         header: { 'Cookie': `dob=;steamid=${steamId};steamLoginSecure=${steamId}||${usableAccessToken}`,
@@ -128,21 +125,21 @@ export class SteamGuardService {
         connectTimeout: SteamGuardService.REQUEST_TIMEOUT,
         readTimeout: SteamGuardService.REQUEST_TIMEOUT
       });
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Steam response HTTP status: %{public}d', response.responseCode);
+      DiagnosticLogService.info('SteamGuard', `Steam confirmations response: HTTP=${response.responseCode}`);
       const body = typeof response.result === 'string' ? response.result : '{}';
       let parsed: Record<string, Object>;
       try {
         parsed = JSON.parse(body) as Record<string, Object>;
       } catch (_) {
-        hilog.error(LOG_DOMAIN, LOG_TAG, 'Steam response is not JSON, body length: %{public}d', body.length);
+        DiagnosticLogService.error('SteamGuard', `Steam response is not JSON, bodyLength=${body.length}`);
         throw new Error(`Steam 返回了无法解析的数据（HTTP ${response.responseCode}）`);
       }
       if (parsed['success'] !== true) {
         const needAuth = `${parsed['needauth'] ?? parsed['needAuth'] ?? 'unknown'}`;
         const steamMessage = `${parsed['message'] ?? parsed['detail'] ??
           (needAuth === 'true' ? 'Steam 会话需要重新认证' : '未提供错误信息')}`;
-        hilog.error(LOG_DOMAIN, LOG_TAG, 'Steam rejected request, success=false, needauth=%{public}s, message=%{public}s',
-          needAuth, steamMessage);
+        DiagnosticLogService.error('SteamGuard',
+          `Steam rejected confirmations request: needAuth=${needAuth}, message=${steamMessage}`);
         throw new Error(`Steam 请求失败（HTTP ${response.responseCode}）：${steamMessage}`);
       }
       const confirmations = (parsed['conf'] ?? []) as Array<Record<string, Object>>;
@@ -161,13 +158,13 @@ export class SteamGuardService {
         };
         result.push(confirmation);
       }
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Steam confirmations received: %{public}d', result.length);
+      DiagnosticLogService.info('SteamGuard', `Steam confirmations received: count=${result.length}`);
       return result;
     } catch (error) {
       const businessError = error as BusinessError;
       const code = businessError.code !== undefined ? `${businessError.code}` : 'unknown';
       const message = businessError.message ?? `${error}`;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Steam request exception, code=%{public}s, message=%{public}s', code, message);
+      DiagnosticLogService.error('SteamGuard', `Steam request exception: code=${code}, message=${message}`);
       if (message.startsWith('Steam ')) throw new Error(message);
       throw new Error(`Steam 网络请求异常（code: ${code}）：${message}`);
     } finally {
@@ -189,7 +186,7 @@ export class SteamGuardService {
     if (usableAccessToken.length === 0) throw new Error('Steam 会话缺少 Access Token 或 Refresh Token');
     const request = http.createHttp();
     try {
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Submitting Steam confirmation operation: %{public}s', operation);
+      DiagnosticLogService.info('SteamGuard', `Submitting Steam confirmation: operation=${operation}`);
       const response = await request.request(`https://steamcommunity.com/mobileconf/multiajaxop?${data}`, {
         method: http.RequestMethod.POST,
         header: {
@@ -201,7 +198,7 @@ export class SteamGuardService {
         connectTimeout: SteamGuardService.REQUEST_TIMEOUT,
         readTimeout: SteamGuardService.REQUEST_TIMEOUT
       });
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Confirmation operation HTTP status: %{public}d', response.responseCode);
+      DiagnosticLogService.info('SteamGuard', `Steam confirmation response: HTTP=${response.responseCode}`);
       const body = typeof response.result === 'string' ? response.result : '{}';
       const parsed = JSON.parse(body) as Record<string, Object>;
       if (parsed['success'] !== true) {
@@ -210,8 +207,9 @@ export class SteamGuardService {
       }
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Confirmation operation failed, code=%{public}s, message=%{public}s',
-        detail.code !== undefined ? `${detail.code}` : 'unknown', detail.message ?? `${error}`);
+      DiagnosticLogService.error('SteamGuard',
+        `Confirmation failed: code=${detail.code !== undefined ? detail.code : 'unknown'}, ` +
+        `message=${detail.message ?? error}`);
       throw new Error(`Steam 确认操作失败：${detail.message ?? error}`);
     } finally {
       request.destroy();
@@ -220,7 +218,7 @@ export class SteamGuardService {
 
   private async generateAccessToken(steamId: string, refreshToken: string): Promise<string> {
     // Refresh Token 用于换取短期 Access Token；两者用途不同，不能互相替代。
-    hilog.info(LOG_DOMAIN, LOG_TAG, 'Refreshing Steam access token');
+    DiagnosticLogService.info('SteamGuard', 'Refreshing Steam access token');
     const request = http.createHttp();
     try {
       const response = await request.request(
@@ -232,7 +230,7 @@ export class SteamGuardService {
           connectTimeout: SteamGuardService.REQUEST_TIMEOUT,
           readTimeout: SteamGuardService.REQUEST_TIMEOUT
         });
-      hilog.info(LOG_DOMAIN, LOG_TAG, 'Access token refresh HTTP status: %{public}d', response.responseCode);
+      DiagnosticLogService.info('SteamGuard', `Access Token refresh response: HTTP=${response.responseCode}`);
       const body = typeof response.result === 'string' ? response.result : '{}';
       const parsed = JSON.parse(body) as Record<string, Object>;
       const responseObject = (parsed['response'] ?? {}) as Record<string, Object>;
@@ -241,8 +239,9 @@ export class SteamGuardService {
       return token;
     } catch (error) {
       const detail = error as BusinessError;
-      hilog.error(LOG_DOMAIN, LOG_TAG, 'Access token refresh failed, code=%{public}s, message=%{public}s',
-        detail.code !== undefined ? `${detail.code}` : 'unknown', detail.message ?? `${error}`);
+      DiagnosticLogService.error('SteamGuard',
+        `Access Token refresh failed: code=${detail.code !== undefined ? detail.code : 'unknown'}, ` +
+        `message=${detail.message ?? error}`);
       throw new Error(`Steam Access Token 刷新失败：${detail.message ?? error}`);
     } finally {
       request.destroy();
