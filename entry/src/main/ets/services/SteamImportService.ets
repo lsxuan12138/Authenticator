@@ -37,6 +37,8 @@ export class SteamImportService {
       accessToken: accessToken,
       refreshToken: SteamImportService.first(tokens, ['refresh_token', 'refreshToken']) ||
         SteamImportService.first(source, ['refresh_token', 'refreshToken']),
+      // maFile 并不总是包含 guard_data；缺失时保留为空，下一次登录仍可重新获取。
+      guardData: SteamImportService.first(source, ['guard_data', 'guardData']),
       revocationCode: SteamImportService.first(source, ['revocation_code', 'revocationCode']),
       serialNumber: SteamImportService.first(source, ['serial_number', 'serialNumber']),
       tokenGid: SteamImportService.first(source, ['token_gid', 'tokenGid']),

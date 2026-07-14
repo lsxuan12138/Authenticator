@@ -187,6 +187,7 @@ def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
         "identity_secret": string_value(steam.get("identitySecret")),
         "uri": string_value(steam.get("uri")) or build_otpauth_uri(token),
         "device_id": string_value(steam.get("deviceId")),
+        "guard_data": string_value(steam.get("guardData")),
         "secret_1": string_value(steam.get("secret1")),
         "tokens": {
             "access_token": string_value(steam.get("accessToken")),

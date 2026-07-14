@@ -7,7 +7,7 @@ import { Base32 } from '../core/Base32';
 import { TokenDuplicateGuard } from '../core/TokenDuplicateGuard';
 import { OtpUriParser } from '../core/OtpUriParser';
 import { OtpEngine } from '../core/OtpEngine';
-import { SteamLoginService } from '../services/SteamLoginService';
+import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLoginService';
 import { SteamAuthenticatorEnrollment, SteamAuthenticatorService } from '../services/SteamAuthenticatorService';
 import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessionTokens } from '../services/SteamProto';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
@@ -40,6 +40,11 @@ export struct AddTokenPage {
   private steamAddEnrollment?: SteamAuthenticatorEnrollment;
   private steamAddDeviceId: string = '';
   private steamAddTimeOffset: number = 0;
+  private steamLoginCancellation?: SteamLoginCancellation;
+
+  aboutToDisappear(): void {
+    this.steamLoginCancellation?.cancel();
+  }
 
   private showToast(message: string, duration: number = 2000): void {
     try {
@@ -102,6 +107,8 @@ export struct AddTokenPage {
   }
 
   private resetSteamAddFlow(): void {
+    this.steamLoginCancellation?.cancel();
+    this.steamLoginCancellation = undefined;
     this.steamAddStep = 0;
     this.steamAddAccount = '';
     this.steamAddPassword = '';
@@ -115,6 +122,18 @@ export struct AddTokenPage {
     this.steamAddEnrollment = undefined;
     this.steamAddDeviceId = '';
     this.steamAddTimeOffset = 0;
+  }
+
+  private newSteamLoginCancellation(): SteamLoginCancellation {
+    this.steamLoginCancellation?.cancel();
+    const cancellation = new SteamLoginCancellation();
+    this.steamLoginCancellation = cancellation;
+    return cancellation;
+  }
+
+  private cancelSteamLogin(): void {
+    this.steamLoginCancellation?.cancel();
+    this.steamAddStatus = '正在取消 Steam 登录…';
   }
 
   private supportedSteamConfirmation(session: SteamAuthSession): SteamAllowedConfirmation | undefined {
@@ -151,9 +170,11 @@ export struct AddTokenPage {
     }
     this.steamAddBusy = true;
     this.steamAddStatus = '正在创建 Steam 登录会话…';
+    const cancellation = this.newSteamLoginCancellation();
     try {
       const service = new SteamLoginService();
       const session = await service.beginSession(this.steamAddAccount.trim(), this.steamAddPassword);
+      cancellation.throwIfCancelled();
       this.steamAddPassword = '';
       this.steamAddSession = session;
       const confirmation = this.supportedSteamConfirmation(session);
@@ -161,8 +182,13 @@ export struct AddTokenPage {
         this.steamAddConfirmationType = confirmation.type;
         this.steamAddStep = 1;
         this.steamAddStatus = confirmation.message || this.steamConfirmationPrompt();
+        if (confirmation.type === SteamGuardType.DEVICE_CONFIRMATION ||
+          confirmation.type === SteamGuardType.EMAIL_CONFIRMATION) {
+          const tokens = await service.pollUntilComplete(session, cancellation);
+          await this.startSteamAuthenticator(session, tokens);
+        }
       } else {
-        const tokens = await service.pollSession(session);
+        const tokens = await service.pollUntilComplete(session, cancellation);
         await this.startSteamAuthenticator(session, tokens);
       }
     } catch (error) {
@@ -178,6 +204,7 @@ export struct AddTokenPage {
     }
     this.steamAddBusy = true;
     this.steamAddStatus = '正在完成 Steam 登录…';
+    const cancellation = this.steamLoginCancellation ?? this.newSteamLoginCancellation();
     try {
       const service = new SteamLoginService();
       if (this.steamAddConfirmationType === SteamGuardType.EMAIL_CODE ||
@@ -185,7 +212,7 @@ export struct AddTokenPage {
         await service.submitGuardCode(this.steamAddSession,
           this.steamAddConfirmationType, this.steamAddCode.trim());
       }
-      const tokens = await service.pollSession(this.steamAddSession);
+      const tokens = await service.pollUntilComplete(this.steamAddSession, cancellation);
       this.steamAddCode = '';
       await this.startSteamAuthenticator(this.steamAddSession, tokens);
     } catch (error) {
@@ -330,6 +357,7 @@ export struct AddTokenPage {
         deviceId: this.steamAddDeviceId,
         accessToken: this.steamAddTokens.accessToken,
         refreshToken: this.steamAddTokens.refreshToken,
+        guardData: this.steamAddTokens.guardData,
         revocationCode: enrollment.revocationCode,
         serialNumber: enrollment.serialNumber,
         tokenGid: enrollment.tokenGid,
@@ -581,13 +609,21 @@ export struct AddTokenPage {
               .backgroundColor($r('app.color.brand_strong'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.completeSteamAddLogin())
-            Button('重新登录')
-              .width('100%')
-              .height(42)
-              .backgroundColor($r('app.color.surface_control'))
-              .fontColor($r('app.color.text_secondary'))
-              .enabled(!this.steamAddBusy)
-              .onClick(() => this.resetSteamAddFlow())
+            if (this.steamAddBusy) {
+              Button('取消等待')
+                .width('100%')
+                .height(42)
+                .backgroundColor($r('app.color.surface_control'))
+                .fontColor($r('app.color.text_secondary'))
+                .onClick(() => this.cancelSteamLogin())
+            } else {
+              Button('重新登录')
+                .width('100%')
+                .height(42)
+                .backgroundColor($r('app.color.surface_control'))
+                .fontColor($r('app.color.text_secondary'))
+                .onClick(() => this.resetSteamAddFlow())
+            }
           } else if (this.steamAddStep === 2) {
             Text('Steam 登录已经完成，最后需要验证新增的移动验证器。')
               .fontSize(14)

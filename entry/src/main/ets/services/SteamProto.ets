@@ -8,6 +8,7 @@ import {
   CAuthentication_PollAuthSessionStatus_Response,
   CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request,
   EAuthSessionGuardType,
+  EAuthTokenAppType,
   EAuthTokenPlatformType,
   ESessionPersistence
 } from './protobuf/steam_auth';
@@ -38,10 +39,21 @@ export interface SteamAuthSession {
 }
 
 export interface SteamSessionTokens {
+  /** 调用 Web API 的短期令牌。 */
   accessToken: string;
+  /** 用于换取 Access Token 或重新建立持久会话的长期令牌。 */
   refreshToken: string;
   accountName: string;
   agreementSessionUrl: string;
+  /** Steam 在轮询完成时返回的新 Guard Data；空字符串表示本次未更新。 */
+  guardData: string;
+}
+
+/** 保留轮询响应中的会话控制字段，避免页面层直接依赖 protobuf 生成类型。 */
+export interface SteamAuthPollResult {
+  tokens: SteamSessionTokens;
+  newClientId: Long;
+  newChallengeUrl: string;
 }
 
 /**
@@ -49,12 +61,14 @@ export interface SteamSessionTokens {
  * 字段定义和 wire 编解码均由 protobufjs 生成，本类只把生成对象转换为应用领域类型。
  */
 export class SteamProto {
-  static beginRequest(account: string, encryptedPassword: string, timestamp: string): Uint8Array {
+  static beginRequest(account: string, encryptedPassword: string, timestamp: string,
+    guardData: string = ''): Uint8Array {
     const device = CAuthentication_DeviceDetails.create({
       deviceFriendlyName: 'Authenticator',
       platformType: EAuthTokenPlatformType.k_EAuthTokenPlatformType_MobileApp,
       osType: -500,
-      gamingDeviceType: 528
+      gamingDeviceType: 528,
+      appType: EAuthTokenAppType.k_EAuthTokenAppType_Mobile_SteamApp
     });
     const request = CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.create({
       accountName: account,
@@ -63,6 +77,8 @@ export class SteamProto {
       platformType: EAuthTokenPlatformType.k_EAuthTokenPlatformType_MobileApp,
       persistence: ESessionPersistence.k_ESessionPersistence_Persistent,
       deviceDetails: device,
+      // Guard Data 必须按账户原样复用；它与本机生成的 deviceId 没有替代关系。
+      guardData: guardData,
       language: 0,
       qosLevel: 2
     });
@@ -108,14 +124,20 @@ export class SteamProto {
     }
   }
 
-  static decodeTokens(data: Uint8Array): SteamSessionTokens {
+  static decodePoll(data: Uint8Array): SteamAuthPollResult {
     try {
       const response = CAuthentication_PollAuthSessionStatus_Response.decode(data);
       return {
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        accountName: response.accountName,
-        agreementSessionUrl: response.agreementSessionUrl
+        tokens: {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          accountName: response.accountName,
+          agreementSessionUrl: response.agreementSessionUrl,
+          // Steam 使用 new_guard_data 表示轮换后的登录信任凭据，而不是回显请求值。
+          guardData: response.newGuardData
+        },
+        newClientId: response.newClientId as Long,
+        newChallengeUrl: response.newChallengeUrl
       };
     } catch (error) {
       const detail = error as BusinessError;

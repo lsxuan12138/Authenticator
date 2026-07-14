@@ -2,7 +2,7 @@
 
 Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标准 TOTP、Steam Guard、二维码与 URI 导入、加密备份以及可切换的第三方图标包。
 
-项目参考了 [kdada/Authenticator](https://github.com/kdada/Authenticator) 中经过验证的 Steam 登录与 Steam Guard 交互流程，但重新组织了数据模型、页面结构和服务边界。Steam 协议使用与该上游项目同源的 Protobuf 字段定义，并由 `protobufjs` 生成编解码代码，不再维护手写的 wire parser。本项目不是上游项目的官方版本或分支。
+项目参考了 [kdada/Authenticator](https://github.com/kdada/Authenticator) 中经过验证的 Steam 登录与 Steam Guard 交互流程，但重新组织了数据模型、页面结构和服务边界。Steam 协议字段以 [SteamTracking/Protobufs](https://github.com/SteamTracking/Protobufs) 的持续跟踪结果为基准，并参考 [SteamRE/SteamKit](https://github.com/SteamRE/SteamKit) 核对登录调用语义；编解码代码由 `protobufjs` 生成，不再维护手写的 wire parser。本项目不是上述项目的官方版本或分支。
 
 ## 功能
 
@@ -155,7 +155,7 @@ Steam 协议定义位于：
 entry/src/main/ets/services/protobuf/steam_auth.proto
 ```
 
-`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件。修改协议时，应使用 `protobufjs-cli@1.1.3` 的 `pbjs` 从 `.proto` 生成运行时代码，再使用当前版 `pbts` 生成声明文件，并保留项目针对 HarmonyOS `@ohos/protobufjs` 与 `long` 的导入适配。新版 `pbjs` 生成的 `reader.tag()` 与当前 HarmonyOS 运行时不兼容；不要直接手工修改消息字段编号。
+`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件。修改协议时，应先与 SteamTracking 的 `steammessages_auth.steamclient.proto`、`steammessages_twofactor.steamclient.proto` 比对，再使用 `protobufjs-cli@1.1.3` 的 `pbjs` 从 `.proto` 生成运行时代码，并使用 `pbts` 生成声明文件；最后保留项目针对 HarmonyOS `@ohos/protobufjs` 与 `long` 的导入适配。新版 `pbjs` 生成的 `reader.tag()` 与当前 HarmonyOS 运行时不兼容；不要直接手工修改消息字段编号。
 
 ## 权限与网络
 

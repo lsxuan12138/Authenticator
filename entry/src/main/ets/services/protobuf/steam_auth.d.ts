@@ -1,60 +1,50 @@
 import * as $protobuf from '@ohos/protobufjs';
 import Long = require("long");
-
 /** EAuthTokenPlatformType enum. */
 export enum EAuthTokenPlatformType {
-
-    /** k_EAuthTokenPlatformType_Unknown value */
     k_EAuthTokenPlatformType_Unknown = 0,
-
-    /** k_EAuthTokenPlatformType_SteamClient value */
     k_EAuthTokenPlatformType_SteamClient = 1,
-
-    /** k_EAuthTokenPlatformType_WebBrowser value */
     k_EAuthTokenPlatformType_WebBrowser = 2,
-
-    /** k_EAuthTokenPlatformType_MobileApp value */
     k_EAuthTokenPlatformType_MobileApp = 3
+}
+
+/** EAuthTokenAppType enum. */
+export enum EAuthTokenAppType {
+    k_EAuthTokenAppType_Unknown = 0,
+    k_EAuthTokenAppType_Mobile_SteamApp = 1,
+    k_EAuthTokenAppType_Mobile_ChatApp = 2
+}
+
+/** ETwoFactorStatusFieldFlag enum. */
+export enum ETwoFactorStatusFieldFlag {
+    k_ETwoFactorStatusFieldFlag_None = 0,
+    k_ETwoFactorStatusFieldFlag_LastUsage = 1
+}
+
+/** ETwoFactorUsageType enum. */
+export enum ETwoFactorUsageType {
+    k_ETwoFactorUsageType_Unknown = 0,
+    k_ETwoFactorUsageType_None = 1,
+    k_ETwoFactorUsageType_MobileConfirmation = 2,
+    k_ETwoFactorUsageType_Login = 3
 }
 
 /** EAuthSessionGuardType enum. */
 export enum EAuthSessionGuardType {
-
-    /** k_EAuthSessionGuardType_Unknown value */
     k_EAuthSessionGuardType_Unknown = 0,
-
-    /** k_EAuthSessionGuardType_None value */
     k_EAuthSessionGuardType_None = 1,
-
-    /** k_EAuthSessionGuardType_EmailCode value */
     k_EAuthSessionGuardType_EmailCode = 2,
-
-    /** k_EAuthSessionGuardType_DeviceCode value */
     k_EAuthSessionGuardType_DeviceCode = 3,
-
-    /** k_EAuthSessionGuardType_DeviceConfirmation value */
     k_EAuthSessionGuardType_DeviceConfirmation = 4,
-
-    /** k_EAuthSessionGuardType_EmailConfirmation value */
     k_EAuthSessionGuardType_EmailConfirmation = 5,
-
-    /** k_EAuthSessionGuardType_MachineToken value */
     k_EAuthSessionGuardType_MachineToken = 6,
-
-    /** k_EAuthSessionGuardType_LegacyMachineAuth value */
     k_EAuthSessionGuardType_LegacyMachineAuth = 7
 }
 
 /** ESessionPersistence enum. */
 export enum ESessionPersistence {
-
-    /** k_ESessionPersistence_Invalid value */
     k_ESessionPersistence_Invalid = -1,
-
-    /** k_ESessionPersistence_Ephemeral value */
     k_ESessionPersistence_Ephemeral = 0,
-
-    /** k_ESessionPersistence_Persistent value */
     k_ESessionPersistence_Persistent = 1
 }
 
@@ -68,29 +58,32 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
     constructor(properties?: ICAuthentication_DeviceDetails);
 
     /** CAuthentication_DeviceDetails deviceFriendlyName. */
-    deviceFriendlyName: string;
+    public deviceFriendlyName: string;
 
     /** CAuthentication_DeviceDetails platformType. */
-    platformType: EAuthTokenPlatformType;
+    public platformType: EAuthTokenPlatformType;
 
     /** CAuthentication_DeviceDetails osType. */
-    osType: number;
+    public osType: number;
 
     /** CAuthentication_DeviceDetails gamingDeviceType. */
-    gamingDeviceType: number;
+    public gamingDeviceType: number;
 
     /** CAuthentication_DeviceDetails clientCount. */
-    clientCount: number;
+    public clientCount: number;
 
     /** CAuthentication_DeviceDetails machineId. */
-    machineId: Uint8Array;
+    public machineId: Uint8Array;
+
+    /** CAuthentication_DeviceDetails appType. */
+    public appType: EAuthTokenAppType;
 
     /**
      * Creates a new CAuthentication_DeviceDetails instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_DeviceDetails instance
      */
-    static create(properties?: ICAuthentication_DeviceDetails): CAuthentication_DeviceDetails;
+    public static create(properties?: ICAuthentication_DeviceDetails): CAuthentication_DeviceDetails;
 
     /**
      * Encodes the specified CAuthentication_DeviceDetails message. Does not implicitly {@link CAuthentication_DeviceDetails.verify|verify} messages.
@@ -98,7 +91,7 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_DeviceDetails, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_DeviceDetails, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_DeviceDetails message, length delimited. Does not implicitly {@link CAuthentication_DeviceDetails.verify|verify} messages.
@@ -106,7 +99,7 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_DeviceDetails, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_DeviceDetails, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_DeviceDetails message from the specified reader or buffer.
@@ -116,7 +109,7 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_DeviceDetails;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_DeviceDetails;
 
     /**
      * Decodes a CAuthentication_DeviceDetails message from the specified reader or buffer, length delimited.
@@ -125,21 +118,21 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_DeviceDetails;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_DeviceDetails;
 
     /**
      * Verifies a CAuthentication_DeviceDetails message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_DeviceDetails message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_DeviceDetails
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_DeviceDetails;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_DeviceDetails;
 
     /**
      * Creates a plain object from a CAuthentication_DeviceDetails message. Also converts values to other types if specified.
@@ -147,20 +140,20 @@ export class CAuthentication_DeviceDetails implements ICAuthentication_DeviceDet
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_DeviceDetails, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_DeviceDetails, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_DeviceDetails to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_DeviceDetails
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_AllowedConfirmation. */
@@ -173,17 +166,17 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
     constructor(properties?: ICAuthentication_AllowedConfirmation);
 
     /** CAuthentication_AllowedConfirmation confirmationType. */
-    confirmationType: EAuthSessionGuardType;
+    public confirmationType: EAuthSessionGuardType;
 
     /** CAuthentication_AllowedConfirmation associatedMessage. */
-    associatedMessage: string;
+    public associatedMessage: string;
 
     /**
      * Creates a new CAuthentication_AllowedConfirmation instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_AllowedConfirmation instance
      */
-    static create(properties?: ICAuthentication_AllowedConfirmation): CAuthentication_AllowedConfirmation;
+    public static create(properties?: ICAuthentication_AllowedConfirmation): CAuthentication_AllowedConfirmation;
 
     /**
      * Encodes the specified CAuthentication_AllowedConfirmation message. Does not implicitly {@link CAuthentication_AllowedConfirmation.verify|verify} messages.
@@ -191,7 +184,7 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_AllowedConfirmation, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_AllowedConfirmation, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_AllowedConfirmation message, length delimited. Does not implicitly {@link CAuthentication_AllowedConfirmation.verify|verify} messages.
@@ -199,7 +192,7 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_AllowedConfirmation, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_AllowedConfirmation, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_AllowedConfirmation message from the specified reader or buffer.
@@ -209,7 +202,7 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_AllowedConfirmation;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_AllowedConfirmation;
 
     /**
      * Decodes a CAuthentication_AllowedConfirmation message from the specified reader or buffer, length delimited.
@@ -218,21 +211,21 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_AllowedConfirmation;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_AllowedConfirmation;
 
     /**
      * Verifies a CAuthentication_AllowedConfirmation message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_AllowedConfirmation message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_AllowedConfirmation
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_AllowedConfirmation;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_AllowedConfirmation;
 
     /**
      * Creates a plain object from a CAuthentication_AllowedConfirmation message. Also converts values to other types if specified.
@@ -240,20 +233,20 @@ export class CAuthentication_AllowedConfirmation implements ICAuthentication_All
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_AllowedConfirmation, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_AllowedConfirmation, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_AllowedConfirmation to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_AllowedConfirmation
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData. */
@@ -266,47 +259,47 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
     constructor(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceFriendlyName. */
-    deviceFriendlyName: string;
+    public deviceFriendlyName: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData accountName. */
-    accountName: string;
+    public accountName: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptedPassword. */
-    encryptedPassword: string;
+    public encryptedPassword: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptionTimestamp. */
-    encryptionTimestamp: (number|Long);
+    public encryptionTimestamp: (number|Long);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData rememberLogin. */
-    rememberLogin: boolean;
+    public rememberLogin: boolean;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData platformType. */
-    platformType: EAuthTokenPlatformType;
+    public platformType: EAuthTokenPlatformType;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData persistence. */
-    persistence: ESessionPersistence;
+    public persistence: ESessionPersistence;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData websiteId. */
-    websiteId: string;
+    public websiteId: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceDetails. */
-    deviceDetails?: (ICAuthentication_DeviceDetails|null);
+    public deviceDetails?: (ICAuthentication_DeviceDetails|null);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData. */
-    guardData: Uint8Array;
+    public guardData: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData language. */
-    language: number;
+    public language: number;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData qosLevel. */
-    qosLevel: number;
+    public qosLevel: number;
 
     /**
      * Creates a new CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData instance
      */
-    static create(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
+    public static create(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
 
     /**
      * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.verify|verify} messages.
@@ -314,7 +307,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message, length delimited. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.verify|verify} messages.
@@ -322,7 +315,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from the specified reader or buffer.
@@ -332,7 +325,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
 
     /**
      * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from the specified reader or buffer, length delimited.
@@ -341,21 +334,21 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
 
     /**
      * Verifies a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
 
     /**
      * Creates a plain object from a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message. Also converts values to other types if specified.
@@ -363,20 +356,20 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_BeginAuthSessionViaCredentials_Response. */
@@ -389,35 +382,35 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
     constructor(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Response);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response clientId. */
-    clientId: (number|Long);
+    public clientId: (number|Long);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response requestId. */
-    requestId: Uint8Array;
+    public requestId: Uint8Array;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response interval. */
-    interval: number;
+    public interval: number;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response allowedConfirmations. */
-    allowedConfirmations: ICAuthentication_AllowedConfirmation[];
+    public allowedConfirmations: ICAuthentication_AllowedConfirmation[];
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response weakToken. */
-    weakToken: string;
+    public weakToken: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response agreementSessionUrl. */
-    agreementSessionUrl: string;
+    public agreementSessionUrl: string;
 
     /** CAuthentication_BeginAuthSessionViaCredentials_Response extendedErrorMessage. */
-    extendedErrorMessage: string;
+    public extendedErrorMessage: string;
 
     /**
      * Creates a new CAuthentication_BeginAuthSessionViaCredentials_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_BeginAuthSessionViaCredentials_Response instance
      */
-    static create(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Response): CAuthentication_BeginAuthSessionViaCredentials_Response;
+    public static create(properties?: ICAuthentication_BeginAuthSessionViaCredentials_Response): CAuthentication_BeginAuthSessionViaCredentials_Response;
 
     /**
      * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Response message. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Response.verify|verify} messages.
@@ -425,7 +418,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_BeginAuthSessionViaCredentials_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_BeginAuthSessionViaCredentials_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Response message, length delimited. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Response.verify|verify} messages.
@@ -433,7 +426,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_BeginAuthSessionViaCredentials_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_BeginAuthSessionViaCredentials_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Response message from the specified reader or buffer.
@@ -443,7 +436,7 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_BeginAuthSessionViaCredentials_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_BeginAuthSessionViaCredentials_Response;
 
     /**
      * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Response message from the specified reader or buffer, length delimited.
@@ -452,21 +445,21 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_BeginAuthSessionViaCredentials_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_BeginAuthSessionViaCredentials_Response;
 
     /**
      * Verifies a CAuthentication_BeginAuthSessionViaCredentials_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_BeginAuthSessionViaCredentials_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_BeginAuthSessionViaCredentials_Response
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_BeginAuthSessionViaCredentials_Response;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_BeginAuthSessionViaCredentials_Response;
 
     /**
      * Creates a plain object from a CAuthentication_BeginAuthSessionViaCredentials_Response message. Also converts values to other types if specified.
@@ -474,20 +467,20 @@ export class CAuthentication_BeginAuthSessionViaCredentials_Response implements 
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_BeginAuthSessionViaCredentials_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_BeginAuthSessionViaCredentials_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_BeginAuthSessionViaCredentials_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_BeginAuthSessionViaCredentials_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request. */
@@ -500,23 +493,23 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
     constructor(properties?: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request);
 
     /** CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request clientId. */
-    clientId: (number|Long);
+    public clientId: (number|Long);
 
     /** CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
 
     /** CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request code. */
-    code: string;
+    public code: string;
 
     /** CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request codeType. */
-    codeType: EAuthSessionGuardType;
+    public codeType: EAuthSessionGuardType;
 
     /**
      * Creates a new CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request instance
      */
-    static create(properties?: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
+    public static create(properties?: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 
     /**
      * Encodes the specified CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.verify|verify} messages.
@@ -524,7 +517,7 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message, length delimited. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.verify|verify} messages.
@@ -532,7 +525,7 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message from the specified reader or buffer.
@@ -542,7 +535,7 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 
     /**
      * Decodes a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message from the specified reader or buffer, length delimited.
@@ -551,21 +544,21 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 
     /**
      * Verifies a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 
     /**
      * Creates a plain object from a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request message. Also converts values to other types if specified.
@@ -573,20 +566,20 @@ export class CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request impleme
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_PollAuthSessionStatus_Request. */
@@ -599,20 +592,20 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
     constructor(properties?: ICAuthentication_PollAuthSessionStatus_Request);
 
     /** CAuthentication_PollAuthSessionStatus_Request clientId. */
-    clientId: (number|Long);
+    public clientId: (number|Long);
 
     /** CAuthentication_PollAuthSessionStatus_Request requestId. */
-    requestId: Uint8Array;
+    public requestId: Uint8Array;
 
     /** CAuthentication_PollAuthSessionStatus_Request tokenToRevoke. */
-    tokenToRevoke: (number|Long);
+    public tokenToRevoke: (number|Long);
 
     /**
      * Creates a new CAuthentication_PollAuthSessionStatus_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_PollAuthSessionStatus_Request instance
      */
-    static create(properties?: ICAuthentication_PollAuthSessionStatus_Request): CAuthentication_PollAuthSessionStatus_Request;
+    public static create(properties?: ICAuthentication_PollAuthSessionStatus_Request): CAuthentication_PollAuthSessionStatus_Request;
 
     /**
      * Encodes the specified CAuthentication_PollAuthSessionStatus_Request message. Does not implicitly {@link CAuthentication_PollAuthSessionStatus_Request.verify|verify} messages.
@@ -620,7 +613,7 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_PollAuthSessionStatus_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_PollAuthSessionStatus_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_PollAuthSessionStatus_Request message, length delimited. Does not implicitly {@link CAuthentication_PollAuthSessionStatus_Request.verify|verify} messages.
@@ -628,7 +621,7 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_PollAuthSessionStatus_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_PollAuthSessionStatus_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_PollAuthSessionStatus_Request message from the specified reader or buffer.
@@ -638,7 +631,7 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_PollAuthSessionStatus_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_PollAuthSessionStatus_Request;
 
     /**
      * Decodes a CAuthentication_PollAuthSessionStatus_Request message from the specified reader or buffer, length delimited.
@@ -647,21 +640,21 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_PollAuthSessionStatus_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_PollAuthSessionStatus_Request;
 
     /**
      * Verifies a CAuthentication_PollAuthSessionStatus_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_PollAuthSessionStatus_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_PollAuthSessionStatus_Request
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_PollAuthSessionStatus_Request;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_PollAuthSessionStatus_Request;
 
     /**
      * Creates a plain object from a CAuthentication_PollAuthSessionStatus_Request message. Also converts values to other types if specified.
@@ -669,20 +662,20 @@ export class CAuthentication_PollAuthSessionStatus_Request implements ICAuthenti
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_PollAuthSessionStatus_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_PollAuthSessionStatus_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_PollAuthSessionStatus_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_PollAuthSessionStatus_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CAuthentication_PollAuthSessionStatus_Response. */
@@ -695,35 +688,35 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
     constructor(properties?: ICAuthentication_PollAuthSessionStatus_Response);
 
     /** CAuthentication_PollAuthSessionStatus_Response newClientId. */
-    newClientId: (number|Long);
+    public newClientId: (number|Long);
 
     /** CAuthentication_PollAuthSessionStatus_Response newChallengeUrl. */
-    newChallengeUrl: string;
+    public newChallengeUrl: string;
 
     /** CAuthentication_PollAuthSessionStatus_Response refreshToken. */
-    refreshToken: string;
+    public refreshToken: string;
 
     /** CAuthentication_PollAuthSessionStatus_Response accessToken. */
-    accessToken: string;
+    public accessToken: string;
 
     /** CAuthentication_PollAuthSessionStatus_Response hadRemoteInteraction. */
-    hadRemoteInteraction: boolean;
+    public hadRemoteInteraction: boolean;
 
     /** CAuthentication_PollAuthSessionStatus_Response accountName. */
-    accountName: string;
+    public accountName: string;
 
     /** CAuthentication_PollAuthSessionStatus_Response newGuardData. */
-    newGuardData: string;
+    public newGuardData: string;
 
     /** CAuthentication_PollAuthSessionStatus_Response agreementSessionUrl. */
-    agreementSessionUrl: string;
+    public agreementSessionUrl: string;
 
     /**
      * Creates a new CAuthentication_PollAuthSessionStatus_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CAuthentication_PollAuthSessionStatus_Response instance
      */
-    static create(properties?: ICAuthentication_PollAuthSessionStatus_Response): CAuthentication_PollAuthSessionStatus_Response;
+    public static create(properties?: ICAuthentication_PollAuthSessionStatus_Response): CAuthentication_PollAuthSessionStatus_Response;
 
     /**
      * Encodes the specified CAuthentication_PollAuthSessionStatus_Response message. Does not implicitly {@link CAuthentication_PollAuthSessionStatus_Response.verify|verify} messages.
@@ -731,7 +724,7 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICAuthentication_PollAuthSessionStatus_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICAuthentication_PollAuthSessionStatus_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CAuthentication_PollAuthSessionStatus_Response message, length delimited. Does not implicitly {@link CAuthentication_PollAuthSessionStatus_Response.verify|verify} messages.
@@ -739,7 +732,7 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICAuthentication_PollAuthSessionStatus_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICAuthentication_PollAuthSessionStatus_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CAuthentication_PollAuthSessionStatus_Response message from the specified reader or buffer.
@@ -749,7 +742,7 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_PollAuthSessionStatus_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_PollAuthSessionStatus_Response;
 
     /**
      * Decodes a CAuthentication_PollAuthSessionStatus_Response message from the specified reader or buffer, length delimited.
@@ -758,21 +751,21 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_PollAuthSessionStatus_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_PollAuthSessionStatus_Response;
 
     /**
      * Verifies a CAuthentication_PollAuthSessionStatus_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CAuthentication_PollAuthSessionStatus_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CAuthentication_PollAuthSessionStatus_Response
      */
-    static fromObject(object: { [k: string]: any }): CAuthentication_PollAuthSessionStatus_Response;
+    public static fromObject(object: { [k: string]: any }): CAuthentication_PollAuthSessionStatus_Response;
 
     /**
      * Creates a plain object from a CAuthentication_PollAuthSessionStatus_Response message. Also converts values to other types if specified.
@@ -780,20 +773,20 @@ export class CAuthentication_PollAuthSessionStatus_Response implements ICAuthent
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CAuthentication_PollAuthSessionStatus_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CAuthentication_PollAuthSessionStatus_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CAuthentication_PollAuthSessionStatus_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CAuthentication_PollAuthSessionStatus_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_AddAuthenticator_Request. */
@@ -806,35 +799,35 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
     constructor(properties?: ICTwoFactor_AddAuthenticator_Request);
 
     /** CTwoFactor_AddAuthenticator_Request steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
 
     /** CTwoFactor_AddAuthenticator_Request authenticatorTime. */
-    authenticatorTime: (number|Long);
+    public authenticatorTime: (number|Long);
 
     /** CTwoFactor_AddAuthenticator_Request serialNumber. */
-    serialNumber: (number|Long);
+    public serialNumber: (number|Long);
 
     /** CTwoFactor_AddAuthenticator_Request authenticatorType. */
-    authenticatorType: number;
+    public authenticatorType: number;
 
     /** CTwoFactor_AddAuthenticator_Request deviceIdentifier. */
-    deviceIdentifier: string;
+    public deviceIdentifier: string;
 
     /** CTwoFactor_AddAuthenticator_Request smsPhoneId. */
-    smsPhoneId: string;
+    public smsPhoneId: string;
 
     /** CTwoFactor_AddAuthenticator_Request httpHeaders. */
-    httpHeaders: string[];
+    public httpHeaders: string[];
 
     /** CTwoFactor_AddAuthenticator_Request version. */
-    version: number;
+    public version: number;
 
     /**
      * Creates a new CTwoFactor_AddAuthenticator_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_AddAuthenticator_Request instance
      */
-    static create(properties?: ICTwoFactor_AddAuthenticator_Request): CTwoFactor_AddAuthenticator_Request;
+    public static create(properties?: ICTwoFactor_AddAuthenticator_Request): CTwoFactor_AddAuthenticator_Request;
 
     /**
      * Encodes the specified CTwoFactor_AddAuthenticator_Request message. Does not implicitly {@link CTwoFactor_AddAuthenticator_Request.verify|verify} messages.
@@ -842,7 +835,7 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_AddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_AddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_AddAuthenticator_Request message, length delimited. Does not implicitly {@link CTwoFactor_AddAuthenticator_Request.verify|verify} messages.
@@ -850,7 +843,7 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_AddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_AddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_AddAuthenticator_Request message from the specified reader or buffer.
@@ -860,7 +853,7 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_AddAuthenticator_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_AddAuthenticator_Request;
 
     /**
      * Decodes a CTwoFactor_AddAuthenticator_Request message from the specified reader or buffer, length delimited.
@@ -869,21 +862,21 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_AddAuthenticator_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_AddAuthenticator_Request;
 
     /**
      * Verifies a CTwoFactor_AddAuthenticator_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_AddAuthenticator_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_AddAuthenticator_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_AddAuthenticator_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_AddAuthenticator_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_AddAuthenticator_Request message. Also converts values to other types if specified.
@@ -891,20 +884,20 @@ export class CTwoFactor_AddAuthenticator_Request implements ICTwoFactor_AddAuthe
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_AddAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_AddAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_AddAuthenticator_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_AddAuthenticator_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_AddAuthenticator_Response. */
@@ -917,47 +910,47 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
     constructor(properties?: ICTwoFactor_AddAuthenticator_Response);
 
     /** CTwoFactor_AddAuthenticator_Response sharedSecret. */
-    sharedSecret: Uint8Array;
+    public sharedSecret: Uint8Array;
 
     /** CTwoFactor_AddAuthenticator_Response serialNumber. */
-    serialNumber: (number|Long);
+    public serialNumber: (number|Long);
 
     /** CTwoFactor_AddAuthenticator_Response revocationCode. */
-    revocationCode: string;
+    public revocationCode: string;
 
     /** CTwoFactor_AddAuthenticator_Response uri. */
-    uri: string;
+    public uri: string;
 
     /** CTwoFactor_AddAuthenticator_Response serverTime. */
-    serverTime: (number|Long);
+    public serverTime: (number|Long);
 
     /** CTwoFactor_AddAuthenticator_Response accountName. */
-    accountName: string;
+    public accountName: string;
 
     /** CTwoFactor_AddAuthenticator_Response tokenGid. */
-    tokenGid: string;
+    public tokenGid: string;
 
     /** CTwoFactor_AddAuthenticator_Response identitySecret. */
-    identitySecret: Uint8Array;
+    public identitySecret: Uint8Array;
 
     /** CTwoFactor_AddAuthenticator_Response secret_1. */
-    secret_1: Uint8Array;
+    public secret_1: Uint8Array;
 
     /** CTwoFactor_AddAuthenticator_Response status. */
-    status: number;
+    public status: number;
 
     /** CTwoFactor_AddAuthenticator_Response phoneNumberHint. */
-    phoneNumberHint: string;
+    public phoneNumberHint: string;
 
     /** CTwoFactor_AddAuthenticator_Response confirmType. */
-    confirmType: number;
+    public confirmType: number;
 
     /**
      * Creates a new CTwoFactor_AddAuthenticator_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_AddAuthenticator_Response instance
      */
-    static create(properties?: ICTwoFactor_AddAuthenticator_Response): CTwoFactor_AddAuthenticator_Response;
+    public static create(properties?: ICTwoFactor_AddAuthenticator_Response): CTwoFactor_AddAuthenticator_Response;
 
     /**
      * Encodes the specified CTwoFactor_AddAuthenticator_Response message. Does not implicitly {@link CTwoFactor_AddAuthenticator_Response.verify|verify} messages.
@@ -965,7 +958,7 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_AddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_AddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_AddAuthenticator_Response message, length delimited. Does not implicitly {@link CTwoFactor_AddAuthenticator_Response.verify|verify} messages.
@@ -973,7 +966,7 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_AddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_AddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_AddAuthenticator_Response message from the specified reader or buffer.
@@ -983,7 +976,7 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_AddAuthenticator_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_AddAuthenticator_Response;
 
     /**
      * Decodes a CTwoFactor_AddAuthenticator_Response message from the specified reader or buffer, length delimited.
@@ -992,21 +985,21 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_AddAuthenticator_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_AddAuthenticator_Response;
 
     /**
      * Verifies a CTwoFactor_AddAuthenticator_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_AddAuthenticator_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_AddAuthenticator_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_AddAuthenticator_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_AddAuthenticator_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_AddAuthenticator_Response message. Also converts values to other types if specified.
@@ -1014,20 +1007,20 @@ export class CTwoFactor_AddAuthenticator_Response implements ICTwoFactor_AddAuth
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_AddAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_AddAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_AddAuthenticator_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_AddAuthenticator_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_FinalizeAddAuthenticator_Request. */
@@ -1040,29 +1033,29 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
     constructor(properties?: ICTwoFactor_FinalizeAddAuthenticator_Request);
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request authenticatorCode. */
-    authenticatorCode: string;
+    public authenticatorCode: string;
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request authenticatorTime. */
-    authenticatorTime: (number|Long);
+    public authenticatorTime: (number|Long);
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request activationCode. */
-    activationCode: string;
+    public activationCode: string;
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request httpHeaders. */
-    httpHeaders: string[];
+    public httpHeaders: string[];
 
     /** CTwoFactor_FinalizeAddAuthenticator_Request validateSmsCode. */
-    validateSmsCode: boolean;
+    public validateSmsCode: boolean;
 
     /**
      * Creates a new CTwoFactor_FinalizeAddAuthenticator_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_FinalizeAddAuthenticator_Request instance
      */
-    static create(properties?: ICTwoFactor_FinalizeAddAuthenticator_Request): CTwoFactor_FinalizeAddAuthenticator_Request;
+    public static create(properties?: ICTwoFactor_FinalizeAddAuthenticator_Request): CTwoFactor_FinalizeAddAuthenticator_Request;
 
     /**
      * Encodes the specified CTwoFactor_FinalizeAddAuthenticator_Request message. Does not implicitly {@link CTwoFactor_FinalizeAddAuthenticator_Request.verify|verify} messages.
@@ -1070,7 +1063,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_FinalizeAddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_FinalizeAddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_FinalizeAddAuthenticator_Request message, length delimited. Does not implicitly {@link CTwoFactor_FinalizeAddAuthenticator_Request.verify|verify} messages.
@@ -1078,7 +1071,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_FinalizeAddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_FinalizeAddAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_FinalizeAddAuthenticator_Request message from the specified reader or buffer.
@@ -1088,7 +1081,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_FinalizeAddAuthenticator_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_FinalizeAddAuthenticator_Request;
 
     /**
      * Decodes a CTwoFactor_FinalizeAddAuthenticator_Request message from the specified reader or buffer, length delimited.
@@ -1097,21 +1090,21 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_FinalizeAddAuthenticator_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_FinalizeAddAuthenticator_Request;
 
     /**
      * Verifies a CTwoFactor_FinalizeAddAuthenticator_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_FinalizeAddAuthenticator_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_FinalizeAddAuthenticator_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_FinalizeAddAuthenticator_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_FinalizeAddAuthenticator_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_FinalizeAddAuthenticator_Request message. Also converts values to other types if specified.
@@ -1119,20 +1112,20 @@ export class CTwoFactor_FinalizeAddAuthenticator_Request implements ICTwoFactor_
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_FinalizeAddAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_FinalizeAddAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_FinalizeAddAuthenticator_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_FinalizeAddAuthenticator_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_FinalizeAddAuthenticator_Response. */
@@ -1145,23 +1138,23 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
     constructor(properties?: ICTwoFactor_FinalizeAddAuthenticator_Response);
 
     /** CTwoFactor_FinalizeAddAuthenticator_Response success. */
-    success: boolean;
+    public success: boolean;
 
     /** CTwoFactor_FinalizeAddAuthenticator_Response wantMore. */
-    wantMore: boolean;
+    public wantMore: boolean;
 
     /** CTwoFactor_FinalizeAddAuthenticator_Response serverTime. */
-    serverTime: (number|Long);
+    public serverTime: (number|Long);
 
     /** CTwoFactor_FinalizeAddAuthenticator_Response status. */
-    status: number;
+    public status: number;
 
     /**
      * Creates a new CTwoFactor_FinalizeAddAuthenticator_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_FinalizeAddAuthenticator_Response instance
      */
-    static create(properties?: ICTwoFactor_FinalizeAddAuthenticator_Response): CTwoFactor_FinalizeAddAuthenticator_Response;
+    public static create(properties?: ICTwoFactor_FinalizeAddAuthenticator_Response): CTwoFactor_FinalizeAddAuthenticator_Response;
 
     /**
      * Encodes the specified CTwoFactor_FinalizeAddAuthenticator_Response message. Does not implicitly {@link CTwoFactor_FinalizeAddAuthenticator_Response.verify|verify} messages.
@@ -1169,7 +1162,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_FinalizeAddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_FinalizeAddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_FinalizeAddAuthenticator_Response message, length delimited. Does not implicitly {@link CTwoFactor_FinalizeAddAuthenticator_Response.verify|verify} messages.
@@ -1177,7 +1170,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_FinalizeAddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_FinalizeAddAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_FinalizeAddAuthenticator_Response message from the specified reader or buffer.
@@ -1187,7 +1180,7 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_FinalizeAddAuthenticator_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_FinalizeAddAuthenticator_Response;
 
     /**
      * Decodes a CTwoFactor_FinalizeAddAuthenticator_Response message from the specified reader or buffer, length delimited.
@@ -1196,21 +1189,21 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_FinalizeAddAuthenticator_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_FinalizeAddAuthenticator_Response;
 
     /**
      * Verifies a CTwoFactor_FinalizeAddAuthenticator_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_FinalizeAddAuthenticator_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_FinalizeAddAuthenticator_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_FinalizeAddAuthenticator_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_FinalizeAddAuthenticator_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_FinalizeAddAuthenticator_Response message. Also converts values to other types if specified.
@@ -1218,20 +1211,20 @@ export class CTwoFactor_FinalizeAddAuthenticator_Response implements ICTwoFactor
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_FinalizeAddAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_FinalizeAddAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_FinalizeAddAuthenticator_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_FinalizeAddAuthenticator_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_Status_Request. */
@@ -1244,14 +1237,17 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
     constructor(properties?: ICTwoFactor_Status_Request);
 
     /** CTwoFactor_Status_Request steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
+
+    /** CTwoFactor_Status_Request include. */
+    public include: ETwoFactorStatusFieldFlag;
 
     /**
      * Creates a new CTwoFactor_Status_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_Status_Request instance
      */
-    static create(properties?: ICTwoFactor_Status_Request): CTwoFactor_Status_Request;
+    public static create(properties?: ICTwoFactor_Status_Request): CTwoFactor_Status_Request;
 
     /**
      * Encodes the specified CTwoFactor_Status_Request message. Does not implicitly {@link CTwoFactor_Status_Request.verify|verify} messages.
@@ -1259,7 +1255,7 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_Status_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_Status_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_Status_Request message, length delimited. Does not implicitly {@link CTwoFactor_Status_Request.verify|verify} messages.
@@ -1267,7 +1263,7 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_Status_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_Status_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_Status_Request message from the specified reader or buffer.
@@ -1277,7 +1273,7 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_Status_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_Status_Request;
 
     /**
      * Decodes a CTwoFactor_Status_Request message from the specified reader or buffer, length delimited.
@@ -1286,21 +1282,21 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_Status_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_Status_Request;
 
     /**
      * Verifies a CTwoFactor_Status_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_Status_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_Status_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_Status_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_Status_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_Status_Request message. Also converts values to other types if specified.
@@ -1308,20 +1304,119 @@ export class CTwoFactor_Status_Request implements ICTwoFactor_Status_Request {
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_Status_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_Status_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_Status_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_Status_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
+}
+
+/** Represents a CTwoFactor_UsageEvent. */
+export class CTwoFactor_UsageEvent implements ICTwoFactor_UsageEvent {
+
+    /**
+     * Constructs a new CTwoFactor_UsageEvent.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: ICTwoFactor_UsageEvent);
+
+    /** CTwoFactor_UsageEvent time. */
+    public time: number;
+
+    /** CTwoFactor_UsageEvent usageType. */
+    public usageType: ETwoFactorUsageType;
+
+    /** CTwoFactor_UsageEvent confirmationType. */
+    public confirmationType: number;
+
+    /** CTwoFactor_UsageEvent confirmationAction. */
+    public confirmationAction: number;
+
+    /**
+     * Creates a new CTwoFactor_UsageEvent instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns CTwoFactor_UsageEvent instance
+     */
+    public static create(properties?: ICTwoFactor_UsageEvent): CTwoFactor_UsageEvent;
+
+    /**
+     * Encodes the specified CTwoFactor_UsageEvent message. Does not implicitly {@link CTwoFactor_UsageEvent.verify|verify} messages.
+     * @param message CTwoFactor_UsageEvent message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: ICTwoFactor_UsageEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified CTwoFactor_UsageEvent message, length delimited. Does not implicitly {@link CTwoFactor_UsageEvent.verify|verify} messages.
+     * @param message CTwoFactor_UsageEvent message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: ICTwoFactor_UsageEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a CTwoFactor_UsageEvent message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns CTwoFactor_UsageEvent
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_UsageEvent;
+
+    /**
+     * Decodes a CTwoFactor_UsageEvent message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns CTwoFactor_UsageEvent
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_UsageEvent;
+
+    /**
+     * Verifies a CTwoFactor_UsageEvent message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a CTwoFactor_UsageEvent message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns CTwoFactor_UsageEvent
+     */
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_UsageEvent;
+
+    /**
+     * Creates a plain object from a CTwoFactor_UsageEvent message. Also converts values to other types if specified.
+     * @param message CTwoFactor_UsageEvent
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: CTwoFactor_UsageEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this CTwoFactor_UsageEvent to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+
+    /**
+     * Gets the default type url for CTwoFactor_UsageEvent
+     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns The default type url
+     */
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_Status_Response. */
@@ -1334,53 +1429,59 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
     constructor(properties?: ICTwoFactor_Status_Response);
 
     /** CTwoFactor_Status_Response state. */
-    state: number;
+    public state: number;
 
     /** CTwoFactor_Status_Response inactivationReason. */
-    inactivationReason: number;
+    public inactivationReason: number;
 
     /** CTwoFactor_Status_Response authenticatorType. */
-    authenticatorType: number;
+    public authenticatorType: number;
 
     /** CTwoFactor_Status_Response authenticatorAllowed. */
-    authenticatorAllowed: boolean;
+    public authenticatorAllowed: boolean;
 
     /** CTwoFactor_Status_Response steamguardScheme. */
-    steamguardScheme: number;
+    public steamguardScheme: number;
 
     /** CTwoFactor_Status_Response tokenGid. */
-    tokenGid: string;
+    public tokenGid: string;
 
     /** CTwoFactor_Status_Response emailValidated. */
-    emailValidated: boolean;
+    public emailValidated: boolean;
 
     /** CTwoFactor_Status_Response deviceIdentifier. */
-    deviceIdentifier: string;
+    public deviceIdentifier: string;
 
     /** CTwoFactor_Status_Response timeCreated. */
-    timeCreated: number;
+    public timeCreated: number;
 
     /** CTwoFactor_Status_Response revocationAttemptsRemaining. */
-    revocationAttemptsRemaining: number;
+    public revocationAttemptsRemaining: number;
 
     /** CTwoFactor_Status_Response classifiedAgent. */
-    classifiedAgent: string;
+    public classifiedAgent: string;
 
     /** CTwoFactor_Status_Response allowExternalAuthenticator. */
-    allowExternalAuthenticator: boolean;
+    public allowExternalAuthenticator: boolean;
 
     /** CTwoFactor_Status_Response timeTransferred. */
-    timeTransferred: number;
+    public timeTransferred: number;
 
     /** CTwoFactor_Status_Response version. */
-    version: number;
+    public version: number;
+
+    /** CTwoFactor_Status_Response lastSeenAuthTokenId. */
+    public lastSeenAuthTokenId: (number|Long);
+
+    /** CTwoFactor_Status_Response usages. */
+    public usages: ICTwoFactor_UsageEvent[];
 
     /**
      * Creates a new CTwoFactor_Status_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_Status_Response instance
      */
-    static create(properties?: ICTwoFactor_Status_Response): CTwoFactor_Status_Response;
+    public static create(properties?: ICTwoFactor_Status_Response): CTwoFactor_Status_Response;
 
     /**
      * Encodes the specified CTwoFactor_Status_Response message. Does not implicitly {@link CTwoFactor_Status_Response.verify|verify} messages.
@@ -1388,7 +1489,7 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_Status_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_Status_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_Status_Response message, length delimited. Does not implicitly {@link CTwoFactor_Status_Response.verify|verify} messages.
@@ -1396,7 +1497,7 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_Status_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_Status_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_Status_Response message from the specified reader or buffer.
@@ -1406,7 +1507,7 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_Status_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_Status_Response;
 
     /**
      * Decodes a CTwoFactor_Status_Response message from the specified reader or buffer, length delimited.
@@ -1415,21 +1516,21 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_Status_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_Status_Response;
 
     /**
      * Verifies a CTwoFactor_Status_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_Status_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_Status_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_Status_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_Status_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_Status_Response message. Also converts values to other types if specified.
@@ -1437,20 +1538,20 @@ export class CTwoFactor_Status_Response implements ICTwoFactor_Status_Response {
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_Status_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_Status_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_Status_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_Status_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticator_Request. */
@@ -1463,23 +1564,23 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
     constructor(properties?: ICTwoFactor_RemoveAuthenticator_Request);
 
     /** CTwoFactor_RemoveAuthenticator_Request revocationCode. */
-    revocationCode: string;
+    public revocationCode: string;
 
     /** CTwoFactor_RemoveAuthenticator_Request revocationReason. */
-    revocationReason: number;
+    public revocationReason: number;
 
     /** CTwoFactor_RemoveAuthenticator_Request steamguardScheme. */
-    steamguardScheme: number;
+    public steamguardScheme: number;
 
     /** CTwoFactor_RemoveAuthenticator_Request removeAllSteamguardCookies. */
-    removeAllSteamguardCookies: boolean;
+    public removeAllSteamguardCookies: boolean;
 
     /**
      * Creates a new CTwoFactor_RemoveAuthenticator_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticator_Request instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticator_Request): CTwoFactor_RemoveAuthenticator_Request;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticator_Request): CTwoFactor_RemoveAuthenticator_Request;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticator_Request message. Does not implicitly {@link CTwoFactor_RemoveAuthenticator_Request.verify|verify} messages.
@@ -1487,7 +1588,7 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticator_Request message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticator_Request.verify|verify} messages.
@@ -1495,7 +1596,7 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticator_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticator_Request message from the specified reader or buffer.
@@ -1505,7 +1606,7 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticator_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticator_Request;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticator_Request message from the specified reader or buffer, length delimited.
@@ -1514,21 +1615,21 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticator_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticator_Request;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticator_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticator_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticator_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticator_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticator_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticator_Request message. Also converts values to other types if specified.
@@ -1536,20 +1637,20 @@ export class CTwoFactor_RemoveAuthenticator_Request implements ICTwoFactor_Remov
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticator_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticator_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticator_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticator_Response. */
@@ -1562,20 +1663,20 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
     constructor(properties?: ICTwoFactor_RemoveAuthenticator_Response);
 
     /** CTwoFactor_RemoveAuthenticator_Response success. */
-    success: boolean;
+    public success: boolean;
 
     /** CTwoFactor_RemoveAuthenticator_Response serverTime. */
-    serverTime: (number|Long);
+    public serverTime: (number|Long);
 
     /** CTwoFactor_RemoveAuthenticator_Response revocationAttemptsRemaining. */
-    revocationAttemptsRemaining: number;
+    public revocationAttemptsRemaining: number;
 
     /**
      * Creates a new CTwoFactor_RemoveAuthenticator_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticator_Response instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticator_Response): CTwoFactor_RemoveAuthenticator_Response;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticator_Response): CTwoFactor_RemoveAuthenticator_Response;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticator_Response message. Does not implicitly {@link CTwoFactor_RemoveAuthenticator_Response.verify|verify} messages.
@@ -1583,7 +1684,7 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticator_Response message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticator_Response.verify|verify} messages.
@@ -1591,7 +1692,7 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticator_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticator_Response message from the specified reader or buffer.
@@ -1601,7 +1702,7 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticator_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticator_Response;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticator_Response message from the specified reader or buffer, length delimited.
@@ -1610,21 +1711,21 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticator_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticator_Response;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticator_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticator_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticator_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticator_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticator_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticator_Response message. Also converts values to other types if specified.
@@ -1632,20 +1733,20 @@ export class CTwoFactor_RemoveAuthenticator_Response implements ICTwoFactor_Remo
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticator_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticator_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticator_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token. */
@@ -1658,47 +1759,47 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
     constructor(properties?: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token);
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token sharedSecret. */
-    sharedSecret: Uint8Array;
+    public sharedSecret: Uint8Array;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serialNumber. */
-    serialNumber: (number|Long);
+    public serialNumber: (number|Long);
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token revocationCode. */
-    revocationCode: string;
+    public revocationCode: string;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token uri. */
-    uri: string;
+    public uri: string;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serverTime. */
-    serverTime: (number|Long);
+    public serverTime: (number|Long);
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token accountName. */
-    accountName: string;
+    public accountName: string;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token tokenGid. */
-    tokenGid: string;
+    public tokenGid: string;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token identitySecret. */
-    identitySecret: Uint8Array;
+    public identitySecret: Uint8Array;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token secret_1. */
-    secret_1: Uint8Array;
+    public secret_1: Uint8Array;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token status. */
-    status: number;
+    public status: number;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamguardScheme. */
-    steamguardScheme: number;
+    public steamguardScheme: number;
 
     /** CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamid. */
-    steamid: (number|Long);
+    public steamid: (number|Long);
 
     /**
      * Creates a new CRemoveAuthenticatorViaChallengeContinue_Replacement_Token instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CRemoveAuthenticatorViaChallengeContinue_Replacement_Token instance
      */
-    static create(properties?: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
+    public static create(properties?: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
 
     /**
      * Encodes the specified CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message. Does not implicitly {@link CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify|verify} messages.
@@ -1706,7 +1807,7 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message, length delimited. Does not implicitly {@link CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify|verify} messages.
@@ -1714,7 +1815,7 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message from the specified reader or buffer.
@@ -1724,7 +1825,7 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
 
     /**
      * Decodes a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message from the specified reader or buffer, length delimited.
@@ -1733,21 +1834,21 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
 
     /**
      * Verifies a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      */
-    static fromObject(object: { [k: string]: any }): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
+    public static fromObject(object: { [k: string]: any }): CRemoveAuthenticatorViaChallengeContinue_Replacement_Token;
 
     /**
      * Creates a plain object from a CRemoveAuthenticatorViaChallengeContinue_Replacement_Token message. Also converts values to other types if specified.
@@ -1755,20 +1856,20 @@ export class CRemoveAuthenticatorViaChallengeContinue_Replacement_Token implemen
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CRemoveAuthenticatorViaChallengeContinue_Replacement_Token, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CRemoveAuthenticatorViaChallengeContinue_Replacement_Token, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CRemoveAuthenticatorViaChallengeContinue_Replacement_Token to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request. */
@@ -1785,7 +1886,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.verify|verify} messages.
@@ -1793,7 +1894,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.verify|verify} messages.
@@ -1801,7 +1902,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message from the specified reader or buffer.
@@ -1811,7 +1912,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message from the specified reader or buffer, length delimited.
@@ -1820,21 +1921,21 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request message. Also converts values to other types if specified.
@@ -1842,20 +1943,20 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request implements 
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response. */
@@ -1868,14 +1969,14 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
     constructor(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response);
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response success. */
-    success: boolean;
+    public success: boolean;
 
     /**
      * Creates a new CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.verify|verify} messages.
@@ -1883,7 +1984,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.verify|verify} messages.
@@ -1891,7 +1992,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message from the specified reader or buffer.
@@ -1901,7 +2002,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message from the specified reader or buffer, length delimited.
@@ -1910,21 +2011,21 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response message. Also converts values to other types if specified.
@@ -1932,20 +2033,20 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response implements
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request. */
@@ -1958,20 +2059,20 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
     constructor(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request);
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request smsCode. */
-    smsCode: string;
+    public smsCode: string;
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request generateNewToken. */
-    generateNewToken: boolean;
+    public generateNewToken: boolean;
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request version. */
-    version: number;
+    public version: number;
 
     /**
      * Creates a new CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.verify|verify} messages.
@@ -1979,7 +2080,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.verify|verify} messages.
@@ -1987,7 +2088,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message from the specified reader or buffer.
@@ -1997,7 +2098,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message from the specified reader or buffer, length delimited.
@@ -2006,21 +2107,21 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request message. Also converts values to other types if specified.
@@ -2028,20 +2129,20 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request implemen
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }
 
 /** Represents a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response. */
@@ -2054,17 +2155,17 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
     constructor(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response);
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response success. */
-    success: boolean;
+    public success: boolean;
 
     /** CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response replacementToken. */
-    replacementToken?: (ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token|null);
+    public replacementToken?: (ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token|null);
 
     /**
      * Creates a new CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response instance using the specified properties.
      * @param [properties] Properties to set
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response instance
      */
-    static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
+    public static create(properties?: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.verify|verify} messages.
@@ -2072,7 +2173,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encode(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Encodes the specified CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message, length delimited. Does not implicitly {@link CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.verify|verify} messages.
@@ -2080,7 +2181,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
      * @param [writer] Writer to encode to
      * @returns Writer
      */
-    static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+    public static encodeDelimited(message: ICTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, writer?: $protobuf.Writer): $protobuf.Writer;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message from the specified reader or buffer.
@@ -2090,7 +2191,7 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
 
     /**
      * Decodes a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message from the specified reader or buffer, length delimited.
@@ -2099,21 +2200,21 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
 
     /**
      * Verifies a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): (string|null);
 
     /**
      * Creates a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message from a plain object. Also converts values to their respective internal types.
      * @param object Plain object
      * @returns CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
      */
-    static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
+    public static fromObject(object: { [k: string]: any }): CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response;
 
     /**
      * Creates a plain object from a CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response message. Also converts values to other types if specified.
@@ -2121,18 +2222,18 @@ export class CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response impleme
      * @param [options] Conversion options
      * @returns Plain object
      */
-    static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(message: CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
     /**
      * Converts this CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response to JSON.
      * @returns JSON object
      */
-    toJSON(): { [k: string]: any };
+    public toJSON(): { [k: string]: any };
 
     /**
      * Gets the default type url for CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */
-    static getTypeUrl(typeUrlPrefix?: string): string;
+    public static getTypeUrl(typeUrlPrefix?: string): string;
 }

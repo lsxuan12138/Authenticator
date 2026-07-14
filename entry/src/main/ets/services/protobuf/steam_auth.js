@@ -31,6 +31,54 @@ export const EAuthTokenPlatformType = $root.EAuthTokenPlatformType = (() => {
 })();
 
 /**
+ * EAuthTokenAppType enum.
+ * @exports EAuthTokenAppType
+ * @enum {number}
+ * @property {number} k_EAuthTokenAppType_Unknown=0 k_EAuthTokenAppType_Unknown value
+ * @property {number} k_EAuthTokenAppType_Mobile_SteamApp=1 k_EAuthTokenAppType_Mobile_SteamApp value
+ * @property {number} k_EAuthTokenAppType_Mobile_ChatApp=2 k_EAuthTokenAppType_Mobile_ChatApp value
+ */
+export const EAuthTokenAppType = $root.EAuthTokenAppType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "k_EAuthTokenAppType_Unknown"] = 0;
+    values[valuesById[1] = "k_EAuthTokenAppType_Mobile_SteamApp"] = 1;
+    values[valuesById[2] = "k_EAuthTokenAppType_Mobile_ChatApp"] = 2;
+    return values;
+})();
+
+/**
+ * ETwoFactorStatusFieldFlag enum.
+ * @exports ETwoFactorStatusFieldFlag
+ * @enum {number}
+ * @property {number} k_ETwoFactorStatusFieldFlag_None=0 k_ETwoFactorStatusFieldFlag_None value
+ * @property {number} k_ETwoFactorStatusFieldFlag_LastUsage=1 k_ETwoFactorStatusFieldFlag_LastUsage value
+ */
+export const ETwoFactorStatusFieldFlag = $root.ETwoFactorStatusFieldFlag = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "k_ETwoFactorStatusFieldFlag_None"] = 0;
+    values[valuesById[1] = "k_ETwoFactorStatusFieldFlag_LastUsage"] = 1;
+    return values;
+})();
+
+/**
+ * ETwoFactorUsageType enum.
+ * @exports ETwoFactorUsageType
+ * @enum {number}
+ * @property {number} k_ETwoFactorUsageType_Unknown=0 k_ETwoFactorUsageType_Unknown value
+ * @property {number} k_ETwoFactorUsageType_None=1 k_ETwoFactorUsageType_None value
+ * @property {number} k_ETwoFactorUsageType_MobileConfirmation=2 k_ETwoFactorUsageType_MobileConfirmation value
+ * @property {number} k_ETwoFactorUsageType_Login=3 k_ETwoFactorUsageType_Login value
+ */
+export const ETwoFactorUsageType = $root.ETwoFactorUsageType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "k_ETwoFactorUsageType_Unknown"] = 0;
+    values[valuesById[1] = "k_ETwoFactorUsageType_None"] = 1;
+    values[valuesById[2] = "k_ETwoFactorUsageType_MobileConfirmation"] = 2;
+    values[valuesById[3] = "k_ETwoFactorUsageType_Login"] = 3;
+    return values;
+})();
+
+/**
  * EAuthSessionGuardType enum.
  * @exports EAuthSessionGuardType
  * @enum {number}
@@ -84,6 +132,7 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @property {number|null} [gamingDeviceType] CAuthentication_DeviceDetails gamingDeviceType
      * @property {number|null} [clientCount] CAuthentication_DeviceDetails clientCount
      * @property {Uint8Array|null} [machineId] CAuthentication_DeviceDetails machineId
+     * @property {EAuthTokenAppType|null} [appType] CAuthentication_DeviceDetails appType
      */
 
     /**
@@ -150,6 +199,14 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
     CAuthentication_DeviceDetails.prototype.machineId = $util.newBuffer([]);
 
     /**
+     * CAuthentication_DeviceDetails appType.
+     * @member {EAuthTokenAppType} appType
+     * @memberof CAuthentication_DeviceDetails
+     * @instance
+     */
+    CAuthentication_DeviceDetails.prototype.appType = 0;
+
+    /**
      * Creates a new CAuthentication_DeviceDetails instance using the specified properties.
      * @function create
      * @memberof CAuthentication_DeviceDetails
@@ -189,6 +246,8 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
             writer.uint32(/* id 5, wireType 0 =*/40).uint32(message.clientCount);
         if (message.machineId != null && Object.hasOwnProperty.call(message, "machineId"))
             writer.uint32(/* id 6, wireType 2 =*/50).bytes(message.machineId);
+        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.appType);
         return writer;
     };
 
@@ -251,6 +310,10 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
                 }
             case 6: {
                     message.machineId = reader.bytes();
+                    break;
+                }
+            case 7: {
+                    message.appType = reader.int32();
                     break;
                 }
             default:
@@ -317,6 +380,15 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
         if (message.machineId != null && Object.hasOwnProperty.call(message, "machineId"))
             if (!(message.machineId && typeof message.machineId.length === "number" || $util.isString(message.machineId)))
                 return "machineId: buffer expected";
+        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+            switch (message.appType) {
+            default:
+                return "appType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
         return null;
     };
 
@@ -375,6 +447,26 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
                 $util.base64.decode(object.machineId, message.machineId = $util.newBuffer($util.base64.length(object.machineId)), 0);
             else if (object.machineId.length >= 0)
                 message.machineId = object.machineId;
+        switch (object.appType) {
+        default:
+            if (typeof object.appType === "number") {
+                message.appType = object.appType;
+                break;
+            }
+            break;
+        case "k_EAuthTokenAppType_Unknown":
+        case 0:
+            message.appType = 0;
+            break;
+        case "k_EAuthTokenAppType_Mobile_SteamApp":
+        case 1:
+            message.appType = 1;
+            break;
+        case "k_EAuthTokenAppType_Mobile_ChatApp":
+        case 2:
+            message.appType = 2;
+            break;
+        }
         return message;
     };
 
@@ -408,6 +500,7 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
                 if (options.bytes !== Array)
                     object.machineId = $util.newBuffer(object.machineId);
             }
+            object.appType = options.enums === String ? "k_EAuthTokenAppType_Unknown" : 0;
         }
         if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
             object.deviceFriendlyName = message.deviceFriendlyName;
@@ -421,6 +514,8 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
             object.clientCount = message.clientCount;
         if (message.machineId != null && Object.hasOwnProperty.call(message, "machineId"))
             object.machineId = options.bytes === String ? $util.base64.encode(message.machineId, 0, message.machineId.length) : options.bytes === Array ? Array.prototype.slice.call(message.machineId) : message.machineId;
+        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+            object.appType = options.enums === String ? $root.EAuthTokenAppType[message.appType] === undefined ? message.appType : $root.EAuthTokenAppType[message.appType] : message.appType;
         return object;
     };
 
@@ -768,7 +863,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
      * @property {ESessionPersistence|null} [persistence] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData persistence
      * @property {string|null} [websiteId] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData websiteId
      * @property {ICAuthentication_DeviceDetails|null} [deviceDetails] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceDetails
-     * @property {Uint8Array|null} [guardData] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData
+     * @property {string|null} [guardData] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData
      * @property {number|null} [language] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData language
      * @property {number|null} [qosLevel] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData qosLevel
      */
@@ -862,11 +957,11 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
 
     /**
      * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData.
-     * @member {Uint8Array} guardData
+     * @member {string} guardData
      * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.guardData = $util.newBuffer([]);
+    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.guardData = "";
 
     /**
      * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData language.
@@ -931,7 +1026,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
         if (message.deviceDetails != null && Object.hasOwnProperty.call(message, "deviceDetails"))
             $root.CAuthentication_DeviceDetails.encode(message.deviceDetails, writer.uint32(/* id 9, wireType 2 =*/74).fork(), q + 1).ldelim();
         if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
-            writer.uint32(/* id 10, wireType 2 =*/82).bytes(message.guardData);
+            writer.uint32(/* id 10, wireType 2 =*/82).string(message.guardData);
         if (message.language != null && Object.hasOwnProperty.call(message, "language"))
             writer.uint32(/* id 11, wireType 0 =*/88).uint32(message.language);
         if (message.qosLevel != null && Object.hasOwnProperty.call(message, "qosLevel"))
@@ -1013,7 +1108,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
                     break;
                 }
             case 10: {
-                    message.guardData = reader.bytes();
+                    message.guardData = reader.string();
                     break;
                 }
             case 11: {
@@ -1106,8 +1201,8 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
                 return "deviceDetails." + error;
         }
         if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
-            if (!(message.guardData && typeof message.guardData.length === "number" || $util.isString(message.guardData)))
-                return "guardData: buffer expected";
+            if (!$util.isString(message.guardData))
+                return "guardData: string expected";
         if (message.language != null && Object.hasOwnProperty.call(message, "language"))
             if (!$util.isInteger(message.language))
                 return "language: integer expected";
@@ -1204,10 +1299,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             message.deviceDetails = $root.CAuthentication_DeviceDetails.fromObject(object.deviceDetails, long + 1);
         }
         if (object.guardData != null)
-            if (typeof object.guardData === "string")
-                $util.base64.decode(object.guardData, message.guardData = $util.newBuffer($util.base64.length(object.guardData)), 0);
-            else if (object.guardData.length >= 0)
-                message.guardData = object.guardData;
+            message.guardData = String(object.guardData);
         if (object.language != null)
             message.language = object.language >>> 0;
         if (object.qosLevel != null)
@@ -1246,13 +1338,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             object.persistence = options.enums === String ? "k_ESessionPersistence_Persistent" : 1;
             object.websiteId = "Unknown";
             object.deviceDetails = null;
-            if (options.bytes === String)
-                object.guardData = "";
-            else {
-                object.guardData = [];
-                if (options.bytes !== Array)
-                    object.guardData = $util.newBuffer(object.guardData);
-            }
+            object.guardData = "";
             object.language = 0;
             object.qosLevel = 2;
         }
@@ -1280,7 +1366,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
         if (message.deviceDetails != null && Object.hasOwnProperty.call(message, "deviceDetails"))
             object.deviceDetails = $root.CAuthentication_DeviceDetails.toObject(message.deviceDetails, options, q + 1);
         if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
-            object.guardData = options.bytes === String ? $util.base64.encode(message.guardData, 0, message.guardData.length) : options.bytes === Array ? Array.prototype.slice.call(message.guardData) : message.guardData;
+            object.guardData = message.guardData;
         if (message.language != null && Object.hasOwnProperty.call(message, "language"))
             object.language = message.language;
         if (message.qosLevel != null && Object.hasOwnProperty.call(message, "qosLevel"))
@@ -4573,6 +4659,7 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @exports ICTwoFactor_Status_Request
      * @interface ICTwoFactor_Status_Request
      * @property {number|Long|null} [steamid] CTwoFactor_Status_Request steamid
+     * @property {ETwoFactorStatusFieldFlag|null} [include] CTwoFactor_Status_Request include
      */
 
     /**
@@ -4597,6 +4684,14 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @instance
      */
     CTwoFactor_Status_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CTwoFactor_Status_Request include.
+     * @member {ETwoFactorStatusFieldFlag} include
+     * @memberof CTwoFactor_Status_Request
+     * @instance
+     */
+    CTwoFactor_Status_Request.prototype.include = 0;
 
     /**
      * Creates a new CTwoFactor_Status_Request instance using the specified properties.
@@ -4628,6 +4723,8 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
             throw Error("max depth exceeded");
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             writer.uint32(/* id 1, wireType 1 =*/9).fixed64(message.steamid);
+        if (message.include != null && Object.hasOwnProperty.call(message, "include"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.include);
         return writer;
     };
 
@@ -4672,6 +4769,10 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
                     message.steamid = reader.fixed64();
                     break;
                 }
+            case 2: {
+                    message.include = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7, long);
                 break;
@@ -4714,6 +4815,14 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
+        if (message.include != null && Object.hasOwnProperty.call(message, "include"))
+            switch (message.include) {
+            default:
+                return "include: enum value expected";
+            case 0:
+            case 1:
+                break;
+            }
         return null;
     };
 
@@ -4744,6 +4853,22 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
                 message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+        switch (object.include) {
+        default:
+            if (typeof object.include === "number") {
+                message.include = object.include;
+                break;
+            }
+            break;
+        case "k_ETwoFactorStatusFieldFlag_None":
+        case 0:
+            message.include = 0;
+            break;
+        case "k_ETwoFactorStatusFieldFlag_LastUsage":
+        case 1:
+            message.include = 1;
+            break;
+        }
         return message;
     };
 
@@ -4764,12 +4889,14 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
         if (q > $util.recursionLimit)
             throw Error("max depth exceeded");
         let object = {};
-        if (options.defaults)
+        if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
                 object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
             } else
                 object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+            object.include = options.enums === String ? "k_ETwoFactorStatusFieldFlag_None" : 0;
+        }
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             if (typeof BigInt !== "undefined" && options.longs === BigInt)
                 object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
@@ -4777,6 +4904,8 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
                 object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
+        if (message.include != null && Object.hasOwnProperty.call(message, "include"))
+            object.include = options.enums === String ? $root.ETwoFactorStatusFieldFlag[message.include] === undefined ? message.include : $root.ETwoFactorStatusFieldFlag[message.include] : message.include;
         return object;
     };
 
@@ -4809,6 +4938,332 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
     return CTwoFactor_Status_Request;
 })();
 
+export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
+
+    /**
+     * Properties of a CTwoFactor_UsageEvent.
+     * @exports ICTwoFactor_UsageEvent
+     * @interface ICTwoFactor_UsageEvent
+     * @property {number|null} [time] CTwoFactor_UsageEvent time
+     * @property {ETwoFactorUsageType|null} [usageType] CTwoFactor_UsageEvent usageType
+     * @property {number|null} [confirmationType] CTwoFactor_UsageEvent confirmationType
+     * @property {number|null} [confirmationAction] CTwoFactor_UsageEvent confirmationAction
+     */
+
+    /**
+     * Constructs a new CTwoFactor_UsageEvent.
+     * @exports CTwoFactor_UsageEvent
+     * @classdesc Represents a CTwoFactor_UsageEvent.
+     * @implements ICTwoFactor_UsageEvent
+     * @constructor
+     * @param {ICTwoFactor_UsageEvent=} [properties] Properties to set
+     */
+    function CTwoFactor_UsageEvent(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CTwoFactor_UsageEvent time.
+     * @member {number} time
+     * @memberof CTwoFactor_UsageEvent
+     * @instance
+     */
+    CTwoFactor_UsageEvent.prototype.time = 0;
+
+    /**
+     * CTwoFactor_UsageEvent usageType.
+     * @member {ETwoFactorUsageType} usageType
+     * @memberof CTwoFactor_UsageEvent
+     * @instance
+     */
+    CTwoFactor_UsageEvent.prototype.usageType = 0;
+
+    /**
+     * CTwoFactor_UsageEvent confirmationType.
+     * @member {number} confirmationType
+     * @memberof CTwoFactor_UsageEvent
+     * @instance
+     */
+    CTwoFactor_UsageEvent.prototype.confirmationType = 0;
+
+    /**
+     * CTwoFactor_UsageEvent confirmationAction.
+     * @member {number} confirmationAction
+     * @memberof CTwoFactor_UsageEvent
+     * @instance
+     */
+    CTwoFactor_UsageEvent.prototype.confirmationAction = 0;
+
+    /**
+     * Creates a new CTwoFactor_UsageEvent instance using the specified properties.
+     * @function create
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {ICTwoFactor_UsageEvent=} [properties] Properties to set
+     * @returns {CTwoFactor_UsageEvent} CTwoFactor_UsageEvent instance
+     */
+    CTwoFactor_UsageEvent.create = function create(properties) {
+        return new CTwoFactor_UsageEvent(properties);
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_UsageEvent message. Does not implicitly {@link CTwoFactor_UsageEvent.verify|verify} messages.
+     * @function encode
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {ICTwoFactor_UsageEvent} message CTwoFactor_UsageEvent message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_UsageEvent.encode = function encode(message, writer, q) {
+        if (!writer)
+            writer = $Writer.create();
+        if (q === undefined)
+            q = 0;
+        if (q > $util.recursionLimit)
+            throw Error("max depth exceeded");
+        if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+            writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.time);
+        if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.usageType);
+        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.confirmationType);
+        if (message.confirmationAction != null && Object.hasOwnProperty.call(message, "confirmationAction"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.confirmationAction);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_UsageEvent message, length delimited. Does not implicitly {@link CTwoFactor_UsageEvent.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {ICTwoFactor_UsageEvent} message CTwoFactor_UsageEvent message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_UsageEvent.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CTwoFactor_UsageEvent message from the specified reader or buffer.
+     * @function decode
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CTwoFactor_UsageEvent} CTwoFactor_UsageEvent
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_UsageEvent.decode = function decode(reader, length, error, long) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        if (long === undefined)
+            long = 0;
+        if (long > $Reader.recursionLimit)
+            throw Error("maximum nesting depth exceeded");
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_UsageEvent();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.time = reader.uint32();
+                    break;
+                }
+            case 2: {
+                    message.usageType = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.confirmationType = reader.int32();
+                    break;
+                }
+            case 4: {
+                    message.confirmationAction = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7, long);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CTwoFactor_UsageEvent message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CTwoFactor_UsageEvent} CTwoFactor_UsageEvent
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_UsageEvent.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CTwoFactor_UsageEvent message.
+     * @function verify
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CTwoFactor_UsageEvent.verify = function verify(message, long) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (long === undefined)
+            long = 0;
+        if (long > $util.recursionLimit)
+            return "maximum nesting depth exceeded";
+        if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+            if (!$util.isInteger(message.time))
+                return "time: integer expected";
+        if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+            switch (message.usageType) {
+            default:
+                return "usageType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                break;
+            }
+        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+            if (!$util.isInteger(message.confirmationType))
+                return "confirmationType: integer expected";
+        if (message.confirmationAction != null && Object.hasOwnProperty.call(message, "confirmationAction"))
+            if (!$util.isInteger(message.confirmationAction))
+                return "confirmationAction: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a CTwoFactor_UsageEvent message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CTwoFactor_UsageEvent} CTwoFactor_UsageEvent
+     */
+    CTwoFactor_UsageEvent.fromObject = function fromObject(object, long) {
+        if (object instanceof $root.CTwoFactor_UsageEvent)
+            return object;
+        if (!$util.isObject(object))
+            throw TypeError(".CTwoFactor_UsageEvent: object expected");
+        if (long === undefined)
+            long = 0;
+        if (long > $util.recursionLimit)
+            throw Error("maximum nesting depth exceeded");
+        let message = new $root.CTwoFactor_UsageEvent();
+        if (object.time != null)
+            message.time = object.time >>> 0;
+        switch (object.usageType) {
+        default:
+            if (typeof object.usageType === "number") {
+                message.usageType = object.usageType;
+                break;
+            }
+            break;
+        case "k_ETwoFactorUsageType_Unknown":
+        case 0:
+            message.usageType = 0;
+            break;
+        case "k_ETwoFactorUsageType_None":
+        case 1:
+            message.usageType = 1;
+            break;
+        case "k_ETwoFactorUsageType_MobileConfirmation":
+        case 2:
+            message.usageType = 2;
+            break;
+        case "k_ETwoFactorUsageType_Login":
+        case 3:
+            message.usageType = 3;
+            break;
+        }
+        if (object.confirmationType != null)
+            message.confirmationType = object.confirmationType | 0;
+        if (object.confirmationAction != null)
+            message.confirmationAction = object.confirmationAction | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CTwoFactor_UsageEvent message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {CTwoFactor_UsageEvent} message CTwoFactor_UsageEvent
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CTwoFactor_UsageEvent.toObject = function toObject(message, options, q) {
+        if (!options)
+            options = {};
+        if (q === undefined)
+            q = 0;
+        if (q > $util.recursionLimit)
+            throw Error("max depth exceeded");
+        let object = {};
+        if (options.defaults) {
+            object.time = 0;
+            object.usageType = options.enums === String ? "k_ETwoFactorUsageType_Unknown" : 0;
+            object.confirmationType = 0;
+            object.confirmationAction = 0;
+        }
+        if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+            object.time = message.time;
+        if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+            object.usageType = options.enums === String ? $root.ETwoFactorUsageType[message.usageType] === undefined ? message.usageType : $root.ETwoFactorUsageType[message.usageType] : message.usageType;
+        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+            object.confirmationType = message.confirmationType;
+        if (message.confirmationAction != null && Object.hasOwnProperty.call(message, "confirmationAction"))
+            object.confirmationAction = message.confirmationAction;
+        return object;
+    };
+
+    /**
+     * Converts this CTwoFactor_UsageEvent to JSON.
+     * @function toJSON
+     * @memberof CTwoFactor_UsageEvent
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CTwoFactor_UsageEvent.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CTwoFactor_UsageEvent
+     * @function getTypeUrl
+     * @memberof CTwoFactor_UsageEvent
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CTwoFactor_UsageEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CTwoFactor_UsageEvent";
+    };
+
+    return CTwoFactor_UsageEvent;
+})();
+
 export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (() => {
 
     /**
@@ -4829,6 +5284,8 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @property {boolean|null} [allowExternalAuthenticator] CTwoFactor_Status_Response allowExternalAuthenticator
      * @property {number|null} [timeTransferred] CTwoFactor_Status_Response timeTransferred
      * @property {number|null} [version] CTwoFactor_Status_Response version
+     * @property {number|Long|null} [lastSeenAuthTokenId] CTwoFactor_Status_Response lastSeenAuthTokenId
+     * @property {Array.<ICTwoFactor_UsageEvent>|null} [usages] CTwoFactor_Status_Response usages
      */
 
     /**
@@ -4840,6 +5297,7 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @param {ICTwoFactor_Status_Response=} [properties] Properties to set
      */
     function CTwoFactor_Status_Response(properties) {
+        this.usages = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                 if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -4959,6 +5417,22 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
     CTwoFactor_Status_Response.prototype.version = 0;
 
     /**
+     * CTwoFactor_Status_Response lastSeenAuthTokenId.
+     * @member {number|Long} lastSeenAuthTokenId
+     * @memberof CTwoFactor_Status_Response
+     * @instance
+     */
+    CTwoFactor_Status_Response.prototype.lastSeenAuthTokenId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CTwoFactor_Status_Response usages.
+     * @member {Array.<ICTwoFactor_UsageEvent>} usages
+     * @memberof CTwoFactor_Status_Response
+     * @instance
+     */
+    CTwoFactor_Status_Response.prototype.usages = $util.emptyArray;
+
+    /**
      * Creates a new CTwoFactor_Status_Response instance using the specified properties.
      * @function create
      * @memberof CTwoFactor_Status_Response
@@ -5014,6 +5488,11 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             writer.uint32(/* id 13, wireType 0 =*/104).uint32(message.timeTransferred);
         if (message.version != null && Object.hasOwnProperty.call(message, "version"))
             writer.uint32(/* id 14, wireType 0 =*/112).uint32(message.version);
+        if (message.lastSeenAuthTokenId != null && Object.hasOwnProperty.call(message, "lastSeenAuthTokenId"))
+            writer.uint32(/* id 15, wireType 1 =*/121).fixed64(message.lastSeenAuthTokenId);
+        if (message.usages != null && message.usages.length)
+            for (let i = 0; i < message.usages.length; ++i)
+                $root.CTwoFactor_UsageEvent.encode(message.usages[i], writer.uint32(/* id 16, wireType 2 =*/130).fork(), q + 1).ldelim();
         return writer;
     };
 
@@ -5110,6 +5589,16 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
                     message.version = reader.uint32();
                     break;
                 }
+            case 15: {
+                    message.lastSeenAuthTokenId = reader.fixed64();
+                    break;
+                }
+            case 16: {
+                    if (!(message.usages && message.usages.length))
+                        message.usages = [];
+                    message.usages.push($root.CTwoFactor_UsageEvent.decode(reader, reader.uint32(), undefined, long + 1));
+                    break;
+                }
             default:
                 reader.skipType(tag & 7, long);
                 break;
@@ -5191,6 +5680,18 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
         if (message.version != null && Object.hasOwnProperty.call(message, "version"))
             if (!$util.isInteger(message.version))
                 return "version: integer expected";
+        if (message.lastSeenAuthTokenId != null && Object.hasOwnProperty.call(message, "lastSeenAuthTokenId"))
+            if (!$util.isInteger(message.lastSeenAuthTokenId) && !(message.lastSeenAuthTokenId && $util.isInteger(message.lastSeenAuthTokenId.low) && $util.isInteger(message.lastSeenAuthTokenId.high)))
+                return "lastSeenAuthTokenId: integer|Long expected";
+        if (message.usages != null && Object.hasOwnProperty.call(message, "usages")) {
+            if (!Array.isArray(message.usages))
+                return "usages: array expected";
+            for (let i = 0; i < message.usages.length; ++i) {
+                let error = $root.CTwoFactor_UsageEvent.verify(message.usages[i], long + 1);
+                if (error)
+                    return "usages." + error;
+            }
+        }
         return null;
     };
 
@@ -5240,6 +5741,25 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             message.timeTransferred = object.timeTransferred >>> 0;
         if (object.version != null)
             message.version = object.version >>> 0;
+        if (object.lastSeenAuthTokenId != null)
+            if ($util.Long)
+                message.lastSeenAuthTokenId = $util.Long.fromValue(object.lastSeenAuthTokenId, true);
+            else if (typeof object.lastSeenAuthTokenId === "string")
+                message.lastSeenAuthTokenId = parseInt(object.lastSeenAuthTokenId, 10);
+            else if (typeof object.lastSeenAuthTokenId === "number")
+                message.lastSeenAuthTokenId = object.lastSeenAuthTokenId;
+            else if (typeof object.lastSeenAuthTokenId === "object")
+                message.lastSeenAuthTokenId = new $util.LongBits(object.lastSeenAuthTokenId.low >>> 0, object.lastSeenAuthTokenId.high >>> 0).toNumber(true);
+        if (object.usages) {
+            if (!Array.isArray(object.usages))
+                throw TypeError(".CTwoFactor_Status_Response.usages: array expected");
+            message.usages = [];
+            for (let i = 0; i < object.usages.length; ++i) {
+                if (!$util.isObject(object.usages[i]))
+                    throw TypeError(".CTwoFactor_Status_Response.usages: object expected");
+                message.usages[i] = $root.CTwoFactor_UsageEvent.fromObject(object.usages[i], long + 1);
+            }
+        }
         return message;
     };
 
@@ -5260,6 +5780,8 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
         if (q > $util.recursionLimit)
             throw Error("max depth exceeded");
         let object = {};
+        if (options.arrays || options.defaults)
+            object.usages = [];
         if (options.defaults) {
             object.state = 0;
             object.inactivationReason = 0;
@@ -5275,6 +5797,11 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             object.allowExternalAuthenticator = false;
             object.timeTransferred = 0;
             object.version = 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.lastSeenAuthTokenId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+            } else
+                object.lastSeenAuthTokenId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
         }
         if (message.state != null && Object.hasOwnProperty.call(message, "state"))
             object.state = message.state;
@@ -5304,6 +5831,18 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             object.timeTransferred = message.timeTransferred;
         if (message.version != null && Object.hasOwnProperty.call(message, "version"))
             object.version = message.version;
+        if (message.lastSeenAuthTokenId != null && Object.hasOwnProperty.call(message, "lastSeenAuthTokenId"))
+            if (typeof BigInt !== "undefined" && options.longs === BigInt)
+                object.lastSeenAuthTokenId = typeof message.lastSeenAuthTokenId === "number" ? BigInt(message.lastSeenAuthTokenId) : $util.Long.fromBits(message.lastSeenAuthTokenId.low >>> 0, message.lastSeenAuthTokenId.high >>> 0, true).toBigInt();
+            else if (typeof message.lastSeenAuthTokenId === "number")
+                object.lastSeenAuthTokenId = options.longs === String ? String(message.lastSeenAuthTokenId) : message.lastSeenAuthTokenId;
+            else
+                object.lastSeenAuthTokenId = options.longs === String ? $util.Long.prototype.toString.call(message.lastSeenAuthTokenId) : options.longs === Number ? new $util.LongBits(message.lastSeenAuthTokenId.low >>> 0, message.lastSeenAuthTokenId.high >>> 0).toNumber(true) : message.lastSeenAuthTokenId;
+        if (message.usages && message.usages.length) {
+            object.usages = [];
+            for (let j = 0; j < message.usages.length; ++j)
+                object.usages[j] = $root.CTwoFactor_UsageEvent.toObject(message.usages[j], options, q + 1);
+        }
         return object;
     };
 

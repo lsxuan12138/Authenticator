@@ -76,6 +76,8 @@ export class BackupService {
             deviceId: token.steam.deviceId,
             accessToken: token.steam.accessToken,
             refreshToken: token.steam.refreshToken,
+            // Guard Data 与令牌一样属于可移植会话凭据，只能出现在 AES-GCM 加密载荷中。
+            guardData: token.steam.guardData,
             revocationCode: token.steam.revocationCode,
             serialNumber: token.steam.serialNumber,
             tokenGid: token.steam.tokenGid,

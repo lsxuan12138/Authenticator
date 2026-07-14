@@ -33,6 +33,11 @@ export interface SteamGuardMetadata {
   deviceId: string;
   accessToken: string;
   refreshToken: string;
+  /**
+   * Steam 登录成功后返回的设备信任凭据（Guard Data）。它不是 Device ID，也不参与验证码生成；
+   * 后续凭据登录会把它原样交还 Steam，以减少重复验证。通常为有有效期的 JWT，按会话凭据保护。
+   */
+  guardData?: string;
   revocationCode: string;
   serialNumber?: string;
   tokenGid?: string;

@@ -3,6 +3,7 @@ import { http } from '@kit.NetworkKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { DiagnosticLogService } from './DiagnosticLogService';
+import { SteamResult } from './SteamResult';
 
 export interface SteamConfirmation {
   type: number;
@@ -19,6 +20,11 @@ export interface SteamConfirmation {
 interface SteamQrChallenge {
   version: string;
   clientId: string;
+}
+
+export interface SteamAccessTokenResult {
+  accessToken: string;
+  refreshToken: string;
 }
 
 /**
@@ -62,7 +68,15 @@ export class SteamGuardService {
     if (!steamId || !refreshToken) {
       throw new Error('缺少 Steam ID 或 Refresh Token');
     }
-    return this.generateAccessToken(steamId, refreshToken);
+    return (await this.generateAccessToken(steamId, refreshToken)).accessToken;
+  }
+
+  /** 显式会话更新入口；若 Steam 轮换 Refresh Token，调用方可以与 Access Token 原子保存。 */
+  async refreshSessionTokens(steamId: string, refreshToken: string): Promise<SteamAccessTokenResult> {
+    if (!steamId || !refreshToken) {
+      throw new Error('缺少 Steam ID 或 Refresh Token');
+    }
+    return this.generateAccessToken(steamId, refreshToken, true);
   }
 
   static isQrLoginChallenge(challengeUrl: string): boolean {
@@ -77,7 +91,7 @@ export class SteamGuardService {
     // Steam 对 version、clientId、steamId 组成的二进制消息做 HMAC-SHA256；数值采用小端序。
     const challenge = this.parseQrChallenge(challengeUrl);
     const signature = this.qrSignature(steamId, sharedSecret, challenge);
-    const accessToken = await this.generateAccessToken(steamId, refreshToken);
+    const accessToken = (await this.generateAccessToken(steamId, refreshToken)).accessToken;
     const data = `steamid=${steamId}&confirm=true&persistence=${persistence ? 1 : 0}` +
       `&version=${challenge.version}&client_id=${challenge.clientId}&signature=${encodeURIComponent(signature)}`;
     const request = http.createHttp();
@@ -100,7 +114,7 @@ export class SteamGuardService {
         throw new Error(`Steam 扫码登录请求失败（HTTP ${response.responseCode}）`);
       }
       if (eResult.length > 0 && eResult !== '1') {
-        throw new Error(`Steam 拒绝扫码登录（EResult ${eResult}）`);
+        throw new Error(SteamResult.message(eResult, 'Steam 拒绝扫码登录'));
       }
     } catch (error) {
       const detail = error as BusinessError;
@@ -125,7 +139,7 @@ export class SteamGuardService {
       `&t=${time}&m=react&tag=${tag}`;
     // 有 Refresh Token 时换取新的短期 Access Token，降低已保存 Access Token 过期造成的失败。
     const usableAccessToken =
-      refreshToken.length > 0 ? await this.generateAccessToken(steamId, refreshToken) : accessToken;
+      refreshToken.length > 0 ? (await this.generateAccessToken(steamId, refreshToken)).accessToken : accessToken;
     if (usableAccessToken.length === 0) {
       throw new Error('Steam 会话缺少 Access Token 或 Refresh Token');
     }
@@ -215,7 +229,7 @@ export class SteamGuardService {
     }
     // allow/cancel 共用协议，调用方仅通过操作参数区分确认或拒绝。
     const usableAccessToken =
-      refreshToken.length > 0 ? await this.generateAccessToken(steamId, refreshToken) : accessToken;
+      refreshToken.length > 0 ? (await this.generateAccessToken(steamId, refreshToken)).accessToken : accessToken;
     if (usableAccessToken.length === 0) {
       throw new Error('Steam 会话缺少 Access Token 或 Refresh Token');
     }
@@ -252,8 +266,10 @@ export class SteamGuardService {
     }
   }
 
-  private async generateAccessToken(steamId: string, refreshToken: string): Promise<string> {
-    // Refresh Token 用于换取短期 Access Token；两者用途不同，不能互相替代。
+  private async generateAccessToken(steamId: string, refreshToken: string,
+    allowRenewal: boolean = false): Promise<SteamAccessTokenResult> {
+    // allowRenewal 仅用于用户主动更新会话。后台确认请求保持 false，防止 Steam 轮换出
+    // 新 Refresh Token 后调用方没有机会持久化，从而使本地仍持有即将失效的旧令牌。
     DiagnosticLogService.info('SteamGuard', 'Refreshing Steam access token');
     const request = http.createHttp();
     try {
@@ -261,7 +277,8 @@ export class SteamGuardService {
         'https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/', {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        extraData: `refresh_token=${encodeURIComponent(refreshToken)}&steamid=${steamId}&renewal_type=0`,
+        extraData: `refresh_token=${encodeURIComponent(refreshToken)}&steamid=${steamId}` +
+          `&renewal_type=${allowRenewal ? 1 : 0}`,
         expectDataType: http.HttpDataType.STRING,
         connectTimeout: SteamGuardService.REQUEST_TIMEOUT,
         readTimeout: SteamGuardService.REQUEST_TIMEOUT
@@ -274,7 +291,10 @@ export class SteamGuardService {
       if (token.length === 0) {
         throw new Error(`Steam 未返回 Access Token（HTTP ${response.responseCode}）`);
       }
-      return token;
+      return {
+        accessToken: token,
+        refreshToken: `${responseObject['refresh_token'] ?? ''}`
+      };
     } catch (error) {
       const detail = error as BusinessError;
       DiagnosticLogService.error('SteamGuard',

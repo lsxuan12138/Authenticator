@@ -116,7 +116,7 @@ export struct TokenDetailPage {
         } else {
           const metadata: SteamGuardMetadata = {
             steamId: '', accountName: token.account, identitySecret: '', deviceId: '',
-            accessToken: '', refreshToken: '', revocationCode: ''
+            accessToken: '', refreshToken: '', guardData: '', revocationCode: ''
           };
           token.steam = metadata;
         }

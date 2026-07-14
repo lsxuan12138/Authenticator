@@ -15,9 +15,11 @@ import {
   CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response,
   CRemoveAuthenticatorViaChallengeContinue_Replacement_Token,
   CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request,
-  CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response
+  CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response,
+  ETwoFactorStatusFieldFlag
 } from './protobuf/steam_auth';
 import { SteamGuardService } from './SteamGuardService';
+import { SteamResult } from './SteamResult';
 
 export interface SteamAuthenticatorEnrollment {
   sharedSecret: Uint8Array;
@@ -56,10 +58,19 @@ export interface SteamAuthenticatorStatus {
   allowExternalAuthenticator: boolean;
   timeTransferred: number;
   version: number;
+  lastSeenAuthTokenId: string;
+  usages: SteamAuthenticatorUsage[];
+}
+
+export interface SteamAuthenticatorUsage {
+  time: number;
+  usageType: number;
+  confirmationType: number;
+  confirmationAction: number;
 }
 
 /**
- * Steam Guard 注册服务。请求与响应均由 kdada/Authenticator 同源 proto 的生成代码处理。
+ * Steam Guard 注册服务。请求与响应均由 SteamTracking 字段定义生成的 protobuf 代码处理。
  * AddAuthenticator 会创建新的密钥；Finalize 成功前调用方不得把临时密钥保存为可用 Token。
  */
 export class SteamAuthenticatorService {
@@ -127,10 +138,11 @@ export class SteamAuthenticatorService {
     };
   }
 
-  /** 查询 Steam 服务端记录的验证器状态；实现与 kdada/Authenticator 的 QueryStatus 流程一致。 */
+  /** 查询 Steam 服务端记录的验证器状态，并按 SteamTracking 定义请求最近使用记录。 */
   async queryAuthenticatorStatus(steamId: string, refreshToken: string): Promise<SteamAuthenticatorStatus> {
     const request: CTwoFactor_Status_Request = CTwoFactor_Status_Request.create({
-      steamid: Long.fromString(steamId, true)
+      steamid: Long.fromString(steamId, true),
+      include: ETwoFactorStatusFieldFlag.k_ETwoFactorStatusFieldFlag_LastUsage
     });
     const data: Uint8Array = CTwoFactor_Status_Request.encode(request).finish();
     const responseData: Uint8Array = await this.protobufRequest('QueryStatus', steamId, refreshToken, data);
@@ -155,7 +167,14 @@ export class SteamAuthenticatorService {
       classifiedAgent: response.classifiedAgent,
       allowExternalAuthenticator: response.allowExternalAuthenticator,
       timeTransferred: response.timeTransferred,
-      version: response.version
+      version: response.version,
+      lastSeenAuthTokenId: response.lastSeenAuthTokenId.toString(),
+      usages: response.usages.map((usage): SteamAuthenticatorUsage => ({
+        time: usage.time,
+        usageType: Number(usage.usageType),
+        confirmationType: usage.confirmationType,
+        confirmationAction: usage.confirmationAction
+      })).sort((left: SteamAuthenticatorUsage, right: SteamAuthenticatorUsage) => right.time - left.time)
     };
   }
 
@@ -266,13 +285,13 @@ export class SteamAuthenticatorService {
         if (eResult === '29') {
           throw new Error('STEAM_GUARD_ALREADY_EXISTS');
         }
-        throw new Error(`Steam EResult: ${eResult}`);
+        throw new Error(SteamResult.message(eResult, 'Steam 验证器操作失败'));
       }
       return new Uint8Array(response.result as ArrayBuffer);
     } catch (error) {
       const detail = error as BusinessError;
       const message = detail.message ?? '未知错误';
-      if (message === 'STEAM_GUARD_ALREADY_EXISTS' || message.startsWith('Steam EResult:')) {
+      if (message === 'STEAM_GUARD_ALREADY_EXISTS' || message.includes('EResult ')) {
         throw new Error(message);
       }
       throw new Error(`Steam Authenticator 请求失败：${message}`);
