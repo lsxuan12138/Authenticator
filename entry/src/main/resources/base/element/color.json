@@ -3,6 +3,130 @@
     {
       "name": "start_window_background",
       "value": "#F5F7FA"
+    },
+    {
+      "name": "page_background",
+      "value": "#F5F7FA"
+    },
+    {
+      "name": "surface",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "surface_subtle",
+      "value": "#F5F7FA"
+    },
+    {
+      "name": "surface_muted",
+      "value": "#E9EDF3"
+    },
+    {
+      "name": "surface_control",
+      "value": "#EEF1F6"
+    },
+    {
+      "name": "text_primary",
+      "value": "#18202A"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#4C5868"
+    },
+    {
+      "name": "text_tertiary",
+      "value": "#687383"
+    },
+    {
+      "name": "text_muted",
+      "value": "#778191"
+    },
+    {
+      "name": "text_faint",
+      "value": "#87909E"
+    },
+    {
+      "name": "text_disabled",
+      "value": "#929BA8"
+    },
+    {
+      "name": "divider",
+      "value": "#E5E8EE"
+    },
+    {
+      "name": "border",
+      "value": "#E7EAF0"
+    },
+    {
+      "name": "brand",
+      "value": "#4668E8"
+    },
+    {
+      "name": "brand_strong",
+      "value": "#183C63"
+    },
+    {
+      "name": "brand_surface",
+      "value": "#EFF5FA"
+    },
+    {
+      "name": "brand_surface_alt",
+      "value": "#E9F0F7"
+    },
+    {
+      "name": "neutral_surface",
+      "value": "#F3F4F7"
+    },
+    {
+      "name": "panel_surface",
+      "value": "#F4F7FA"
+    },
+    {
+      "name": "status_surface",
+      "value": "#F1F4F8"
+    },
+    {
+      "name": "danger",
+      "value": "#A33143"
+    },
+    {
+      "name": "danger_strong",
+      "value": "#B42335"
+    },
+    {
+      "name": "danger_surface",
+      "value": "#FBECEF"
+    },
+    {
+      "name": "danger_surface_alt",
+      "value": "#FDECEF"
+    },
+    {
+      "name": "warning",
+      "value": "#A65B25"
+    },
+    {
+      "name": "warning_surface",
+      "value": "#FFF4E8"
+    },
+    {
+      "name": "success",
+      "value": "#287A52"
+    },
+    {
+      "name": "steam_surface",
+      "value": "#DDE8F2"
+    },
+    {
+      "name": "steam_divider",
+      "value": "#DDE4EC"
+    },
+    {
+      "name": "icon_surface",
+      "value": "#F0F2F6"
+    },
+    {
+      "name": "empty_icon_surface",
+      "value": "#E8EDFF"
     }
   ]
 }

@@ -12,6 +12,9 @@
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERNET"
+      },
+      {
+        "name": "ohos.permission.PRIVACY_WINDOW"
       }
     ],
     "pages": "$profile:main_pages",

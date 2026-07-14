@@ -56,7 +56,9 @@ export class SteamImportService {
     options.maxSelectNumber = 1;
     options.fileSuffixFilters = ['.maFile', '.json'];
     const selected = await new picker.DocumentViewPicker(context).select(options);
-    if (selected.length === 0) return '';
+    if (selected.length === 0) {
+      return '';
+    }
     let file: fs.File | undefined;
     let content = '';
     let failure: Error | undefined;
@@ -80,22 +82,30 @@ export class SteamImportService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
     return content;
   }
 
   private static unwrap(root: Record<string, Object>): Record<string, Object> {
     // 某些导出格式会将真实 maFile 内容包装在 steam 或 external 节点中。
     const nested = root['steam'] ?? root['external'];
-    if (typeof nested === 'string') return JSON.parse(nested) as Record<string, Object>;
-    if (typeof nested === 'object' && nested !== null) return nested as Record<string, Object>;
+    if (typeof nested === 'string') {
+      return JSON.parse(nested) as Record<string, Object>;
+    }
+    if (typeof nested === 'object' && nested !== null) {
+      return nested as Record<string, Object>;
+    }
     return root;
   }
 
   private static first(source: Record<string, Object>, keys: string[]): string {
     for (const key of keys) {
       const value = source[key];
-      if (value !== undefined && value !== null && `${value}`.length > 0) return `${value}`;
+      if (value !== undefined && value !== null && `${value}`.length > 0) {
+        return `${value}`;
+      }
     }
     return '';
   }

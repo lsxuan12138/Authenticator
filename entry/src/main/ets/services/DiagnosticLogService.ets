@@ -26,7 +26,9 @@ export class DiagnosticLogService {
   static initialize(context: common.Context): void {
     try {
       DiagnosticLogService.directory = `${context.filesDir}/${DiagnosticLogService.DIRECTORY_NAME}`;
-      if (!fs.accessSync(DiagnosticLogService.directory)) fs.mkdirSync(DiagnosticLogService.directory);
+      if (!fs.accessSync(DiagnosticLogService.directory)) {
+        fs.mkdirSync(DiagnosticLogService.directory);
+      }
       DiagnosticLogService.info('Lifecycle', `Logger initialized, sdkApi=${deviceInfo.sdkApiVersion}`);
     } catch (error) {
       const detail = error as BusinessError;
@@ -53,11 +55,15 @@ export class DiagnosticLogService {
   static stats(): DiagnosticLogStats {
     let bytes = 0;
     let files = 0;
-    if (!DiagnosticLogService.directory) return { bytes: bytes, files: files };
+    if (!DiagnosticLogService.directory) {
+      return { bytes: bytes, files: files };
+    }
     try {
       for (let index = DiagnosticLogService.FILE_COUNT - 1; index >= 0; index--) {
         const path = DiagnosticLogService.logPath(index);
-        if (!fs.accessSync(path)) continue;
+        if (!fs.accessSync(path)) {
+          continue;
+        }
         bytes += fs.statSync(path).size;
         files++;
       }
@@ -69,11 +75,15 @@ export class DiagnosticLogService {
   }
 
   static clear(): void {
-    if (!DiagnosticLogService.directory) return;
+    if (!DiagnosticLogService.directory) {
+      return;
+    }
     try {
       for (let index = DiagnosticLogService.FILE_COUNT - 1; index >= 0; index--) {
         const path = DiagnosticLogService.logPath(index);
-        if (fs.accessSync(path)) fs.unlinkSync(path);
+        if (fs.accessSync(path)) {
+          fs.unlinkSync(path);
+        }
       }
       hilog.info(LOG_DOMAIN, LOG_TAG, 'Diagnostic logs cleared');
     } catch (error) {
@@ -89,7 +99,9 @@ export class DiagnosticLogService {
     options.newFileNames = [`authenticator-diagnostics-${day}.txt`];
     options.fileSuffixChoices = ['Authenticator 诊断日志|.txt'];
     const selected = await new picker.DocumentViewPicker(context).save(options);
-    if (selected.length === 0) return false;
+    if (selected.length === 0) {
+      return false;
+    }
     DiagnosticLogService.writeExportFile(selected[0], content);
     DiagnosticLogService.info('Diagnostics', `Diagnostic log exported, bytes=${content.length}`);
     return true;
@@ -99,7 +111,9 @@ export class DiagnosticLogService {
     const safeTag = DiagnosticLogService.sanitizeTag(tag);
     const safeMessage = DiagnosticLogService.sanitize(message);
     DiagnosticLogService.writeHiLog(level, safeTag, safeMessage);
-    if (!DiagnosticLogService.directory) return;
+    if (!DiagnosticLogService.directory) {
+      return;
+    }
     try {
       const line = `${new Date().toISOString()} ${level.padEnd(5, ' ')} ${safeTag} ${safeMessage}\n`;
       const bytes = new util.TextEncoder().encodeInto(line).length;
@@ -108,6 +122,10 @@ export class DiagnosticLogService {
         fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.APPEND);
       try {
         fs.writeSync(file.fd, line);
+      } catch (writeError) {
+        const detail = writeError as BusinessError;
+        hilog.error(LOG_DOMAIN, LOG_TAG, 'Failed to write diagnostic log: %{public}s',
+          detail.message ?? 'unknown');
       } finally {
         try {
           fs.closeSync(file.fd);
@@ -146,10 +164,14 @@ export class DiagnosticLogService {
         return;
       }
       const oldest = DiagnosticLogService.logPath(DiagnosticLogService.FILE_COUNT - 1);
-      if (fs.accessSync(oldest)) fs.unlinkSync(oldest);
+      if (fs.accessSync(oldest)) {
+        fs.unlinkSync(oldest);
+      }
       for (let index = DiagnosticLogService.FILE_COUNT - 2; index >= 0; index--) {
         const source = DiagnosticLogService.logPath(index);
-        if (fs.accessSync(source)) fs.moveFileSync(source, DiagnosticLogService.logPath(index + 1));
+        if (fs.accessSync(source)) {
+          fs.moveFileSync(source, DiagnosticLogService.logPath(index + 1));
+        }
       }
     } catch (error) {
       const detail = error as BusinessError;
@@ -165,11 +187,15 @@ export class DiagnosticLogService {
       'Sensitive credentials are automatically redacted. Review before sharing.',
       ''
     ];
-    if (!DiagnosticLogService.directory) return parts.join('\n');
+    if (!DiagnosticLogService.directory) {
+      return parts.join('\n');
+    }
     try {
       for (let index = DiagnosticLogService.FILE_COUNT - 1; index >= 0; index--) {
         const path = DiagnosticLogService.logPath(index);
-        if (fs.accessSync(path)) parts.push(DiagnosticLogService.readText(path));
+        if (fs.accessSync(path)) {
+          parts.push(DiagnosticLogService.readText(path));
+        }
       }
     } catch (error) {
       const detail = error as BusinessError;
@@ -202,7 +228,9 @@ export class DiagnosticLogService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
     return content;
   }
 
@@ -226,7 +254,9 @@ export class DiagnosticLogService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
   }
 
   private static logPath(index: number): string {
@@ -242,7 +272,8 @@ export class DiagnosticLogService {
   private static sanitize(message: string): string {
     let value = message.replaceAll('\r', ' ').replaceAll('\n', ' ');
     // 同时覆盖普通 key=value 与 JSON 的 "key":"value"，避免服务端响应进入日志时泄漏凭据。
-    value = value.replace(/(["']?(?:access[_ -]?token|refresh[_ -]?token|identity[_ -]?secret|shared[_ -]?secret|secret1?|password|authorization|cookie|sessionid)["']?\s*[=:]\s*)["']?[^"',\s;&}]+["']?/gi,
+    value = value.replace(
+      /(["']?(?:access[_ -]?token|refresh[_ -]?token|identity[_ -]?secret|shared[_ -]?secret|secret1?|password|authorization|cookie|sessionid)["']?\s*[=:]\s*)["']?[^"',\s;&}]+["']?/gi,
       '$1<redacted>');
     value = value.replace(/steamLoginSecure=[^\s;]+/gi, 'steamLoginSecure=<redacted>');
     value = value.replace(/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g,

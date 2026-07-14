@@ -7,8 +7,13 @@ import {
   CTwoFactor_AddAuthenticator_Response,
   CTwoFactor_FinalizeAddAuthenticator_Request,
   CTwoFactor_FinalizeAddAuthenticator_Response,
+  CTwoFactor_Status_Request,
+  CTwoFactor_Status_Response,
+  CTwoFactor_RemoveAuthenticator_Request,
+  CTwoFactor_RemoveAuthenticator_Response,
   CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request,
   CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response,
+  CRemoveAuthenticatorViaChallengeContinue_Replacement_Token,
   CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request,
   CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response
 } from './protobuf/steam_auth';
@@ -33,6 +38,24 @@ export interface SteamFinalizeResult {
   wantMore: boolean;
   serverTime: number;
   status: number;
+}
+
+/** Steam 当前为账户记录的移动验证器状态。数值字段保持服务端原值，便于诊断协议变化。 */
+export interface SteamAuthenticatorStatus {
+  state: number;
+  inactivationReason: number;
+  authenticatorType: number;
+  authenticatorAllowed: boolean;
+  steamguardScheme: number;
+  tokenGid: string;
+  emailValidated: boolean;
+  deviceIdentifier: string;
+  timeCreated: number;
+  revocationAttemptsRemaining: number;
+  classifiedAgent: string;
+  allowExternalAuthenticator: boolean;
+  timeTransferred: number;
+  version: number;
 }
 
 /**
@@ -104,6 +127,63 @@ export class SteamAuthenticatorService {
     };
   }
 
+  /** 查询 Steam 服务端记录的验证器状态；实现与 kdada/Authenticator 的 QueryStatus 流程一致。 */
+  async queryAuthenticatorStatus(steamId: string, refreshToken: string): Promise<SteamAuthenticatorStatus> {
+    const request: CTwoFactor_Status_Request = CTwoFactor_Status_Request.create({
+      steamid: Long.fromString(steamId, true)
+    });
+    const data: Uint8Array = CTwoFactor_Status_Request.encode(request).finish();
+    const responseData: Uint8Array = await this.protobufRequest('QueryStatus', steamId, refreshToken, data);
+    let response: CTwoFactor_Status_Response;
+    try {
+      response = CTwoFactor_Status_Response.decode(responseData);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`解析 Steam 验证器状态失败：${detail.message ?? 'Protobuf 数据无效'}`);
+    }
+    return {
+      state: response.state,
+      inactivationReason: response.inactivationReason,
+      authenticatorType: response.authenticatorType,
+      authenticatorAllowed: response.authenticatorAllowed,
+      steamguardScheme: response.steamguardScheme,
+      tokenGid: response.tokenGid,
+      emailValidated: response.emailValidated,
+      deviceIdentifier: response.deviceIdentifier,
+      timeCreated: response.timeCreated,
+      revocationAttemptsRemaining: response.revocationAttemptsRemaining,
+      classifiedAgent: response.classifiedAgent,
+      allowExternalAuthenticator: response.allowExternalAuthenticator,
+      timeTransferred: response.timeTransferred,
+      version: response.version
+    };
+  }
+
+  /** 使用注册时返回的撤销码移除账户的移动验证器。成功后原 Steam Guard 密钥立即失效。 */
+  async revokeAuthenticator(steamId: string, refreshToken: string,
+    revocationCode: string): Promise<number> {
+    if (!revocationCode.trim()) {
+      throw new Error('当前 Token 没有撤销码，无法撤销 Steam 验证器');
+    }
+    const request: CTwoFactor_RemoveAuthenticator_Request = CTwoFactor_RemoveAuthenticator_Request.create({
+      revocationCode: revocationCode.trim()
+    });
+    const data: Uint8Array = CTwoFactor_RemoveAuthenticator_Request.encode(request).finish();
+    const responseData: Uint8Array = await this.protobufRequest(
+      'RemoveAuthenticator', steamId, refreshToken, data);
+    let response: CTwoFactor_RemoveAuthenticator_Response;
+    try {
+      response = CTwoFactor_RemoveAuthenticator_Response.decode(responseData);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`解析 Steam 验证器撤销结果失败：${detail.message ?? 'Protobuf 数据无效'}`);
+    }
+    if (!response.success) {
+      throw new Error(`Steam 未撤销验证器（剩余尝试次数：${response.revocationAttemptsRemaining}）`);
+    }
+    return response.revocationAttemptsRemaining;
+  }
+
   /** 请求把已有的移动验证器转移到本应用；Steam 会向账户手机号发送验证码。 */
   async beginTransfer(steamId: string, refreshToken: string): Promise<void> {
     const request: CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request =
@@ -119,7 +199,9 @@ export class SteamAuthenticatorService {
       const detail = error as BusinessError;
       throw new Error(`解析 Steam 验证器转移响应失败：${detail.message ?? 'Protobuf 数据无效'}`);
     }
-    if (!response.success) throw new Error('Steam 未允许转移当前验证器');
+    if (!response.success) {
+      throw new Error('Steam 未允许转移当前验证器');
+    }
   }
 
   async completeTransfer(steamId: string, refreshToken: string,
@@ -141,7 +223,8 @@ export class SteamAuthenticatorService {
       const detail = error as BusinessError;
       throw new Error(`解析 Steam 验证器转移结果失败：${detail.message ?? 'Protobuf 数据无效'}`);
     }
-    const token = response.replacementToken;
+    const token: CRemoveAuthenticatorViaChallengeContinue_Replacement_Token | null | undefined =
+      response.replacementToken as CRemoveAuthenticatorViaChallengeContinue_Replacement_Token | null | undefined;
     const sharedSecret: Uint8Array = token?.sharedSecret ?? new Uint8Array(0);
     const identitySecret: Uint8Array = token?.identitySecret ?? new Uint8Array(0);
     if (!response.success || !token || sharedSecret.length === 0 || identitySecret.length === 0) {
@@ -169,7 +252,8 @@ export class SteamAuthenticatorService {
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(
-        `https://api.steampowered.com/ITwoFactorService/${method}/v1/?access_token=${encodeURIComponent(accessToken)}`, {
+        `https://api.steampowered.com/ITwoFactorService/${method}/v1/?access_token=${encodeURIComponent(accessToken)}`,
+        {
           method: http.RequestMethod.POST,
           header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept-Type': 'application/json' },
           extraData: `input_protobuf_encoded=${encodeURIComponent(base64)}`,
@@ -179,7 +263,9 @@ export class SteamAuthenticatorService {
         });
       const eResult: string = this.readEResult(response.header);
       if (eResult && eResult !== '1' && eResult !== 'OK') {
-        if (eResult === '29') throw new Error('STEAM_GUARD_ALREADY_EXISTS');
+        if (eResult === '29') {
+          throw new Error('STEAM_GUARD_ALREADY_EXISTS');
+        }
         throw new Error(`Steam EResult: ${eResult}`);
       }
       return new Uint8Array(response.result as ArrayBuffer);

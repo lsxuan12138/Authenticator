@@ -112,7 +112,9 @@ export class BackupService {
   }
 
   static async decrypt(serialized: string, password: string): Promise<StoredToken[]> {
-    if (password.length === 0) throw new Error('请输入备份密码');
+    if (password.length === 0) {
+      throw new Error('请输入备份密码');
+    }
     const backup = JSON.parse(serialized) as EncryptedBackup;
     BackupService.validateBackup(backup);
     const base64 = new util.Base64Helper();
@@ -180,7 +182,9 @@ export class BackupService {
     options.newFileNames = [`authenticator-backup-${day}.authbackup`];
     options.fileSuffixChoices = ['Authenticator 加密备份|.authbackup'];
     const selected = await new picker.DocumentViewPicker(context).save(options);
-    if (selected.length === 0) return false;
+    if (selected.length === 0) {
+      return false;
+    }
     let file: fs.File | undefined;
     let failure: Error | undefined;
     try {
@@ -200,7 +204,9 @@ export class BackupService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
     return true;
   }
 
@@ -209,7 +215,9 @@ export class BackupService {
     options.maxSelectNumber = 1;
     options.fileSuffixFilters = ['.authbackup', '.json'];
     const selected = await new picker.DocumentViewPicker(context).select(options);
-    if (selected.length === 0) return '';
+    if (selected.length === 0) {
+      return '';
+    }
     let file: fs.File | undefined;
     let content = '';
     let failure: Error | undefined;
@@ -217,7 +225,9 @@ export class BackupService {
       file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       // 当前实现整文件读入内存，大小上限用于防止错误或恶意文件造成内存压力。
-      if (size <= 0 || size > BackupService.MAX_FILE_SIZE) throw new Error('备份文件为空或超过 8MB');
+      if (size <= 0 || size > BackupService.MAX_FILE_SIZE) {
+        throw new Error('备份文件为空或超过 8MB');
+      }
       const buffer = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, buffer);
       content = new util.TextDecoder().decodeToString(new Uint8Array(buffer.slice(0, count)));
@@ -235,14 +245,20 @@ export class BackupService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
     return content;
   }
 
   private static async deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
     // 随机 salt 防止相同密码产生相同密钥；迭代次数提高离线猜测成本。
     const spec: cryptoFramework.PBKDF2Spec = {
-      algName: 'PBKDF2', password: password, salt: salt, iterations: iterations, keySize: 32
+      algName: 'PBKDF2',
+      password: password,
+      salt: salt,
+      iterations: iterations,
+      keySize: 32
     };
     try {
       return (await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec)).data;
@@ -253,7 +269,9 @@ export class BackupService {
   }
 
   private static validatePassword(password: string): void {
-    if (password.length < 8) throw new Error('备份密码至少需要 8 个字符');
+    if (password.length < 8) {
+      throw new Error('备份密码至少需要 8 个字符');
+    }
   }
 
   private static validateBackup(backup: EncryptedBackup): void {
@@ -278,9 +296,13 @@ export class BackupService {
         !Number.isInteger(token.period) || token.period < 1 || token.period > 300) {
         throw new Error('备份中包含无效的 Token 数据');
       }
-      if (!TokenId.isUuid(token.id)) throw new Error('备份中包含无效的 Token UUID');
+      if (!TokenId.isUuid(token.id)) {
+        throw new Error('备份中包含无效的 Token UUID');
+      }
       token.id = token.id.toLowerCase();
-      if (ids.has(token.id)) throw new Error('备份中包含重复的 Token UUID');
+      if (ids.has(token.id)) {
+        throw new Error('备份中包含重复的 Token UUID');
+      }
       ids.add(token.id);
     });
     return content.tokens;

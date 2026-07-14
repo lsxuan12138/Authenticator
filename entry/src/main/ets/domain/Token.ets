@@ -13,6 +13,7 @@ export interface TokenRecord {
   digits: number;
   period: number;
   kind: TokenKind;
+
   // 仅保存用户手动选择的本机图标路径；自动匹配结果不持久化，也不进入备份。
   iconPath: string;
   iconManual?: boolean;

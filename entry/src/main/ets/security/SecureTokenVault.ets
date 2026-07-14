@@ -94,7 +94,9 @@ export class SecureTokenVault {
 
   private async loadOrCreateMasterKey(): Promise<Uint8Array> {
     const existing = await this.queryMasterKey();
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
 
     try {
       const generated = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.KEY_SIZE).data;
@@ -119,7 +121,9 @@ export class SecureTokenVault {
 
   private async loadExistingMasterKey(): Promise<Uint8Array> {
     const existing = await this.queryMasterKey();
-    if (!existing) throw new Error('安全主密钥不存在，无法读取 Token 数据');
+    if (!existing) {
+      throw new Error('安全主密钥不存在，无法读取 Token 数据');
+    }
     return existing;
   }
 
@@ -129,7 +133,9 @@ export class SecureTokenVault {
     query.set(asset.Tag.RETURN_TYPE, asset.ReturnType.ALL);
     try {
       const results = await asset.query(query);
-      if (results.length === 0) return undefined;
+      if (results.length === 0) {
+        return undefined;
+      }
       const secret = results[0].get(asset.Tag.SECRET) as Uint8Array;
       if (!secret || secret.length !== SecureTokenVault.KEY_SIZE) {
         throw new Error('安全主密钥格式无效');
@@ -137,7 +143,9 @@ export class SecureTokenVault {
       return secret;
     } catch (error) {
       const detail = error as BusinessError;
-      if (detail.code === asset.ErrorCode.NOT_FOUND) return undefined;
+      if (detail.code === asset.ErrorCode.NOT_FOUND) {
+        return undefined;
+      }
       throw new Error(`读取安全主密钥失败：${detail.message}`);
     }
   }

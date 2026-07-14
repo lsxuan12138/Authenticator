@@ -27,10 +27,14 @@ export class TokenRepository {
   }
 
   async list(): Promise<StoredToken[]> {
-    if (!this.store) return [];
+    if (!this.store) {
+      return [];
+    }
     try {
       const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
-      if (!encrypted) return [];
+      if (!encrypted) {
+        return [];
+      }
       const raw = await this.vault.decrypt(encrypted);
       return this.parseTokens(raw);
     } catch (error) {
@@ -41,7 +45,9 @@ export class TokenRepository {
   }
 
   async save(items: StoredToken[]): Promise<void> {
-    if (!this.store) throw new Error('数据仓库尚未初始化');
+    if (!this.store) {
+      throw new Error('数据仓库尚未初始化');
+    }
     try {
       const raw = JSON.stringify(items);
       const encrypted = await this.vault.encrypt(raw);
@@ -61,7 +67,9 @@ export class TokenRepository {
   private parseTokens(raw: string): StoredToken[] {
     // JSON.parse 成功并不代表根节点类型正确，仓库只接受数组。
     const items = JSON.parse(raw) as StoredToken[];
-    if (!Array.isArray(items)) throw new Error('Token 数据格式无效');
+    if (!Array.isArray(items)) {
+      throw new Error('Token 数据格式无效');
+    }
     if (items.some((token: StoredToken) => !token || !TokenId.isUuid(token.id))) {
       throw new Error('Token 数据包含无效 UUID');
     }
@@ -71,14 +79,20 @@ export class TokenRepository {
   private async verifyEncryptedData(encrypted: string, expected: string): Promise<void> {
     const decrypted = await this.vault.decrypt(encrypted);
     this.parseTokens(decrypted);
-    if (decrypted !== expected) throw new Error('Token 加密数据校验失败');
+    if (decrypted !== expected) {
+      throw new Error('Token 加密数据校验失败');
+    }
   }
 
   private async verifyStoredData(expected: string): Promise<void> {
-    if (!this.store) throw new Error('数据仓库尚未初始化');
+    if (!this.store) {
+      throw new Error('数据仓库尚未初始化');
+    }
     try {
       const encrypted = await this.store.get(TokenRepository.ENCRYPTED_TOKENS_KEY, '') as string;
-      if (!encrypted) throw new Error('Token 加密数据写入失败');
+      if (!encrypted) {
+        throw new Error('Token 加密数据写入失败');
+      }
       await this.verifyEncryptedData(encrypted, expected);
     } catch (error) {
       const detail = error as BusinessError;

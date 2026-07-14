@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
+import { AppSettingsService } from '../services/AppSettingsService';
 
 /** 应用入口 Ability：设置跟随系统的颜色模式，并将主窗口加载到 Index 根组件。 */
 export default class EntryAbility extends UIAbility {
@@ -28,7 +29,20 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       DiagnosticLogService.info('Lifecycle', 'Index content loaded');
+      this.restoreScreenshotProtection(windowStage);
     });
+  }
+
+  /** Window 创建后恢复用户偏好，避免重新启动应用时短暂失去截屏保护。 */
+  private async restoreScreenshotProtection(windowStage: window.WindowStage): Promise<void> {
+    try {
+      const enabled = await AppSettingsService.screenshotProtectionEnabled(this.context);
+      const mainWindow = await windowStage.getMainWindow();
+      await AppSettingsService.applyToWindow(mainWindow, enabled);
+      DiagnosticLogService.info('Privacy', `Screenshot protection restored, enabled=${enabled}`);
+    } catch (error) {
+      DiagnosticLogService.error('Privacy', `Failed to restore screenshot protection: ${(error as Error).message}`);
+    }
   }
 
   onWindowStageDestroy(): void {

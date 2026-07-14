@@ -46,7 +46,9 @@ export class IconPackService {
           const value = IconPackService.normalize(candidate);
           return normalized.includes(value) || value.includes(normalized);
         });
-        if (matched) return `file://${active.directory}/${icon.filename}`;
+        if (matched) {
+          return `file://${active.directory}/${icon.filename}`;
+        }
       }
     }
     return '';
@@ -62,7 +64,9 @@ export class IconPackService {
           const value = IconPackService.normalize(candidate);
           return normalized.includes(value) || value.includes(normalized);
         });
-        if (matched) paths.push(`file://${pack.directory}/${icon.filename}`);
+        if (matched) {
+          paths.push(`file://${pack.directory}/${icon.filename}`);
+        }
       }
     }
     return paths;
@@ -71,18 +75,26 @@ export class IconPackService {
   static resolveIcon(issuer: string, manualPath: string, iconManual: boolean,
     packs: IconPack[], activePackKey: string): string {
     // 手动路径失效（例如图标包被删除）时安全回退到自动匹配。
-    if (iconManual && IconPackService.pathExists(manualPath)) return manualPath;
+    if (iconManual && IconPackService.pathExists(manualPath)) {
+      return manualPath;
+    }
     return IconPackService.suggestedIcon(issuer, packs, activePackKey);
   }
 
   static iconPathAt(pack: IconPack, index: number): string {
-    if (index < 0 || index >= pack.icons.length) return '';
+    if (index < 0 || index >= pack.icons.length) {
+      return '';
+    }
     return `file://${pack.directory}/${pack.icons[index].filename}`;
   }
 
   static pathExists(path: string): boolean {
-    if (!path) return false;
-    if (path.startsWith('rawfile://')) return true;
+    if (!path) {
+      return false;
+    }
+    if (path.startsWith('rawfile://')) {
+      return true;
+    }
     try {
       return fs.accessSync(path.startsWith('file://') ? path.substring(7) : path);
     } catch (error) {
@@ -120,7 +132,9 @@ export class IconPackService {
     options.maxSelectNumber = 5;
     options.fileSuffixFilters = ['.zip'];
     const selected = await new picker.DocumentViewPicker(context).select(options);
-    for (const uri of selected) await IconPackService.importZip(context, uri);
+    for (const uri of selected) {
+      await IconPackService.importZip(context, uri);
+    }
     return selected.length;
   }
 
@@ -137,15 +151,22 @@ export class IconPackService {
       for (const folder of folders) {
         const directory = `${root}/${folder}`;
         const manifest = `${directory}/pack.json`;
-        if (!fs.accessSync(manifest)) continue;
+        if (!fs.accessSync(manifest)) {
+          continue;
+        }
         try {
           const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
           const icons = (parsed['icons'] ?? []) as IconDefinition[];
           // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
           const safeIcons = icons.filter((icon: IconDefinition) => IconPackService.isSafeRelativePath(icon.filename) &&
             fs.accessSync(`${directory}/${icon.filename}`));
-          result.push({ id: `${parsed['uuid'] ?? folder}`, name: `${parsed['name'] ?? folder}`,
-            version: Number(parsed['version'] ?? 0), directory: directory, icons: safeIcons });
+          result.push({
+            id: `${parsed['uuid'] ?? folder}`,
+            name: `${parsed['name'] ?? folder}`,
+            version: Number(parsed['version'] ?? 0),
+            directory: directory,
+            icons: safeIcons
+          });
         } catch (error) {
           const detail = error as BusinessError;
           DiagnosticLogService.warn('IconPack',
@@ -171,7 +192,9 @@ export class IconPackService {
       fs.closeSync(file.fd);
       await zlib.decompressFile(source, target);
       const pack = (await IconPackService.list(context)).find((item: IconPack) => item.directory === target);
-      if (!pack || pack.icons.length === 0) throw new Error('图标包缺少有效的 pack.json 或图片');
+      if (!pack || pack.icons.length === 0) {
+        throw new Error('图标包缺少有效的 pack.json 或图片');
+      }
     } catch (error) {
       const detail = error as BusinessError;
       try {
@@ -188,7 +211,9 @@ export class IconPackService {
   private static ensureRoot(context: common.UIAbilityContext): string {
     const root = `${context.filesDir}/icon_packs`;
     try {
-      if (!fs.accessSync(root)) fs.mkdirSync(root);
+      if (!fs.accessSync(root)) {
+        fs.mkdirSync(root);
+      }
       return root;
     } catch (error) {
       const detail = error as BusinessError;
@@ -208,7 +233,9 @@ export class IconPackService {
   private static removeDirectory(path: string): void {
     // 图标包目录只位于应用 filesDir 下；递归删除用于兼容 ZIP 中的子目录。
     try {
-      if (!fs.accessSync(path)) return;
+      if (!fs.accessSync(path)) {
+        return;
+      }
       const children = fs.listFileSync(path);
       for (const name of children) {
         const child = `${path}/${name}`;
@@ -250,7 +277,9 @@ export class IconPackService {
         }
       }
     }
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
     return content;
   }
 }

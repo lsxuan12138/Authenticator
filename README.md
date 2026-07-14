@@ -18,6 +18,8 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
   - 使用账号密码登录 Steam，并处理邮箱验证码、已有 Steam Guard 验证码或设备确认
   - 添加新的移动验证器并获取完整元信息
   - 通过短信转移已有移动验证器
+  - 查询 Steam 服务端记录的移动验证器状态
+  - 使用撤销码移除移动验证器（成功后同步删除已失效的本地 Token）
   - 查看并处理 Steam 待确认项目
   - 扫码登录 Steam
 - Token 管理
@@ -153,7 +155,7 @@ Steam 协议定义位于：
 entry/src/main/ets/services/protobuf/steam_auth.proto
 ```
 
-`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件。修改协议时应从 `.proto` 重新生成，并保留项目针对 HarmonyOS `@ohos/protobufjs` 与 `long` 的导入适配，不要直接手工修改消息字段编号。
+`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件。修改协议时，应使用 `protobufjs-cli@1.1.3` 的 `pbjs` 从 `.proto` 生成运行时代码，再使用当前版 `pbts` 生成声明文件，并保留项目针对 HarmonyOS `@ohos/protobufjs` 与 `long` 的导入适配。新版 `pbjs` 生成的 `reader.tag()` 与当前 HarmonyOS 运行时不兼容；不要直接手工修改消息字段编号。
 
 ## 权限与网络
 

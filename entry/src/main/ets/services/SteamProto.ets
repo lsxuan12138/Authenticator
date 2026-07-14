@@ -125,17 +125,22 @@ export class SteamProto {
 
   private static generatedGuardType(value: number): EAuthSessionGuardType {
     switch (value) {
-      case SteamGuardType.NONE: return EAuthSessionGuardType.k_EAuthSessionGuardType_None;
-      case SteamGuardType.EMAIL_CODE: return EAuthSessionGuardType.k_EAuthSessionGuardType_EmailCode;
-      case SteamGuardType.DEVICE_CODE: return EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceCode;
+      case SteamGuardType.NONE:
+        return EAuthSessionGuardType.k_EAuthSessionGuardType_None;
+      case SteamGuardType.EMAIL_CODE:
+        return EAuthSessionGuardType.k_EAuthSessionGuardType_EmailCode;
+      case SteamGuardType.DEVICE_CODE:
+        return EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceCode;
       case SteamGuardType.DEVICE_CONFIRMATION:
         return EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceConfirmation;
       case SteamGuardType.EMAIL_CONFIRMATION:
         return EAuthSessionGuardType.k_EAuthSessionGuardType_EmailConfirmation;
-      case SteamGuardType.MACHINE_TOKEN: return EAuthSessionGuardType.k_EAuthSessionGuardType_MachineToken;
+      case SteamGuardType.MACHINE_TOKEN:
+        return EAuthSessionGuardType.k_EAuthSessionGuardType_MachineToken;
       case SteamGuardType.LEGACY_MACHINE_AUTH:
         return EAuthSessionGuardType.k_EAuthSessionGuardType_LegacyMachineAuth;
-      default: return EAuthSessionGuardType.k_EAuthSessionGuardType_Unknown;
+      default:
+        return EAuthSessionGuardType.k_EAuthSessionGuardType_Unknown;
     }
   }
 }

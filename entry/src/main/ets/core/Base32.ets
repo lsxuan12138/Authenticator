@@ -46,7 +46,9 @@ export class Base32 {
         result += Base32.ALPHABET[(buffer >> bits) & 31];
       }
     }
-    if (bits > 0) result += Base32.ALPHABET[(buffer << (5 - bits)) & 31];
+    if (bits > 0) {
+      result += Base32.ALPHABET[(buffer << (5 - bits)) & 31];
+    }
     return result;
   }
 }

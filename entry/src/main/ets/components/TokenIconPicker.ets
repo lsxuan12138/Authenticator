@@ -18,12 +18,16 @@ class IconPathDataSource implements IDataSource {
   }
 
   registerDataChangeListener(listener: DataChangeListener): void {
-    if (this.listeners.indexOf(listener) < 0) this.listeners.push(listener);
+    if (this.listeners.indexOf(listener) < 0) {
+      this.listeners.push(listener);
+    }
   }
 
   unregisterDataChangeListener(listener: DataChangeListener): void {
     const index = this.listeners.indexOf(listener);
-    if (index >= 0) this.listeners.splice(index, 1);
+    if (index >= 0) {
+      this.listeners.splice(index, 1);
+    }
   }
 }
 
@@ -36,8 +40,10 @@ export struct TokenIconPicker {
   @Prop issuer: string = '';
   @Prop currentPath: string = '';
   @Prop packs: IconPack[] = [];
-  onConfirm: (path: string) => void = (_path: string): void => {};
-  onClose: () => void = (): void => {};
+  onConfirm: (path: string) => void = (_path: string): void => {
+  };
+  onClose: () => void = (): void => {
+  };
   @State private selectedPath: string = '';
   @State private suggestions: string[] = [];
   private sources: Map<string, IconPathDataSource> = new Map();
@@ -62,37 +68,64 @@ export struct TokenIconPicker {
           } else {
             Image(path).width(42).height(42).objectFit(ImageFit.Contain).draggable(false)
           }
-        }.width(54).height(54).borderRadius(16)
-          .backgroundColor(automatic ? '#4668E8' : '#F0F2F6')
-          .border({ width: this.selectedPath === path ? 2 : 0, color: '#4668E8' })
-        if (automatic) Text('自动').fontSize(11).fontColor('#687383')
+        }
+        .width(54)
+        .height(54)
+        .borderRadius(16)
+        .backgroundColor(automatic ? '#4668E8' : $r('app.color.icon_surface'))
+        .border({ width: this.selectedPath === path ? 2 : 0, color: '#4668E8' })
+
+        if (automatic) {
+          Text('自动').fontSize(11).fontColor($r('app.color.text_tertiary'))
+        }
       }.width('100%').height(76).justifyContent(FlexAlign.Center)
-        .onClick(() => this.selectedPath = path)
+      .onClick(() => this.selectedPath = path)
     }
   }
 
   @Builder
   private sectionHeader(title: string) {
-    Text(title).fontSize(14).fontWeight(FontWeight.Medium).fontColor('#4C5868')
-      .width('100%').padding({ left: 4, top: 10, bottom: 8 })
+    Text(title)
+      .fontSize(14)
+      .fontWeight(FontWeight.Medium)
+      .fontColor($r('app.color.text_secondary'))
+      .width('100%')
+      .padding({ left: 4, top: 10, bottom: 8 })
   }
 
   build() {
     Column() {
       Row({ space: 10 }) {
-        Button('‹').type(ButtonType.Circle).width(38).height(38).fontSize(24)
-          .backgroundColor('#E9EDF3').fontColor('#243148').onClick(() => this.onClose())
+        Button() {
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontSize(22)
+            .fontColor([$r('app.color.text_secondary')])
+        }
+          .type(ButtonType.Circle)
+          .width(38)
+          .height(38)
+          .backgroundColor($r('app.color.surface_muted'))
+          .onClick(() => this.onClose())
         Column({ space: 3 }) {
           Text('选择图标').fontSize(26).fontWeight(FontWeight.Bold)
-          Text(this.issuer).fontSize(13).fontColor('#687383').maxLines(1)
+          Text(this.issuer).fontSize(13).fontColor($r('app.color.text_tertiary')).maxLines(1)
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+
         Button('完成').backgroundColor('#4668E8').onClick(() => this.onConfirm(this.selectedPath))
-      }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
+      }
+      .width('100%')
+      .padding({
+        left: 18,
+        right: 18,
+        top: 18,
+        bottom: 8
+      })
 
       List({ space: 6 }) {
         ListItemGroup({ header: this.sectionHeader('显示方式') }) {
           this.iconCell('', true)
         }
+
         if (this.suggestions.length > 0) {
           ListItemGroup({ header: this.sectionHeader('推荐') }) {
             ForEach(this.suggestions, (path: string) => {
@@ -108,8 +141,14 @@ export struct TokenIconPicker {
               }, (path: string) => path)
           }
         }, (pack: IconPack) => IconPackService.packKey(pack))
-      }.layoutWeight(1).width('100%').height('100%').padding({ left: 12, right: 12, bottom: 12 })
-        .lanes({ minLength: 74, maxLength: 74 }).cachedCount(10).scrollBar(BarState.Auto)
-    }.width('100%').height('100%').backgroundColor(Color.White)
+      }
+      .layoutWeight(1)
+      .width('100%')
+      .height('100%')
+      .padding({ left: 12, right: 12, bottom: 12 })
+      .lanes({ minLength: 74, maxLength: 74 })
+      .cachedCount(10)
+      .scrollBar(BarState.Auto)
+    }.width('100%').height('100%').backgroundColor($r('app.color.surface'))
   }
 }
