@@ -11,11 +11,24 @@ import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLogi
 import { SteamAuthenticatorEnrollment, SteamAuthenticatorService } from '../services/SteamAuthenticatorService';
 import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessionTokens } from '../services/SteamProto';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
+import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
+
+/** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
+@Builder
+export function AddTokenPageBuilder(_name: string, _param: ESObject) {
+  NavDestination() {
+    AddTokenPage({
+      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+      onClose: (): void => AppRouter.pop()
+    })
+  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.ADD))
+}
 
 /** Token 添加页。表单、Steam 密码与登录会话只在该 NavDestination 存活期间保留。 */
 @Component
 export struct AddTokenPage {
-  @Prop tokens: StoredToken[] = [];
+  @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   onTokensChanged: (tokens: StoredToken[]) => Promise<void> = async (_tokens: StoredToken[]): Promise<void> => {};
   onClose: () => void = (): void => {};
 
@@ -42,10 +55,12 @@ export struct AddTokenPage {
   private steamAddTimeOffset: number = 0;
   private steamLoginCancellation?: SteamLoginCancellation;
 
+  /** 页面离开时取消尚未完成的 Steam 登录轮询。 */
   aboutToDisappear(): void {
     this.steamLoginCancellation?.cancel();
   }
 
+  /** 显示轻量操作结果；Toast 失败只写日志，不中断添加流程。 */
   private showToast(message: string, duration: number = 2000): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
@@ -54,6 +69,7 @@ export struct AddTokenPage {
       DiagnosticLogService.error('AddToken', `Failed to show toast: ${detail.message ?? message}`);
     }
   }
+  /** 清空所有普通和 Steam 添加表单，供成功提交后复用。 */
   private resetForm(): void {
     this.issuer = '';
     this.account = '';
@@ -76,6 +92,7 @@ export struct AddTokenPage {
     this.onClose();
   }
 
+  /** 校验手动输入并根据 issuer 自动创建 TOTP 或 Steam Token。 */
   private async addManual(): Promise<void> {
     try {
       const normalized = Base32.normalize(this.secret);
@@ -106,6 +123,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 取消登录并清空 Steam 添加流程的临时密码、会话和密钥。 */
   private resetSteamAddFlow(): void {
     this.steamLoginCancellation?.cancel();
     this.steamLoginCancellation = undefined;
@@ -124,6 +142,7 @@ export struct AddTokenPage {
     this.steamAddTimeOffset = 0;
   }
 
+  /** 取消旧轮询并为新的 Steam 登录创建独立取消令牌。 */
   private newSteamLoginCancellation(): SteamLoginCancellation {
     this.steamLoginCancellation?.cancel();
     const cancellation = new SteamLoginCancellation();
@@ -131,11 +150,13 @@ export struct AddTokenPage {
     return cancellation;
   }
 
+  /** 响应用户取消按钮，在下一个安全检查点停止登录。 */
   private cancelSteamLogin(): void {
     this.steamLoginCancellation?.cancel();
     this.steamAddStatus = '正在取消 Steam 登录…';
   }
 
+  /** 从服务端允许列表中选择当前 UI 能处理的第一种验证方式。 */
   private supportedSteamConfirmation(session: SteamAuthSession): SteamAllowedConfirmation | undefined {
     // 与上游 kdada/Authenticator 一致：遵循 Steam 返回的验证方式顺序，不由客户端重排优先级。
     for (const confirmation of session.confirmations) {
@@ -148,6 +169,7 @@ export struct AddTokenPage {
     return undefined;
   }
 
+  /** 为当前 Steam 验证方式生成明确的用户操作提示。 */
   private steamConfirmationPrompt(): string {
     switch (this.steamAddConfirmationType) {
       case SteamGuardType.EMAIL_CODE:
@@ -163,6 +185,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 使用账号密码创建 Steam 会话，并进入代码输入或自动轮询步骤。 */
   private async startSteamAddLogin(): Promise<void> {
     if (!this.steamAddAccount.trim() || !this.steamAddPassword) {
       this.steamAddStatus = '请输入 Steam 账户名和密码';
@@ -198,6 +221,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 提交邮箱/设备验证码并轮询直到 Steam 返回持久会话令牌。 */
   private async completeSteamAddLogin(): Promise<void> {
     if (!this.steamAddSession) {
       return;
@@ -222,6 +246,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 登录成功后申请新验证器；已绑定账户则转入显式转移流程。 */
   private async startSteamAuthenticator(session: SteamAuthSession, tokens: SteamSessionTokens): Promise<void> {
     this.steamAddTokens = tokens;
     this.steamAddDeviceId = `android:${util.generateRandomUUID()}`;
@@ -246,6 +271,7 @@ export struct AddTokenPage {
     this.steamAddStatus = `请输入通过${channel}收到的激活码${hint}`;
   }
 
+  /** 用激活码和服务器时间校正后的验证码完成新 Steam Guard 激活。 */
   private async finalizeSteamAuthenticator(): Promise<void> {
     if (!this.steamAddSession || !this.steamAddTokens || !this.steamAddEnrollment) {
       return;
@@ -291,6 +317,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 请求转移已有 Steam Guard，并触发 Steam 发送短信验证码。 */
   private async beginSteamTransfer(): Promise<void> {
     if (!this.steamAddSession || !this.steamAddTokens) {
       return;
@@ -310,6 +337,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 提交短信验证码并接收转移后的完整验证器密钥。 */
   private async completeSteamTransfer(): Promise<void> {
     if (!this.steamAddSession || !this.steamAddTokens) {
       return;
@@ -333,6 +361,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 将已激活/转移的密钥与会话元信息组装为 Token，再走统一去重提交。 */
   private async saveSteamEnrollment(enrollment: SteamAuthenticatorEnrollment, message: string): Promise<void> {
     if (!this.steamAddSession || !this.steamAddTokens) {
       return;
@@ -369,6 +398,7 @@ export struct AddTokenPage {
     this.showToast(message, 2200);
   }
 
+  /** 规范化并解析粘贴的 otpauth URI，然后提交到 Token 仓库。 */
   private async addUri(): Promise<void> {
     try {
       this.uriValue = this.normalizeOtpPayload(this.uriValue);
@@ -379,6 +409,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 容忍二维码和剪贴板常见包装格式，提取可解析的 otpauth URI。 */
   private normalizeOtpPayload(rawValue: string): string {
     // 容忍 HTML 转义、引号包裹、百分号编码及二维码中夹带说明文字等常见输入。
     let value = rawValue.trim().replaceAll('&amp;', '&');
@@ -404,6 +435,7 @@ export struct AddTokenPage {
     return value.trim();
   }
 
+  /** 调用 Scan Kit 扫描 OTP 二维码，成功后直接去重并添加。 */
   private async scanToken(): Promise<void> {
     try {
       const options: scanBarcode.ScanOptions = {
@@ -430,6 +462,7 @@ export struct AddTokenPage {
     }
   }
 
+  /** 构建以扫码为主的快捷添加页。 */
   @Builder
   private scanAddTab() {
     Scroll() {
@@ -462,6 +495,7 @@ export struct AddTokenPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 构建 URI 粘贴与解析页。 */
   @Builder
   private uriAddTab() {
     Scroll() {
@@ -500,6 +534,7 @@ export struct AddTokenPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 构建包含周期和位数选项的手动添加表单。 */
   @Builder
   private manualAddTab() {
     Scroll() {
@@ -564,6 +599,7 @@ export struct AddTokenPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 构建 Steam 登录、激活和转移的分步表单。 */
   @Builder
   private steamAddTab() {
     Scroll() {
@@ -694,6 +730,7 @@ export struct AddTokenPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 组合添加页标题和四种添加方式的 Tabs。 */
   build() {
     Column() {
       Row({ space: 10 }) {

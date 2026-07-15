@@ -23,6 +23,7 @@ export class DiagnosticLogService {
   private static readonly FILE_COUNT: number = 3;
   private static directory: string = '';
 
+  /** 在 Ability 启动时确定沙箱日志目录，后续写入才能落盘。 */
   static initialize(context: common.Context): void {
     try {
       DiagnosticLogService.directory = `${context.filesDir}/${DiagnosticLogService.DIRECTORY_NAME}`;
@@ -36,22 +37,27 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 记录仅用于开发诊断的低优先级消息。 */
   static debug(tag: string, message: string): void {
     DiagnosticLogService.write('DEBUG', tag, message);
   }
 
+  /** 记录正常流程中的关键状态变化。 */
   static info(tag: string, message: string): void {
     DiagnosticLogService.write('INFO', tag, message);
   }
 
+  /** 记录可恢复但值得关注的异常状态。 */
   static warn(tag: string, message: string): void {
     DiagnosticLogService.write('WARN', tag, message);
   }
 
+  /** 记录导致当前操作失败的错误，同时执行敏感信息脱敏。 */
   static error(tag: string, message: string): void {
     DiagnosticLogService.write('ERROR', tag, message);
   }
 
+  /** 汇总当前日志文件数量与大小，供设置页显示。 */
   static stats(): DiagnosticLogStats {
     let bytes = 0;
     let files = 0;
@@ -74,6 +80,7 @@ export class DiagnosticLogService {
     return { bytes: bytes, files: files };
   }
 
+  /** 删除当前及轮换日志文件，不影响系统 HiLog。 */
   static clear(): void {
     if (!DiagnosticLogService.directory) {
       return;
@@ -92,6 +99,7 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 合并轮换日志并通过系统选择器导出，用户取消时返回 false。 */
   static async export(context: common.UIAbilityContext): Promise<boolean> {
     const content = DiagnosticLogService.exportContent();
     const options = new picker.DocumentSaveOptions();
@@ -107,6 +115,7 @@ export class DiagnosticLogService {
     return true;
   }
 
+  /** 统一完成脱敏、HiLog 输出、文件轮换和追加写入。 */
   private static write(level: string, tag: string, message: string): void {
     const safeTag = DiagnosticLogService.sanitizeTag(tag);
     const safeMessage = DiagnosticLogService.sanitize(message);
@@ -140,6 +149,7 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 将内部日志级别映射到 HarmonyOS HiLog 接口。 */
   private static writeHiLog(level: string, tag: string, message: string): void {
     switch (level) {
       case 'DEBUG':
@@ -157,6 +167,7 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 在追加内容将超过上限前轮换日志，限制长期磁盘占用。 */
   private static rotateIfNeeded(incomingBytes: number): void {
     try {
       const active = DiagnosticLogService.logPath(0);
@@ -179,6 +190,7 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 按时间顺序拼接历史与当前日志，并附带不含敏感数据的说明头。 */
   private static exportContent(): string {
     const parts: string[] = [
       'Authenticator diagnostic log',
@@ -204,6 +216,7 @@ export class DiagnosticLogService {
     return parts.join('\n');
   }
 
+  /** 安全读取单个日志文件，确保文件句柄在异常路径也会关闭。 */
   private static readText(path: string): string {
     let file: fs.File | undefined;
     let content = '';
@@ -234,6 +247,7 @@ export class DiagnosticLogService {
     return content;
   }
 
+  /** 将导出文本写入用户选择的 URI，并保证文件句柄释放。 */
   private static writeExportFile(uri: string, content: string): void {
     let file: fs.File | undefined;
     let failure: Error | undefined;
@@ -259,16 +273,19 @@ export class DiagnosticLogService {
     }
   }
 
+  /** 生成当前日志或指定轮换分片的沙箱路径。 */
   private static logPath(index: number): string {
     return index === 0 ? `${DiagnosticLogService.directory}/${DiagnosticLogService.ACTIVE_FILE}` :
       `${DiagnosticLogService.directory}/app.${index}.log`;
   }
 
+  /** 将日志标签限制为便于检索且不会破坏格式的字符集合。 */
   private static sanitizeTag(tag: string): string {
     const normalized = tag.replace(/[^A-Za-z0-9_.-]/g, '_');
     return normalized.length > 0 ? normalized.substring(0, 31) : LOG_TAG;
   }
 
+  /** 移除令牌、密钥、密码和超长内容，避免诊断导出泄露凭据。 */
   private static sanitize(message: string): string {
     let value = message.replaceAll('\r', ' ').replaceAll('\n', ' ');
     // 同时覆盖普通 key=value 与 JSON 的 "key":"value"，避免服务端响应进入日志时泄漏凭据。

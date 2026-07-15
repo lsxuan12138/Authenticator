@@ -5,13 +5,27 @@ import { IconPack, IconPackService } from '../services/IconPackService';
 import { BackupMergeResult, BackupService } from '../services/BackupService';
 import { DiagnosticLogService, DiagnosticLogStats } from '../services/DiagnosticLogService';
 import { AppSettingsService } from '../services/AppSettingsService';
+import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
+
+/** 系统路由表入口；设置结果通过 AppStorage 自动同步回首页。 */
+@Builder
+export function SettingsPageBuilder(_name: string, _param: ESObject) {
+  NavDestination() {
+    SettingsPage({
+      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+      onIconPacksChanged: (packs: IconPack[]): void => AppStore.updateIconPacks(packs),
+      onActiveIconPackChanged: (key: string): void => AppStore.updateActiveIconPack(key)
+    })
+  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.SETTINGS))
+}
 
 /** 设置页只接收跨页面共享的数据，其余交互状态均随页面创建和销毁。 */
 @Component
 export struct SettingsPage {
-  @Prop tokens: StoredToken[] = [];
-  @Prop iconPacks: IconPack[] = [];
-  @Prop activeIconPackKey: string = IconPackService.defaultPackKey();
+  @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
+  @StorageLink(APP_ICON_PACKS_KEY) iconPacks: IconPack[] = [];
+  @StorageLink(APP_ACTIVE_ICON_PACK_KEY) activeIconPackKey: string = IconPackService.noPackKey();
   onTokensChanged: (tokens: StoredToken[]) => Promise<void> = async (_tokens: StoredToken[]): Promise<void> => {};
   onIconPacksChanged: (packs: IconPack[]) => void = (_packs: IconPack[]): void => {};
   onActiveIconPackChanged: (key: string) => void = (_key: string): void => {};
@@ -28,11 +42,13 @@ export struct SettingsPage {
   @State private screenshotProtectionEnabled: boolean = false;
   @State private screenshotProtectionBusy: boolean = false;
 
+  /** 设置页出现时刷新图标包、备份面板、安全开关和日志统计。 */
   aboutToAppear(): void {
     this.refreshDiagnosticLogStats();
     this.loadScreenshotProtection();
   }
 
+  /** 显示设置操作结果，UIContext 异常时记录诊断日志。 */
   private showToast(message: string, duration: number = 2000): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
@@ -42,12 +58,14 @@ export struct SettingsPage {
     }
   }
 
+  /** 根据活动键解析当前图标包名称，默认模式返回明确标签。 */
   private currentIconPackName(): string {
-    if (this.activeIconPackKey === IconPackService.defaultPackKey()) return '内置字母图标';
+    if (this.activeIconPackKey === IconPackService.noPackKey()) return '默认字母图标';
     return this.iconPacks.find((pack: IconPack) => IconPackService.packKey(pack) === this.activeIconPackKey)?.name ??
-      '内置字母图标';
+      '默认字母图标';
   }
 
+  /** 保存活动图标包并通知首页重新计算自动图标。 */
   private async selectIconPack(key: string): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -59,6 +77,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 选择并安装 ZIP 图标包，完成后刷新管理列表。 */
   private async installIconPack(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -71,13 +90,14 @@ export struct SettingsPage {
     }
   }
 
+  /** 卸载图标包，并清理引用该目录的手动图标与活动选择。 */
   private async removeIconPack(pack: IconPack): Promise<void> {
     try {
       await IconPackService.remove(pack);
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       if (this.activeIconPackKey === IconPackService.packKey(pack)) {
-        await IconPackService.selectPack(context, IconPackService.defaultPackKey());
-        this.activeIconPackKey = IconPackService.defaultPackKey();
+        await IconPackService.selectPack(context, IconPackService.noPackKey());
+        this.activeIconPackKey = IconPackService.noPackKey();
         this.onActiveIconPackChanged(this.activeIconPackKey);
       }
       this.tokens.forEach((token: StoredToken) => {
@@ -96,6 +116,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 关闭备份操作并清空密码、确认密码和待导入内容。 */
   private resetBackupPanel(): void {
     this.backupMode = 0;
     this.backupPassword = '';
@@ -104,6 +125,7 @@ export struct SettingsPage {
     this.backupBusy = false;
   }
 
+  /** 选择加密备份文件并切换到密码输入恢复模式。 */
   private async chooseBackupImport(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -118,6 +140,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 校验两次密码后创建并保存应用加密备份。 */
   private async exportEncryptedBackup(): Promise<void> {
     if (this.backupPassword !== this.backupConfirmPassword) {
       this.showToast('两次输入的备份密码不一致', 2200);
@@ -140,6 +163,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 解密备份、按 UUID/配置去重合并，并提交新的 Token 数组。 */
   private async importEncryptedBackup(): Promise<void> {
     if (!this.backupImportContent) return;
     this.backupBusy = true;
@@ -163,15 +187,17 @@ export struct SettingsPage {
     }
   }
 
+  /** 从设置服务读取当前防截屏开关用于初始化 UI。 */
   private async loadScreenshotProtection(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      this.screenshotProtectionEnabled = await AppSettingsService.screenshotProtectionEnabled(context);
+      this.screenshotProtectionEnabled = await AppSettingsService.getScreenshotProtectionEnabled(context);
     } catch (error) {
       DiagnosticLogService.error('Privacy', `Failed to load app settings: ${(error as Error).message}`);
     }
   }
 
+  /** 同时更新当前窗口和持久化设置，失败时恢复原开关状态。 */
   private async updateScreenshotProtection(enabled: boolean): Promise<void> {
     if (this.screenshotProtectionBusy) return;
     const previous = this.screenshotProtectionEnabled;
@@ -198,17 +224,20 @@ export struct SettingsPage {
     }
   }
 
+  /** 重新读取日志文件数量和字节数，更新设置页摘要。 */
   private refreshDiagnosticLogStats(): void {
     const stats: DiagnosticLogStats = DiagnosticLogService.stats();
     this.diagnosticLogBytes = stats.bytes;
     this.diagnosticLogFiles = stats.files;
   }
 
+  /** 将日志字节数格式化为适合界面显示的 KB/MB 文本。 */
   private diagnosticLogSize(): string {
     if (this.diagnosticLogBytes < 1024) return `${this.diagnosticLogBytes} B`;
     return `${(this.diagnosticLogBytes / 1024).toFixed(1)} KB`;
   }
 
+  /** 经隐私提示确认后导出脱敏诊断日志。 */
   private async exportDiagnosticLogs(): Promise<void> {
     this.diagnosticLogBusy = true;
     try {
@@ -234,6 +263,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 二次确认后清除应用沙箱内的诊断日志分片。 */
   private async clearDiagnosticLogs(): Promise<void> {
     this.diagnosticLogBusy = true;
     try {
@@ -258,6 +288,7 @@ export struct SettingsPage {
     }
   }
 
+  /** 构建设置页标题和用途说明。 */
   @Builder
   private header() {
     Column({ space: 4 }) {
@@ -266,6 +297,7 @@ export struct SettingsPage {
     }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 18, right: 18, top: 20, bottom: 8 })
   }
 
+  /** 渲染单个已安装图标包的选择和删除操作。 */
   @Builder
   private installedIconPackRow(pack: IconPack) {
     Row({ space: 10 }) {
@@ -304,6 +336,7 @@ export struct SettingsPage {
     .borderRadius(12)
   }
 
+  /** 构建可折叠的图标包安装、选择与管理卡片。 */
   @Builder
   private iconPackCard() {
     Column({ space: 14 }) {
@@ -325,15 +358,15 @@ export struct SettingsPage {
           Button('安装 ZIP').backgroundColor('#4668E8').onClick(() => this.installIconPack())
         }.width('100%')
         Row({ space: 10 }) {
-          Radio({ value: IconPackService.defaultPackKey(), group: 'active-icon-pack' })
-            .checked(this.activeIconPackKey === IconPackService.defaultPackKey())
+          Radio({ value: IconPackService.noPackKey(), group: 'active-icon-pack' })
+            .checked(this.activeIconPackKey === IconPackService.noPackKey())
             .onChange((checked: boolean) => {
-              if (checked) this.selectIconPack(IconPackService.defaultPackKey());
+              if (checked) this.selectIconPack(IconPackService.noPackKey());
             })
           Column({ space: 2 }) {
             Row({ space: 8 }) {
-              Text('内置字母图标').fontSize(15).fontWeight(FontWeight.Medium)
-              if (this.activeIconPackKey === IconPackService.defaultPackKey()) {
+              Text('默认字母图标').fontSize(15).fontWeight(FontWeight.Medium)
+              if (this.activeIconPackKey === IconPackService.noPackKey()) {
                 Text('使用中').fontSize(11).fontColor($r('app.color.brand_strong'))
                   .padding({ left: 7, right: 7, top: 3, bottom: 3 })
                   .backgroundColor($r('app.color.brand_surface_alt')).borderRadius(8)
@@ -344,7 +377,7 @@ export struct SettingsPage {
         }
         .width('100%')
         .padding(12)
-        .backgroundColor(this.activeIconPackKey === IconPackService.defaultPackKey() ?
+        .backgroundColor(this.activeIconPackKey === IconPackService.noPackKey() ?
           $r('app.color.brand_surface') : $r('app.color.surface_subtle'))
         .borderRadius(12)
         ForEach(this.iconPacks, (pack: IconPack) => {
@@ -353,8 +386,10 @@ export struct SettingsPage {
       }
     }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
       .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
+      .border({ width: 1, color: $r('app.color.border') })
   }
 
+  /** 构建加密导出/恢复模式及密码输入区域。 */
   @Builder
   private backupCard() {
     Column({ space: 14 }) {
@@ -399,8 +434,10 @@ export struct SettingsPage {
       }
     }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
       .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
+      .border({ width: 1, color: $r('app.color.border') })
   }
 
+  /** 组合图标包、备份、安全和诊断日志设置。 */
   build() {
     Scroll() {
       Column({ space: 14 }) {
@@ -422,6 +459,7 @@ export struct SettingsPage {
             .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
           .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
+          .border({ width: 1, color: $r('app.color.border') })
         Column({ space: 12 }) {
           Text('诊断日志').fontSize(17).fontWeight(FontWeight.Medium).width('100%')
           Text(`本机环形日志 · ${this.diagnosticLogFiles} 个文件 · ${this.diagnosticLogSize()}`)
@@ -438,6 +476,7 @@ export struct SettingsPage {
           }.width('100%')
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
           .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
+          .border({ width: 1, color: $r('app.color.border') })
         Column({ space: 6 }) {
           Text('本机数据保护').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
           Text('Token 数据使用系统安全主密钥和 AES-256-GCM 加密保存。应用不会启用系统自动备份。')
@@ -446,5 +485,6 @@ export struct SettingsPage {
           .margin({ left: 16, right: 16, bottom: 18 }).backgroundColor($r('app.color.brand_surface')).borderRadius(18)
       }.width('100%').alignItems(HorizontalAlign.Start)
     }.height('100%').width('100%').align(Alignment.TopStart).scrollBar(BarState.Off)
+      .backgroundColor($r('app.color.page_background'))
   }
 }

@@ -2,12 +2,25 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken } from '../domain/Token';
 import { SteamConfirmation, SteamGuardService } from '../services/SteamGuardService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
+import { APP_TOKENS_KEY } from '../data/AppStore';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
+
+/** 使用系统路由参数构建指定 Steam Token 的确认页面。 */
+@Builder
+export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
+  NavDestination() {
+    SteamConfirmationsPage({
+      tokenId: AppRouter.tokenId(param),
+      onClose: (): void => AppRouter.pop()
+    })
+  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.STEAM))
+}
 
 /** Steam 移动确认页，仅在可见期间持有待确认条目和加载状态。 */
 @Component
 export struct SteamConfirmationsPage {
-  @Prop tokens: StoredToken[] = [];
-  tokenIndex: number = -1;
+  @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
+  tokenId: string = '';
   onClose: () => void = (): void => {};
   @State private confirmations: SteamConfirmation[] = [];
   @State private loading: boolean = false;
@@ -15,10 +28,12 @@ export struct SteamConfirmationsPage {
   @State private hasLoaded: boolean = false;
   @State private lastRefresh: string = '';
 
+  /** 页面出现时自动请求一次当前待确认列表。 */
   aboutToAppear(): void {
     this.requestConfirmations();
   }
 
+  /** 显示确认操作结果，失败时写入诊断日志。 */
   private showToast(message: string, duration: number = 2000): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
@@ -28,9 +43,14 @@ export struct SteamConfirmationsPage {
     }
   }
 
+  /** 按路由携带的 UUID 获取账户，避免首页排序后确认请求落到其他 Token。 */
+  private currentToken(): StoredToken | null {
+    return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
+  }
+
+  /** 使用当前 Token 元信息获取 Steam 待确认条目并刷新列表状态。 */
   private async requestConfirmations(): Promise<void> {
-    if (this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) return;
-    const metadata = this.tokens[this.tokenIndex].steam;
+    const metadata = this.currentToken()?.steam;
     if (!metadata?.steamId || !metadata.identitySecret || !metadata.deviceId ||
       (!metadata.accessToken && !metadata.refreshToken)) {
       this.hasLoaded = true;
@@ -52,9 +72,10 @@ export struct SteamConfirmationsPage {
     }
   }
 
+  /** 批准或拒绝单条确认，成功后从本地列表移除。 */
   private async respond(confirmation: SteamConfirmation, approve: boolean): Promise<void> {
-    if (this.submitting || this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) return;
-    const metadata = this.tokens[this.tokenIndex].steam;
+    if (this.submitting) return;
+    const metadata = this.currentToken()?.steam;
     if (!metadata) return;
     this.submitting = true;
     try {
@@ -69,12 +90,12 @@ export struct SteamConfirmationsPage {
     }
   }
 
+  /** 二次确认后批量处理当前所有条目，并防止不可撤销的误触。 */
   private async respondAll(approve: boolean): Promise<void> {
-    if (this.submitting || this.confirmations.length === 0 ||
-      this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) {
+    if (this.submitting || this.confirmations.length === 0) {
       return;
     }
-    const metadata = this.tokens[this.tokenIndex].steam;
+    const metadata = this.currentToken()?.steam;
     if (!metadata) return;
     const action = approve ? '批准' : '拒绝';
     try {
@@ -104,6 +125,7 @@ export struct SteamConfirmationsPage {
     }
   }
 
+  /** 构建刷新、批量操作、空状态和确认条目列表。 */
   build() {
     Column() {
       Row({ space: 10 }) {

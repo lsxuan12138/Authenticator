@@ -61,6 +61,7 @@ export interface SteamAuthPollResult {
  * 字段定义和 wire 编解码均由 protobufjs 生成，本类只把生成对象转换为应用领域类型。
  */
 export class SteamProto {
+  /** 编码凭据登录首包，包括加密密码、移动端设备信息和可选 Guard Data。 */
   static beginRequest(account: string, encryptedPassword: string, timestamp: string,
     guardData: string = ''): Uint8Array {
     const device = CAuthentication_DeviceDetails.create({
@@ -85,6 +86,7 @@ export class SteamProto {
     return CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.encode(request).finish();
   }
 
+  /** 编码向已有登录会话提交邮箱码或设备验证码的请求。 */
   static guardRequest(session: SteamAuthSession, codeType: number, code: string): Uint8Array {
     const request = CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.create({
       clientId: session.clientId,
@@ -95,6 +97,7 @@ export class SteamProto {
     return CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.encode(request).finish();
   }
 
+  /** 编码登录状态轮询请求，绑定服务端下发的 clientId 和 requestId。 */
   static pollRequest(session: SteamAuthSession): Uint8Array {
     const request = CAuthentication_PollAuthSessionStatus_Request.create({
       clientId: session.clientId,
@@ -103,6 +106,7 @@ export class SteamProto {
     return CAuthentication_PollAuthSessionStatus_Request.encode(request).finish();
   }
 
+  /** 解码登录会话、允许的验证方式和服务器建议轮询间隔。 */
   static decodeBegin(data: Uint8Array): SteamAuthSession {
     try {
       const response = CAuthentication_BeginAuthSessionViaCredentials_Response.decode(data);
@@ -124,6 +128,7 @@ export class SteamProto {
     }
   }
 
+  /** 解码轮询结果，并保留令牌、Guard Data 和会话迁移字段。 */
   static decodePoll(data: Uint8Array): SteamAuthPollResult {
     try {
       const response = CAuthentication_PollAuthSessionStatus_Response.decode(data);
@@ -145,6 +150,7 @@ export class SteamProto {
     }
   }
 
+  /** 将页面使用的稳定数字常量转换为生成代码中的 protobuf 枚举。 */
   private static generatedGuardType(value: number): EAuthSessionGuardType {
     switch (value) {
       case SteamGuardType.NONE:

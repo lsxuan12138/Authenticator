@@ -1,28 +1,12 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { StoredToken, TokenCode, TokenKind } from '../domain/Token';
-import { TokenRepository } from '../data/TokenRepository';
+import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { OtpEngine } from '../core/OtpEngine';
 import { OtpUriParser } from '../core/OtpUriParser';
 import { IconPack, IconPackService } from '../services/IconPackService';
-import { TokenIconPicker } from '../components/TokenIconPicker';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
-import { SettingsPage } from './SettingsPage';
-import { AddTokenPage } from './AddTokenPage';
-import { SteamConfirmationsPage } from './SteamConfirmationsPage';
-import { TokenDetailPage } from './TokenDetailPage';
-import { SteamManagementPage } from './SteamManagementPage';
-
-/** Navigation 路由名称；首页是 NavBar，其余界面都是独立 NavDestination。 */
-enum AppRoute {
-  HOME = 'home',
-  ADD = 'add',
-  SETTINGS = 'settings',
-  STEAM = 'steam',
-  STEAM_MANAGEMENT = 'steamManagement',
-  DETAIL = 'detail',
-  ICON_PICKER = 'iconPicker'
-}
+import { APP_ROUTE_KEY, AppRoute, AppRouter } from '../navigation/AppRouter';
 
 /**
  * 应用主界面，同时协调 Token 持久化、验证码刷新、Steam 操作和图标包设置。
@@ -32,21 +16,17 @@ enum AppRoute {
 @Component
 struct Index {
   // 首页与跨页面共享状态。
-  @State private currentRoute: AppRoute = AppRoute.HOME;
-  @State private tokens: StoredToken[] = [];
+  @StorageLink(APP_ROUTE_KEY) private currentRoute: AppRoute = AppRoute.HOME;
+  @StorageLink(APP_TOKENS_KEY) private tokens: StoredToken[] = [];
   @State private codes: TokenCode[] = [];
   // 图标包及手动图标选择状态。
-  @State private iconPacks: IconPack[] = [];
-  @State private activeIconPackKey: string = IconPackService.defaultPackKey();
-  @State private iconPickerIndex: number = -1;
-  @State private iconPickerIssuer: string = '';
+  @StorageLink(APP_ICON_PACKS_KEY) private iconPacks: IconPack[] = [];
+  @StorageLink(APP_ACTIVE_ICON_PACK_KEY) private activeIconPackKey: string = IconPackService.noPackKey();
   @State private reorderMode: boolean = false;
   @State private showTokenQr: boolean = false;
   @State private qrTokenIndex: number = -1;
   @State private now: number = Date.now();
-  // 路由参数只保存 Token 索引，编辑副本与 Steam 凭据由详情页自行管理。
-  @State private selectedSteamIndex: number = -1;
-  private navPathStack: NavPathStack = new NavPathStack();
+  private navPathStack: NavPathStack = AppRouter.stack();
 
   /** Toast 失败不应中断用户操作，但需要留下可定位的日志。 */
   private showToast(message: string, duration: number = 2000): void {
@@ -58,21 +38,21 @@ struct Index {
     }
   }
 
-  private repository: TokenRepository = new TokenRepository();
   private timer: number = -1;
 
   /** 所有二级界面均进入 Navigation 路由栈，系统返回手势与页面生命周期由框架统一管理。 */
   private navigate(route: AppRoute): void {
-    this.navPathStack.pushPath({ name: route });
+    AppRouter.push(route);
   }
 
+  /** 清空二级页面选择状态并回到首页列表。 */
   private returnHome(): void {
-    this.navPathStack.clear();
-    this.currentRoute = AppRoute.HOME;
+    AppRouter.returnHome();
   }
 
   // ===== 生命周期、存储与动态验证码 =====
 
+  /** 首页出现时加载仓库数据，并启动每秒更新验证码的计时器。 */
   aboutToAppear(): void {
     this.initialize();
     // 每秒刷新一次既能更新倒计时，也能及时跨越 OTP 周期边界。
@@ -82,41 +62,18 @@ struct Index {
     }, 1000);
   }
 
+  /** 首页离开组件树时停止计时器，避免后台无意义刷新和泄漏。 */
   aboutToDisappear(): void {
     if (this.timer >= 0) {
       clearInterval(this.timer);
     }
   }
 
+  /** 打开安全仓库、读取 Token 和图标包，并清理已失效的旧自动图标路径。 */
   private async initialize(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      await this.repository.open(context);
-      this.tokens = await this.repository.list();
-      this.iconPacks = await IconPackService.list(context);
-      this.activeIconPackKey = await IconPackService.activePackKey(context);
-      if (this.activeIconPackKey !== IconPackService.defaultPackKey() &&
-        !this.iconPacks.some((pack: IconPack) => IconPackService.packKey(pack) === this.activeIconPackKey)) {
-        this.activeIconPackKey = IconPackService.defaultPackKey();
-        await IconPackService.selectPack(context, this.activeIconPackKey);
-      }
-      // 自动图标不保存路径；手动图标若已随图标包删除，则回退到自动匹配。
-      let iconsChanged = false;
-      this.tokens = this.tokens.map((token: StoredToken) => {
-        if (token.iconManual !== true && token.iconPath.length > 0) {
-          token.iconPath = '';
-          token.iconManual = false;
-          iconsChanged = true;
-        } else if (token.iconManual === true && !IconPackService.pathExists(token.iconPath)) {
-          token.iconPath = '';
-          token.iconManual = false;
-          iconsChanged = true;
-        }
-        return token;
-      });
-      if (iconsChanged) {
-        await this.repository.save(this.tokens);
-      }
+      await AppStore.initialize(context);
       this.refreshCodes();
     } catch (error) {
       const detail = error as BusinessError;
@@ -125,6 +82,7 @@ struct Index {
     }
   }
 
+  /** 为当前 Token 快照重新计算验证码、进度和剩余秒数。 */
   private refreshCodes(): void {
     this.codes = this.tokens.map((token: StoredToken): TokenCode => {
       try {
@@ -138,27 +96,15 @@ struct Index {
     });
   }
 
+  /** 把首页当前 Token 顺序和字段写入加密仓库。 */
   private async persist(): Promise<void> {
-    await this.repository.save(this.tokens);
+    await AppStore.updateTokens(this.tokens);
     this.refreshCodes();
-  }
-
-  /** 子页面通过显式回调提交新数组，避免在路由 Builder 中依赖 IDE 无法解析的 $Link 宏。 */
-  private async updateTokens(tokens: StoredToken[]): Promise<void> {
-    this.tokens = [...tokens];
-    await this.persist();
-  }
-
-  private updateIconPacks(packs: IconPack[]): void {
-    this.iconPacks = [...packs];
-  }
-
-  private updateActiveIconPack(key: string): void {
-    this.activeIconPackKey = key;
   }
 
   // ===== Token 添加、编辑与排序 =====
 
+  /** 将验证码写入系统剪贴板，并向用户反馈操作结果。 */
   private async copyCode(value: string): Promise<void> {
     try {
       await pasteboard.getSystemPasteboard().setData(
@@ -170,6 +116,7 @@ struct Index {
     }
   }
 
+  /** 删除指定 Token、同步验证码数组并立即持久化。 */
   private async removeToken(index: number): Promise<void> {
     const previous = this.tokens;
     try {
@@ -182,6 +129,7 @@ struct Index {
     }
   }
 
+  /** 响应拖拽排序，移动 Token 后保存新的首页顺序。 */
   private async moveToken(from: number, to: number): Promise<void> {
     // 数组顺序就是首页顺序，拖拽结束后立即持久化，重启应用仍保持该顺序。
     if (from === to || from < 0 || to < 0 || from >= this.tokens.length || to >= this.tokens.length) {
@@ -201,18 +149,23 @@ struct Index {
     }
   }
 
+  /** 使用 UUID 进入 Token 详情路由，排序不会改变该页面对应的记录。 */
   private openTokenDetail(index: number): void {
-    this.selectedSteamIndex = index;
-    this.navigate(AppRoute.DETAIL);
+    if (index < 0 || index >= this.tokens.length) {
+      return;
+    }
+    AppRouter.pushToken(AppRoute.DETAIL, this.tokens[index].id);
   }
 
   // ===== 图标解析与图标包管理 =====
 
+  /** 按手动选择和活动图标包规则解析首页实际显示路径。 */
   private resolvedIcon(token: StoredToken): string {
     return IconPackService.resolveIcon(token.issuer, token.iconPath, token.iconManual === true,
       this.iconPacks, this.activeIconPackKey);
   }
 
+  /** 从 issuer 生成稳定色板索引，使无图标 Token 仍容易区分。 */
   private fallbackIconColor(issuer: string): string {
     let hash = 0;
     for (let index = 0; index < issuer.length; index++) {
@@ -222,49 +175,17 @@ struct Index {
     return colors[Math.abs(hash) % colors.length];
   }
 
+  /** 将 Token UUID 和预览 issuer 随路由入栈并进入懒加载图标选择页。 */
   private openIconPicker(index: number, issuer: string = ''): void {
     if (index < 0 || index >= this.tokens.length) {
       return;
     }
-    this.iconPickerIndex = index;
-    this.iconPickerIssuer = issuer.trim().length > 0 ? issuer.trim() : this.tokens[index].issuer;
-    this.navigate(AppRoute.ICON_PICKER);
+    const token = this.tokens[index];
+    const previewIssuer = issuer.trim().length > 0 ? issuer.trim() : token.issuer;
+    AppRouter.pushToken(AppRoute.ICON_PICKER, token.id, previewIssuer);
   }
 
-  private async applyManualIcon(path: string): Promise<void> {
-    if (this.iconPickerIndex < 0 || this.iconPickerIndex >= this.tokens.length) {
-      return;
-    }
-    const token = this.tokens[this.iconPickerIndex];
-    const previousPath = token.iconPath;
-    const previousManual = token.iconManual;
-    try {
-      token.iconPath = path;
-      token.iconManual = path.length > 0;
-      this.tokens = [...this.tokens];
-      await this.persist();
-      this.navPathStack.pop();
-    } catch (error) {
-      token.iconPath = previousPath;
-      token.iconManual = previousManual;
-      this.tokens = [...this.tokens];
-      this.refreshCodes();
-      this.showToast(`保存图标选择失败：${(error as Error).message}`, 3000);
-    }
-  }
-
-  // ===== Steam 会话、移动确认与扫码登录 =====
-
-  private openSteamToken(index: number): void {
-    this.selectedSteamIndex = index;
-    this.navigate(AppRoute.STEAM);
-  }
-
-  private openSteamManagement(index: number): void {
-    this.selectedSteamIndex = index;
-    this.navigate(AppRoute.STEAM_MANAGEMENT);
-  }
-
+  /** 选择 Token 并打开包含敏感 otpauth URI 的二维码弹层。 */
   private openTokenQr(index: number): void {
     if (index < 0 || index >= this.tokens.length) {
       return;
@@ -273,6 +194,7 @@ struct Index {
     this.showTokenQr = true;
   }
 
+  /** 安全取得当前二维码弹层对应的 Token，索引失效时返回 null。 */
   private currentQrToken(): StoredToken | null {
     if (this.qrTokenIndex < 0 || this.qrTokenIndex >= this.tokens.length) {
       return null;
@@ -280,6 +202,7 @@ struct Index {
     return this.tokens[this.qrTokenIndex];
   }
 
+  /** 为二维码弹层序列化当前 Token，异常时返回空字符串关闭内容。 */
   private currentQrUri(): string {
     const token = this.currentQrToken();
     return token === null ? '' : OtpUriParser.serialize(token);
@@ -287,6 +210,7 @@ struct Index {
 
   // ===== 可复用 UI Builder =====
 
+  /** 构建首页左滑操作区，提供编辑、二维码和删除快捷操作。 */
   @Builder
   private swipeActions(index: number) {
     Row({ space: 8 }) {
@@ -311,6 +235,7 @@ struct Index {
     }.width(124).height('100%').padding({ left: 8 }).backgroundColor(Color.Transparent)
   }
 
+  /** 构建 Token URI 二维码弹层，并提示其等同于密钥。 */
   @Builder
   private tokenQrSheet() {
     Column({ space: 12 }) {
@@ -331,6 +256,7 @@ struct Index {
     }.width('100%').padding({ left: 20, right: 20, bottom: 20 }).alignItems(HorizontalAlign.Center)
   }
 
+  /** 渲染 Token 图标；没有可用图片时使用稳定色块和首字母。 */
   @Builder
   private tokenIcon(token: StoredToken, index: number) {
     Stack() {
@@ -351,6 +277,7 @@ struct Index {
       .onAction(() => this.openIconPicker(index)))
   }
 
+  /** 渲染单个验证码条目以及可选的拖拽手柄。 */
   @Builder
   private tokenRow(token: StoredToken, index: number, showHandle: boolean) {
     Row({ space: 14 }) {
@@ -385,10 +312,11 @@ struct Index {
       })
   }
 
+  /** 构建支持左滑操作和拖拽排序的 Token 列表。 （包含头部）*/
   @Builder
   private tokenList() {
     Column() {
-      Row() {
+      Row({ space: 10 }) {
         Column({ space: 4 }) {
           Text('验证码').fontSize(30).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary'))
           Text(this.reorderMode ? '长按右侧手柄并上下拖动' :
@@ -396,11 +324,20 @@ struct Index {
             .fontSize(14).fontColor($r('app.color.text_tertiary'))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
+        // 排序模式
         if (this.reorderMode) {
           Button('完成').backgroundColor('#4668E8').onClick(() => this.reorderMode = false)
         } else {
           if (this.tokens.length > 1) {
-            Button('排序').backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
+            Button() {
+              SymbolGlyph($r('sys.symbol.sort')).fontSize(22)
+                .fontColor([$r('app.color.text_secondary')])
+            }
+              .type(ButtonType.Circle)
+              .width(42)
+              .height(42)
+              .backgroundColor($r('app.color.surface_muted'))
+              .accessibilityText('排序验证码')
               .onClick(() => this.reorderMode = true)
           }
           Button() {
@@ -410,6 +347,7 @@ struct Index {
             .width(42)
             .height(42)
             .backgroundColor('#4668E8')
+            .accessibilityText('添加账户')
             .onClick(() => {
               this.navigate(AppRoute.ADD);
             })
@@ -434,6 +372,7 @@ struct Index {
         }.layoutWeight(1).justifyContent(FlexAlign.Center).width('100%')
       } else {
         List({ space: 12 }) {
+          // 排序模式
           if (this.reorderMode) {
             ForEach(this.tokens, (token: StoredToken, index: number) => {
               ListItem() {
@@ -461,89 +400,7 @@ struct Index {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
-  @Builder
-  private routeDestination(name: string) {
-    if (name === AppRoute.ADD) {
-      NavDestination() {
-        AddTokenPage({
-          tokens: this.tokens,
-          onTokensChanged: (tokens: StoredToken[]): Promise<void> => this.updateTokens(tokens),
-          onClose: (): void => {
-            this.navPathStack.pop();
-          }
-        })
-      }.hideTitleBar(true).onShown(() => this.currentRoute = AppRoute.ADD)
-    } else if (name === AppRoute.SETTINGS) {
-      NavDestination() {
-        SettingsPage({
-          tokens: this.tokens,
-          iconPacks: this.iconPacks,
-          activeIconPackKey: this.activeIconPackKey,
-          onTokensChanged: (tokens: StoredToken[]): Promise<void> => this.updateTokens(tokens),
-          onIconPacksChanged: (packs: IconPack[]): void => this.updateIconPacks(packs),
-          onActiveIconPackChanged: (key: string): void => this.updateActiveIconPack(key)
-        })
-      }.hideTitleBar(true).onShown(() => {
-        this.currentRoute = AppRoute.SETTINGS;
-      })
-    } else if (name === AppRoute.STEAM) {
-      NavDestination() {
-        SteamConfirmationsPage({
-          tokens: this.tokens,
-          tokenIndex: this.selectedSteamIndex,
-          onClose: (): void => {
-            this.navPathStack.pop();
-          }
-        })
-      }.hideTitleBar(true).onShown(() => this.currentRoute = AppRoute.STEAM)
-    } else if (name === AppRoute.STEAM_MANAGEMENT) {
-      NavDestination() {
-        SteamManagementPage({
-          tokens: this.tokens,
-          tokenIndex: this.selectedSteamIndex,
-          onTokensChanged: (tokens: StoredToken[]): Promise<void> => this.updateTokens(tokens),
-          onClose: (): void => {
-            this.navPathStack.pop();
-          },
-          onTokenRemoved: (): void => this.returnHome()
-        })
-      }.hideTitleBar(true).onShown(() => this.currentRoute = AppRoute.STEAM_MANAGEMENT)
-    } else if (name === AppRoute.DETAIL) {
-      NavDestination() {
-        TokenDetailPage({
-          tokens: this.tokens,
-          iconPacks: this.iconPacks,
-          activeIconPackKey: this.activeIconPackKey,
-          tokenIndex: this.selectedSteamIndex,
-          onTokensChanged: (tokens: StoredToken[]): Promise<void> => this.updateTokens(tokens),
-          onClose: (): void => {
-            this.navPathStack.pop();
-          },
-          onOpenIconPicker: (issuer: string): void =>
-            this.openIconPicker(this.selectedSteamIndex, issuer),
-          onOpenConfirm: (): void => this.openSteamToken(this.selectedSteamIndex),
-          onOpenSteamManagement: (): void => this.openSteamManagement(this.selectedSteamIndex)
-        })
-      }.hideTitleBar(true).onShown(() => this.currentRoute = AppRoute.DETAIL)
-    } else if (name === AppRoute.ICON_PICKER && this.iconPickerIndex >= 0 &&
-      this.iconPickerIndex < this.tokens.length) {
-      NavDestination() {
-        TokenIconPicker({
-          issuer: this.iconPickerIssuer,
-          currentPath: this.tokens[this.iconPickerIndex].iconManual === true ?
-            this.tokens[this.iconPickerIndex].iconPath : '',
-          packs: this.iconPacks,
-          onConfirm: (path: string): void => {
-            this.applyManualIcon(path);
-          },
-          onClose: (): void => {
-            this.navPathStack.pop();
-          }
-        })
-      }.hideTitleBar(true).onShown(() => this.currentRoute = AppRoute.ICON_PICKER)
-    }
-  }
-
+  /** 构建首页底部导航，仅保留首页与设置两个一级入口。 */
   @Builder
   private bottomBar() {
     Row() {
@@ -562,16 +419,16 @@ struct Index {
     .border({ width: { top: 1 }, color: $r('app.color.border') })
   }
 
+  /** 组合 Navigation、首页内容、弹层与底部导航。 */
   build() {
     Column() {
       Navigation(this.navPathStack) {
         this.tokenList()
       }.layoutWeight(1).width('100%').height('100%')
         .hideTitleBar(true).mode(NavigationMode.Stack)
-        .navDestination(this.routeDestination)
         .onNavBarStateChange((isVisible: boolean) => {
           if (isVisible) {
-            this.currentRoute = AppRoute.HOME;
+            AppRouter.markCurrent(AppRoute.HOME);
           }
         })
 

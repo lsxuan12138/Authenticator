@@ -10,14 +10,29 @@ import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLogi
 import { SteamGuardType } from '../services/SteamProto';
 import { SteamAuthenticatorService, SteamAuthenticatorStatus } from '../services/SteamAuthenticatorService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
+import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
+
+/** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
+@Builder
+export function SteamManagementPageBuilder(_name: string, param: ESObject) {
+  NavDestination() {
+    SteamManagementPage({
+      tokenId: AppRouter.tokenId(param),
+      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+      onClose: (): void => AppRouter.pop(),
+      onTokenRemoved: (): void => AppRouter.returnHome()
+    })
+  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.STEAM_MANAGEMENT))
+}
 
 /**
  * Steam 专用管理页。会话、验证器和原始数据分区展示，避免 Token 详情页承载全部高级功能。
  */
 @Component
 export struct SteamManagementPage {
-  @Prop tokens: StoredToken[] = [];
-  tokenIndex: number = -1;
+  @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
+  tokenId: string = '';
   onTokensChanged: (tokens: StoredToken[]) => Promise<void> = async (_tokens: StoredToken[]): Promise<void> => {};
   onClose: () => void = (): void => {};
   onTokenRemoved: () => void = (): void => {};
@@ -35,24 +50,25 @@ export struct SteamManagementPage {
   @State private steamAuthenticatorStatus: SteamAuthenticatorStatus | null = null;
   private steamLoginCancellation?: SteamLoginCancellation;
 
+  /** 页面出现时从当前 Token 加载可展示和可修复的元信息。 */
   aboutToAppear(): void {
     this.loadMetadata();
   }
 
+  /** 页面离开时取消可能仍在等待设备确认的登录轮询。 */
   aboutToDisappear(): void {
     this.steamLoginCancellation?.cancel();
   }
 
+  /** 将非密钥字段复制到页面状态；敏感字段继续保留在 Token 模型中。 */
   private loadMetadata(): void {
-    if (this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) {
-      return;
-    }
-    const metadata = this.tokens[this.tokenIndex].steam;
+    const metadata = this.currentToken()?.steam;
     this.steamId = metadata?.steamId ?? '';
     this.steamAccessToken = metadata?.accessToken ?? '';
     this.steamDeviceId = metadata?.deviceId ?? '';
   }
 
+  /** 显示 Steam 管理操作结果，Toast 失败时写诊断日志。 */
   private showToast(message: string, duration: number = 2000): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
@@ -62,17 +78,17 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 按稳定 UUID 返回当前管理目标，索引变化时仍能阻止误操作其他账户。 */
   private currentToken(): StoredToken | null {
-    if (this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) {
-      return null;
-    }
-    return this.tokens[this.tokenIndex];
+    return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
   }
 
+  /** 读取当前 Refresh Token，仅用于状态展示和联网前置检查。 */
   private currentRefreshToken(): string {
     return this.currentToken()?.steam?.refreshToken ?? '';
   }
 
+  /** 主动更新 Access Token，并原子保存 Steam 可能轮换的新 Refresh Token。 */
   private async refreshSteamSession(): Promise<void> {
     const token = this.currentToken();
     if (!token?.steam?.steamId || !token.steam.refreshToken) {
@@ -98,6 +114,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 使用密码、当前五位码和 Guard Data 重新建立完整 Steam 会话。 */
   private async reauthenticateSteam(): Promise<void> {
     const token = this.currentToken();
     if (!token || !this.steamLoginPassword) {
@@ -140,11 +157,13 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 响应取消按钮，在下一个轮询安全点终止重新认证。 */
   private cancelSteamLogin(): void {
     this.steamLoginCancellation?.cancel();
     this.steamSessionStatus = '正在取消 Steam 登录…';
   }
 
+  /** 将 Steam 返回的 Unix 秒时间转换为本地可读文本。 */
   private formatStatusTime(seconds: number): string {
     if (seconds <= 0) {
       return '未提供';
@@ -156,6 +175,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 把验证器最近使用类型转换为界面标签，同时保留未知值的兜底。 */
   private usageTypeLabel(type: number): string {
     if (type === 2) {
       return '移动确认';
@@ -166,6 +186,7 @@ export struct SteamManagementPage {
     return '其他操作';
   }
 
+  /** 从 Steam 服务端查询验证器状态和最近使用记录。 */
   private async queryAuthenticatorStatus(): Promise<void> {
     const metadata = this.currentToken()?.steam;
     if (!metadata?.steamId || !metadata.refreshToken) {
@@ -184,6 +205,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 二次确认后撤销服务端验证器，并仅在成功后删除本地 Token。 */
   private async revokeAuthenticator(): Promise<void> {
     const token = this.currentToken();
     const metadata = token?.steam;
@@ -208,8 +230,7 @@ export struct SteamManagementPage {
       this.steamAuthenticatorLoading = true;
       await new SteamAuthenticatorService().revokeAuthenticator(
         metadata.steamId, metadata.refreshToken, metadata.revocationCode);
-      const next: StoredToken[] = [...this.tokens];
-      next.splice(this.tokenIndex, 1);
+      const next: StoredToken[] = this.tokens.filter((item: StoredToken): boolean => item.id !== this.tokenId);
       this.tokens = next;
       await this.onTokensChanged(next);
       this.showToast('Steam 验证器已撤销，本地 Token 已删除', 2600);
@@ -221,6 +242,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 保存高级修复允许的标识字段，受保护的令牌和密钥始终沿用原值。 */
   private async saveMetadata(): Promise<void> {
     const token = this.currentToken();
     if (!token) {
@@ -259,6 +281,7 @@ export struct SteamManagementPage {
     this.showToast('Steam 元信息已保存', 1800);
   }
 
+  /** 显示风险说明并在用户确认后开放 Steam ID 与 Device ID 编辑。 */
   private async enterMetadataRepair(): Promise<void> {
     try {
       const result = await this.getUIContext().getPromptAction().showDialog({
@@ -280,15 +303,18 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 放弃未保存修复并从 Token 重新加载原始标识。 */
   private cancelMetadataRepair(): void {
     this.loadMetadata();
     this.metadataRepairMode = false;
   }
 
+  /** 将敏感字段转换为不泄露内容的“已配置/未配置”状态。 */
   private configuredStatus(value: string): string {
     return value.length > 0 ? '已配置' : '未配置';
   }
 
+  /** 解析 maFile/JSON，并用完整导入结果替换当前 Steam 元信息。 */
   private async importSteamText(text: string): Promise<void> {
     try {
       const imported: SteamImportResult = SteamImportService.parse(text);
@@ -315,6 +341,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 选择 Steam 数据文件并交给统一文本导入流程。 */
   private async pickSteamFile(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -327,6 +354,7 @@ export struct SteamManagementPage {
     }
   }
 
+  /** 构建令牌有效期、主动更新和重新认证区域。 */
   @Builder
   private sessionTab() {
     Scroll() {
@@ -382,6 +410,7 @@ export struct SteamManagementPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 构建服务端验证器状态、最近使用记录和撤销入口。 */
   @Builder
   private authenticatorTab() {
     Scroll() {
@@ -448,6 +477,7 @@ export struct SteamManagementPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 构建只读数据状态、受限高级修复和 maFile/JSON 导入区域。 */
   @Builder
   private dataTab() {
     Scroll() {
@@ -512,6 +542,7 @@ export struct SteamManagementPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
+  /** 组合 Steam 管理页标题及会话、验证器、数据三个分区。 */
   build() {
     Column() {
       Row({ space: 10 }) {

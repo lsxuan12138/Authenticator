@@ -74,6 +74,7 @@ export interface SteamAuthenticatorUsage {
  * AddAuthenticator 会创建新的密钥；Finalize 成功前调用方不得把临时密钥保存为可用 Token。
  */
 export class SteamAuthenticatorService {
+  /** 向 Steam 申请一套待激活的移动验证器密钥和撤销信息。 */
   async addAuthenticator(steamId: string, refreshToken: string,
     deviceId: string): Promise<SteamAuthenticatorEnrollment> {
     const request: CTwoFactor_AddAuthenticator_Request = CTwoFactor_AddAuthenticator_Request.create({
@@ -110,6 +111,7 @@ export class SteamAuthenticatorService {
     };
   }
 
+  /** 提交激活码和当前验证码，只有服务端确认成功后密钥才可持久化。 */
   async finalizeAuthenticator(steamId: string, refreshToken: string, authenticatorCode: string,
     authenticatorTime: number, activationCode: string): Promise<SteamFinalizeResult> {
     const request: CTwoFactor_FinalizeAddAuthenticator_Request =
@@ -223,6 +225,7 @@ export class SteamAuthenticatorService {
     }
   }
 
+  /** 使用短信验证码完成验证器转移，并返回替换后的完整密钥材料。 */
   async completeTransfer(steamId: string, refreshToken: string,
     smsCode: string): Promise<SteamAuthenticatorEnrollment> {
     const request: CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request =
@@ -264,6 +267,7 @@ export class SteamAuthenticatorService {
     };
   }
 
+  /** 为 ITwoFactorService 请求换取 Access Token、编码 protobuf 并统一处理 EResult。 */
   private async protobufRequest(method: string, steamId: string, refreshToken: string,
     payload: Uint8Array): Promise<Uint8Array> {
     const accessToken: string = await new SteamGuardService().refreshAccessToken(steamId, refreshToken);

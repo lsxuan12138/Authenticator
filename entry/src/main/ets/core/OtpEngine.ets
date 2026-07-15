@@ -10,6 +10,7 @@ import { TokenCode, TokenKind, TokenRecord } from '../domain/Token';
 export class OtpEngine {
   private static readonly STEAM_ALPHABET: string = '23456789BCDFGHJKMNPQRTVWXY';
 
+  /** 根据 Token 周期和当前时间生成 TOTP 或 Steam 五字符验证码及倒计时状态。 */
   static generate(token: TokenRecord, nowMilliseconds: number = Date.now()): TokenCode {
     const period = token.period > 0 ? token.period : 30;
     const seconds = Math.floor(nowMilliseconds / 1000);
@@ -36,6 +37,7 @@ export class OtpEngine {
     return { value: value, remainingSeconds: period - elapsed, progress: (period - elapsed) / period };
   }
 
+  /** 执行 RFC 6238 与 Steam Guard 都要求的 HMAC-SHA1 运算。 */
   private static hmacSha1(secret: Uint8Array, message: Uint8Array): Uint8Array {
     try {
       // Crypto Architecture Kit 需要先把原始密钥字节转换为 HMAC 对称密钥对象。
@@ -52,6 +54,7 @@ export class OtpEngine {
     }
   }
 
+  /** 把时间步计数器写成 HOTP 规定的 8 字节大端序消息。 */
   private static counterBytes(counter: number): Uint8Array {
     // 避免 JavaScript 位运算的 32 bit 截断，逐字节使用除法生成高位。
     const bytes = new Uint8Array(8);

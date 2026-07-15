@@ -25,6 +25,7 @@ export class SecureTokenVault {
   private readonly decoder: util.TextDecoder = new util.TextDecoder();
   private readonly base64: util.Base64Helper = new util.Base64Helper();
 
+  /** 使用 Asset Store 中的主密钥和随机 IV 将 Token JSON 加密为版本化载荷。 */
   async encrypt(plaintext: string): Promise<string> {
     try {
       const keyBytes = await this.loadOrCreateMasterKey();
@@ -55,6 +56,7 @@ export class SecureTokenVault {
     }
   }
 
+  /** 验证 AES-GCM 标签并解密持久化载荷，认证失败时不返回任何明文。 */
   async decrypt(serialized: string): Promise<string> {
     try {
       const payload = JSON.parse(serialized) as EncryptedTokenPayload;
@@ -81,6 +83,7 @@ export class SecureTokenVault {
     }
   }
 
+  /** 在进入密码学 API 前检查载荷版本、必需字段和二进制长度。 */
   private validatePayload(payload: EncryptedTokenPayload): void {
     if (!payload || payload.version !== 1 || !payload.iv || !payload.authTag || !payload.ciphertext) {
       throw new Error('加密 Token 数据格式无效');
@@ -92,6 +95,7 @@ export class SecureTokenVault {
     }
   }
 
+  /** 读取现有主密钥；首次运行时生成并写入系统 Asset Store。 */
   private async loadOrCreateMasterKey(): Promise<Uint8Array> {
     const existing = await this.queryMasterKey();
     if (existing) {
@@ -119,6 +123,7 @@ export class SecureTokenVault {
     }
   }
 
+  /** 在并发创建发生重复时重新读取胜出的 Asset Store 主密钥。 */
   private async loadExistingMasterKey(): Promise<Uint8Array> {
     const existing = await this.queryMasterKey();
     if (!existing) {
@@ -127,6 +132,7 @@ export class SecureTokenVault {
     return existing;
   }
 
+  /** 查询并校验 Asset Store 中保存的固定长度主密钥。 */
   private async queryMasterKey(): Promise<Uint8Array | undefined> {
     const query: asset.AssetMap = new Map();
     query.set(asset.Tag.ALIAS, this.encoder.encodeInto(SecureTokenVault.MASTER_KEY_ALIAS));

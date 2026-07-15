@@ -5,24 +5,29 @@ class IconPathDataSource implements IDataSource {
   private listeners: DataChangeListener[] = [];
   private pack: IconPack;
 
+  /** 为单个图标包创建按需取路径的数据源。 */
   constructor(pack: IconPack) {
     this.pack = pack;
   }
 
+  /** 告诉 LazyForEach 当前图标包包含多少可见项。 */
   totalCount(): number {
     return this.pack.icons.length;
   }
 
+  /** 仅在列表请求某个索引时生成对应文件路径。 */
   getData(index: number): string {
     return IconPackService.iconPathAt(this.pack, index);
   }
 
+  /** 注册 LazyForEach 数据变化监听器，避免重复注册。 */
   registerDataChangeListener(listener: DataChangeListener): void {
     if (this.listeners.indexOf(listener) < 0) {
       this.listeners.push(listener);
     }
   }
 
+  /** 组件销毁时移除监听器，避免持有无效页面引用。 */
   unregisterDataChangeListener(listener: DataChangeListener): void {
     const index = this.listeners.indexOf(listener);
     if (index >= 0) {
@@ -48,6 +53,7 @@ export struct TokenIconPicker {
   @State private suggestions: string[] = [];
   private sources: Map<string, IconPathDataSource> = new Map();
 
+  /** 页面显示时按当前 issuer 计算推荐图标和各包懒加载数据源。 */
   aboutToAppear(): void {
     this.selectedPath = this.currentPath;
     this.suggestions = IconPackService.suggestedIcons(this.issuer, this.packs);
@@ -58,6 +64,7 @@ export struct TokenIconPicker {
   }
 
   @Builder
+  /** 渲染单个图标选项，并区分恢复自动匹配的特殊入口。 */
   private iconCell(path: string, automatic: boolean = false) {
     ListItem() {
       Column({ space: 5 }) {
@@ -84,6 +91,7 @@ export struct TokenIconPicker {
   }
 
   @Builder
+  /** 为图标列表分组生成统一的标题样式。 */
   private sectionHeader(title: string) {
     Text(title)
       .fontSize(14)
@@ -93,6 +101,7 @@ export struct TokenIconPicker {
       .padding({ left: 4, top: 10, bottom: 8 })
   }
 
+  /** 组合自动模式、推荐项与各图标包的懒加载列表。 */
   build() {
     Column() {
       Row({ space: 10 }) {

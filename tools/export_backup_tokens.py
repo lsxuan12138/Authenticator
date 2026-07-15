@@ -21,6 +21,7 @@ BACKUP_AAD = b"harmony-authenticator-backup.v1"
 
 
 def parse_args() -> argparse.Namespace:
+    """解析输入备份、密码和可选输出路径等命令行参数。"""
     parser = argparse.ArgumentParser(
         description=(
             "解密 Authenticator 备份，输出所有 Token 的 otpauth URI；"
@@ -48,6 +49,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def decode_base64(value: Any, field: str) -> bytes:
+    """校验并解码备份外层的 Base64 字段，同时提供明确字段名错误。"""
     if not isinstance(value, str) or not value:
         raise ValueError(f"备份字段 {field} 缺失或不是字符串")
     try:
@@ -57,7 +59,7 @@ def decode_base64(value: Any, field: str) -> bytes:
 
 
 def remove_optional_pkcs7(data: bytes) -> bytes:
-    """Remove the padding produced by HarmonyOS AES256|GCM|PKCS7."""
+    """移除 HarmonyOS AES256|GCM|PKCS7 可能保留的可选填充。"""
     if not data:
         return data
     padding = data[-1]
@@ -67,6 +69,7 @@ def remove_optional_pkcs7(data: bytes) -> bytes:
 
 
 def decrypt_backup(envelope: dict[str, Any], password: str) -> dict[str, Any]:
+    """按应用备份格式派生密钥、验证 GCM 标签并返回解密后的 JSON 对象。"""
     try:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     except ImportError as error:
@@ -108,6 +111,7 @@ def decrypt_backup(envelope: dict[str, Any], password: str) -> dict[str, Any]:
 
 
 def load_encrypted_backup(path: Path, password: str) -> dict[str, Any]:
+    """以 UTF-8 读取加密备份外壳并交给统一解密流程。"""
     try:
         envelope = json.loads(path.read_text(encoding="utf-8-sig"))
     except OSError as error:
@@ -120,10 +124,12 @@ def load_encrypted_backup(path: Path, password: str) -> dict[str, Any]:
 
 
 def string_value(value: Any) -> str:
+    """把可选 JSON 字段安全收敛为去除首尾空白的字符串。"""
     return value.strip() if isinstance(value, str) else ""
 
 
 def normalized_secret(value: Any) -> str:
+    """规范化并校验 Token 的 Base32 OTP 密钥。"""
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Token 缺少 OTP 密钥")
     secret = re.sub(r"[\s=-]", "", value).upper()
@@ -136,6 +142,7 @@ def normalized_secret(value: Any) -> str:
 
 
 def build_otpauth_uri(token: dict[str, Any]) -> str:
+    """根据备份 Token 字段重建可供其他验证器导入的 otpauth URI。"""
     issuer = string_value(token.get("issuer"))
     account = string_value(token.get("account"))
     secret = normalized_secret(token.get("secret"))
@@ -159,6 +166,7 @@ def build_otpauth_uri(token: dict[str, Any]) -> str:
 
 
 def shared_secret_to_base64(secret: Any) -> str:
+    """把应用保存的 Base32 Steam shared secret 转换为 maFile 所需 Base64。"""
     normalized = normalized_secret(secret)
     padding = "=" * ((8 - len(normalized) % 8) % 8)
     secret_bytes = base64.b32decode(normalized + padding, casefold=True)
@@ -166,6 +174,7 @@ def shared_secret_to_base64(secret: Any) -> str:
 
 
 def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
+    """为元信息完整的 Steam Token 生成 maFile 对象，普通 Token 返回 None。"""
     steam = token.get("steam")
     if not isinstance(steam, dict) or not steam:
         return None
@@ -197,6 +206,7 @@ def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def export_tokens(content: dict[str, Any]) -> tuple[dict[str, Any], int]:
+    """导出所有 Token URI，并为符合条件的 Steam Token 附加 maFile 数据。"""
     source_tokens = content.get("tokens")
     if not isinstance(source_tokens, list):
         raise ValueError("解密内容缺少 tokens 数组")
@@ -221,10 +231,12 @@ def export_tokens(content: dict[str, Any]) -> tuple[dict[str, Any], int]:
 
 
 def default_output_path(input_path: Path) -> Path:
+    """在输入文件旁生成不会覆盖原备份的默认输出文件名。"""
     return input_path.with_name(f"{input_path.stem}.tokens.json")
 
 
 def main() -> int:
+    """执行解密、转换和 UTF-8 JSON 写出，并返回进程退出码。"""
     args = parse_args()
     output = args.output or default_output_path(args.input)
     if output.exists() and not args.overwrite:

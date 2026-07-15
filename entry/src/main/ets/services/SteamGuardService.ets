@@ -35,6 +35,7 @@ export interface SteamAccessTokenResult {
 export class SteamGuardService {
   private static readonly REQUEST_TIMEOUT: number = 15000;
 
+  /** 仅解析 JWT 的 exp 用于界面提示，不把未验签载荷视为可信身份信息。 */
   static tokenExpiresAt(token: string): number {
     // JWT payload 只用于展示有效期，不作为令牌真实性校验手段。
     try {
@@ -50,6 +51,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 将 JWT 有效期转换为适合会话页面显示的中文状态。 */
   static tokenStatus(token: string): string {
     const expiresAt = SteamGuardService.tokenExpiresAt(token);
     if (expiresAt === 0) {
@@ -64,6 +66,7 @@ export class SteamGuardService {
     return `有效至 ${new Date(expiresAt).toLocaleString()}（约 ${days > 0 ? `${days} 天` : `${hours} 小时`}）`;
   }
 
+  /** 为普通联网操作换取短期 Access Token，明确禁止轮换 Refresh Token。 */
   async refreshAccessToken(steamId: string, refreshToken: string): Promise<string> {
     if (!steamId || !refreshToken) {
       throw new Error('缺少 Steam ID 或 Refresh Token');
@@ -79,10 +82,12 @@ export class SteamGuardService {
     return this.generateAccessToken(steamId, refreshToken, true);
   }
 
+  /** 快速判断扫码结果是否符合 Steam 登录挑战 URL 结构。 */
   static isQrLoginChallenge(challengeUrl: string): boolean {
     return /^https:\/\/s\.team\/q\/\d+\/\d+(?:\?.*)?$/.test(challengeUrl.trim());
   }
 
+  /** 使用当前验证器密钥签名并批准另一台设备展示的 Steam 登录二维码。 */
   async approveQrLogin(steamId: string, refreshToken: string, sharedSecret: Uint8Array,
     challengeUrl: string, persistence: boolean = false): Promise<void> {
     if (!steamId || !refreshToken || sharedSecret.length === 0) {
@@ -130,6 +135,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 获取 Steam 移动确认列表，并把网络 JSON 转换为稳定领域对象。 */
   async getConfirmations(steamId: string, accessToken: string, refreshToken: string, identitySecret: string,
     deviceId: string): Promise<SteamConfirmation[]> {
     const time = Math.floor(Date.now() / 1000);
@@ -205,6 +211,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 将单条批准/拒绝操作转交给统一的批量确认协议实现。 */
   async respondToConfirmation(steamId: string, accessToken: string, refreshToken: string,
     identitySecret: string, deviceId: string, confirmation: SteamConfirmation, approve: boolean): Promise<void> {
     await this.respondToConfirmations(steamId, accessToken, refreshToken, identitySecret, deviceId,
@@ -266,6 +273,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 用 Refresh Token 换取 Access Token，并按调用场景决定是否允许长期令牌轮换。 */
   private async generateAccessToken(steamId: string, refreshToken: string,
     allowRenewal: boolean = false): Promise<SteamAccessTokenResult> {
     // allowRenewal 仅用于用户主动更新会话。后台确认请求保持 false，防止 Steam 轮换出
@@ -306,6 +314,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 生成 mobileconf 请求所需、绑定时间和用途标签的确认密钥。 */
   private confirmationKey(secret: string, time: number, tag: string): string {
     // 移动确认密钥 = HMAC-SHA1(identitySecret, 8 字节大端 Unix 时间 + ASCII tag)。
     const base64 = new util.Base64Helper();
@@ -331,6 +340,7 @@ export class SteamGuardService {
     }
   }
 
+  /** 按 Steam 移动端协议为二维码挑战生成 HMAC-SHA256 签名。 */
   private qrSignature(steamId: string, sharedSecret: Uint8Array, challenge: SteamQrChallenge): string {
     try {
       const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: sharedSecret });
@@ -346,12 +356,14 @@ export class SteamGuardService {
     }
   }
 
+  /** 从 Network Kit 响应头提取 Steam 协议级结果码。 */
   private readEResult(header: Object): string {
     const headerText: string = JSON.stringify(header);
     const match: RegExpMatchArray | null = headerText.match(/"x-eresult"\s*:\s*"([^"\\]*)"/i);
     return match !== null && match.length > 1 ? match[1] : '';
   }
 
+  /** 校验二维码 URL 并提取签名所需的版本号与 clientId。 */
   private parseQrChallenge(challengeUrl: string): SteamQrChallenge {
     const match = /^https:\/\/s\.team\/q\/(\d+)\/(\d+)(?:\?.*)?$/.exec(challengeUrl.trim());
     if (!match || match.length < 3) {
@@ -361,6 +373,7 @@ export class SteamGuardService {
     return challenge;
   }
 
+  /** 将无符号整数写为 Steam 二维码签名规定的定长小端序字节。 */
   private littleEndian(value: bigint, count: number): Uint8Array {
     // Steam 扫码登录签名中的整数按小端序写入固定长度缓冲区。
     const bytes = new Uint8Array(count);

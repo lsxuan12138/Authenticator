@@ -5,6 +5,7 @@ import { TokenId } from './TokenId';
 
 /** 解析 otpauth://totp URI，并把外部参数收敛为应用内部的 StoredToken。 */
 export class OtpUriParser {
+  /** 校验并解析 otpauth URI，自动识别 Steam issuer 并生成新的记录 UUID。 */
   static parse(rawValue: string): StoredToken {
     const parsed = new uri.URI(rawValue.trim());
     if (parsed.scheme !== 'otpauth' || parsed.host !== 'totp') {
@@ -35,6 +36,7 @@ export class OtpUriParser {
     };
   }
 
+  /** 为新 Token 创建随机 UUID；配置去重由 TokenDuplicateGuard 单独负责。 */
   static createId(): string {
     return TokenId.create();
   }

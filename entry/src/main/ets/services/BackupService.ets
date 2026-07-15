@@ -41,6 +41,7 @@ export class BackupService {
   private static readonly TAG_SIZE: number = 16;
   private static readonly MAX_FILE_SIZE: number = 8 * 1024 * 1024;
 
+  /** 将可移植 Token 字段序列化并用用户密码派生的 AES-GCM 密钥创建备份。 */
   static async create(tokens: StoredToken[], password: string): Promise<string> {
     BackupService.validatePassword(password);
     try {
@@ -113,6 +114,7 @@ export class BackupService {
     }
   }
 
+  /** 校验备份格式和认证标签后解密；密码错误与文件损坏统一作为不可信输入处理。 */
   static async decrypt(serialized: string, password: string): Promise<StoredToken[]> {
     if (password.length === 0) {
       throw new Error('请输入备份密码');
@@ -155,6 +157,7 @@ export class BackupService {
     return BackupService.validateContent(content);
   }
 
+  /** 按 UUID 和验证码配置合并恢复数据，并统计跳过的重复条目。 */
   static merge(current: StoredToken[], incoming: StoredToken[]): BackupMergeResult {
     // UUID 是合并主键：保留现有位置并覆盖内容，新 UUID 按备份顺序追加。
     const positions: Map<string, number> = new Map();
@@ -178,6 +181,7 @@ export class BackupService {
     return { tokens: merged, added: added, updated: updated };
   }
 
+  /** 调用系统文件选择器保存加密备份；用户取消时返回 false。 */
   static async saveFile(context: common.UIAbilityContext, content: string): Promise<boolean> {
     const options = new picker.DocumentSaveOptions();
     const day = new Date().toISOString().substring(0, 10);
@@ -212,6 +216,7 @@ export class BackupService {
     return true;
   }
 
+  /** 选择并限量读取备份文件，防止异常大文件占用过多内存。 */
   static async pickFile(context: common.UIAbilityContext): Promise<string> {
     const options = new picker.DocumentSelectOptions();
     options.maxSelectNumber = 1;
@@ -253,6 +258,7 @@ export class BackupService {
     return content;
   }
 
+  /** 使用 PBKDF2-HMAC-SHA256 从备份密码和随机盐派生 256 位密钥。 */
   private static async deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
     // 随机 salt 防止相同密码产生相同密钥；迭代次数提高离线猜测成本。
     const spec: cryptoFramework.PBKDF2Spec = {
@@ -270,12 +276,14 @@ export class BackupService {
     }
   }
 
+  /** 统一约束备份密码的最低长度，避免弱口令直接进入派生流程。 */
   private static validatePassword(password: string): void {
     if (password.length < 8) {
       throw new Error('备份密码至少需要 8 个字符');
     }
   }
 
+  /** 校验外层备份版本、算法参数和 Base64 字段是否完整。 */
   private static validateBackup(backup: EncryptedBackup): void {
     if (!backup || backup.format !== BackupService.FORMAT || backup.version !== 1 ||
       !backup.salt || !backup.iv || !backup.authTag || !backup.ciphertext) {
@@ -286,6 +294,7 @@ export class BackupService {
     }
   }
 
+  /** 校验解密后的内容版本、数组结构及每个 Token 的 UUID。 */
   private static validateContent(content: BackupContent): StoredToken[] {
     if (!content || content.version !== 1 || !Array.isArray(content.tokens)) {
       throw new Error('备份内容格式无效');

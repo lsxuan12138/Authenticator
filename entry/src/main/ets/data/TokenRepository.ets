@@ -16,6 +16,7 @@ export class TokenRepository {
   private store?: preferences.Preferences;
   private readonly vault: SecureTokenVault = new SecureTokenVault();
 
+  /** 打开 Preferences 容器；所有读写前必须先由首页初始化调用。 */
   async open(context: common.UIAbilityContext): Promise<void> {
     try {
       this.store = await preferences.getPreferences(context, TokenRepository.STORE_NAME);
@@ -26,6 +27,7 @@ export class TokenRepository {
     }
   }
 
+  /** 解密并解析全部 Token；空仓库返回空数组，损坏数据会显式报错。 */
   async list(): Promise<StoredToken[]> {
     if (!this.store) {
       return [];
@@ -44,6 +46,7 @@ export class TokenRepository {
     }
   }
 
+  /** 加密后原子保存 Token 数组，并回读验证以避免静默持久化失败。 */
   async save(items: StoredToken[]): Promise<void> {
     if (!this.store) {
       throw new Error('数据仓库尚未初始化');
@@ -64,6 +67,7 @@ export class TokenRepository {
     }
   }
 
+  /** 校验解密后的 JSON 结构和 UUID，阻止不兼容数据进入页面状态。 */
   private parseTokens(raw: string): StoredToken[] {
     // JSON.parse 成功并不代表根节点类型正确，仓库只接受数组。
     const items = JSON.parse(raw) as StoredToken[];
@@ -76,6 +80,7 @@ export class TokenRepository {
     return items;
   }
 
+  /** 在写入前验证新密文能够由当前 Asset Store 主密钥正确解密。 */
   private async verifyEncryptedData(encrypted: string, expected: string): Promise<void> {
     const decrypted = await this.vault.decrypt(encrypted);
     this.parseTokens(decrypted);
@@ -84,6 +89,7 @@ export class TokenRepository {
     }
   }
 
+  /** flush 后从 Preferences 回读并解密，确认磁盘内容与待保存内容一致。 */
   private async verifyStoredData(expected: string): Promise<void> {
     if (!this.store) {
       throw new Error('数据仓库尚未初始化');

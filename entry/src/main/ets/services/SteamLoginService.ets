@@ -15,14 +15,17 @@ import { SteamResult } from './SteamResult';
 export class SteamLoginCancellation {
   private cancelled: boolean = false;
 
+  /** 标记本次登录不再需要继续轮询；不会强行中断正在执行的网络请求。 */
   cancel(): void {
     this.cancelled = true;
   }
 
+  /** 返回调用方是否已经请求取消。 */
   isCancelled(): boolean {
     return this.cancelled;
   }
 
+  /** 在安全检查点把取消状态转换为可由页面统一处理的异常。 */
   throwIfCancelled(): void {
     if (this.cancelled) {
       throw new Error('Steam 登录已取消');
@@ -68,6 +71,7 @@ export class SteamLoginService {
     return session;
   }
 
+  /** 按 Steam 固定要求使用临时 RSA 公钥加密密码，明文不会离开本方法。 */
   private encryptPassword(publicKey: Record<string, Object>, password: string): string {
     try {
       const rsaSpec: cryptoFramework.RSAPubKeySpec = {
@@ -91,6 +95,7 @@ export class SteamLoginService {
     }
   }
 
+  /** 将用户或当前 Token 提供的验证代码提交给指定登录会话。 */
   async submitGuardCode(session: SteamAuthSession, codeType: number, code: string): Promise<void> {
     if (!code) {
       throw new Error('请输入 Steam 验证码');
@@ -100,6 +105,7 @@ export class SteamLoginService {
       SteamProto.guardRequest(session, codeType, code), true);
   }
 
+  /** 只轮询一次，供需要由 UI 自己控制重试节奏的调用方使用。 */
   async pollSession(session: SteamAuthSession): Promise<SteamSessionTokens> {
     const tokens = await this.pollOnce(session);
     if (!tokens) {
@@ -125,6 +131,7 @@ export class SteamLoginService {
     throw new Error('等待 Steam 登录确认超时，请重新发起登录');
   }
 
+  /** 执行一次状态查询；未完成返回 null，协议或协议确认问题直接抛错。 */
   private async pollOnce(session: SteamAuthSession): Promise<SteamSessionTokens | null> {
     const poll = await this.protobufRequest('PollAuthSessionStatus', SteamProto.pollRequest(session));
     const result: SteamAuthPollResult = SteamProto.decodePoll(poll);
@@ -138,12 +145,14 @@ export class SteamLoginService {
     return result.tokens.refreshToken.length > 0 ? result.tokens : null;
   }
 
+  /** 在轮询之间异步等待，不阻塞 ArkUI 主线程。 */
   private async delay(milliseconds: number): Promise<void> {
     return new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, milliseconds);
     });
   }
 
+  /** 获取账户对应的临时 RSA 公钥和时间戳，用于凭据登录加密。 */
   private async getPublicKey(account: string): Promise<Record<string, Object>> {
     const request = http.createHttp();
     try {
@@ -161,6 +170,7 @@ export class SteamLoginService {
     }
   }
 
+  /** 发送 Base64 包装的 Steam protobuf 请求并统一处理 x-eresult。 */
   private async protobufRequest(method: string, payload: Uint8Array,
     allowDuplicateRequest: boolean = false): Promise<Uint8Array> {
     // Steam Web API 使用 Base64 包装 protobuf，并用 x-eresult 表达协议级错误。
@@ -192,6 +202,7 @@ export class SteamLoginService {
     }
   }
 
+  /** 从 Network Kit 的不透明响应头对象中安全提取 x-eresult。 */
   private readEResult(header: Object): string {
     const headerText: string = JSON.stringify(header);
     const match: RegExpMatchArray | null = headerText.match(/"x-eresult"\s*:\s*"([^"\\]*)"/i);

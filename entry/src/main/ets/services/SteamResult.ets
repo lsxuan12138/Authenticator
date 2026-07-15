@@ -1,9 +1,11 @@
 /** 将 Steam EResult 转换为用户可理解、同时保留协议码的错误信息。 */
 export class SteamResult {
+  /** 组合用户可理解的错误说明与原始 EResult，兼顾提示和日志诊断。 */
   static message(code: string, action: string): string {
     return `${action}：${SteamResult.description(code)}（EResult ${code}）`;
   }
 
+  /** 将验证器场景中常见的 Steam EResult 映射为中文含义。 */
   static description(code: string): string {
     switch (code) {
       case '2':

@@ -15,6 +15,7 @@ export interface SteamImportResult {
  * 支持 snake_case/camelCase 以及令牌嵌套对象，兼容不同工具生成的导出格式。
  */
 export class SteamImportService {
+  /** 解析 maFile 或兼容 JSON，并收敛为应用内部 Steam 元信息。 */
   static parse(text: string): SteamImportResult {
     // 在 JSON.parse 前把 Steam ID 包成字符串，防止 64 位整数经过 Number 后精度丢失。
     const normalized = text.replace(/("steam_id"\s*:\s*)(\d{16,})/g, '$1"$2"');
@@ -53,6 +54,7 @@ export class SteamImportService {
     return result;
   }
 
+  /** 通过系统选择器读取单个 maFile/JSON，并确保文件句柄安全关闭。 */
   static async pickAndRead(context: common.UIAbilityContext): Promise<string> {
     const options = new picker.DocumentSelectOptions();
     options.maxSelectNumber = 1;
@@ -90,6 +92,7 @@ export class SteamImportService {
     return content;
   }
 
+  /** 兼容外层包装字段或 JSON 字符串嵌套的不同导出格式。 */
   private static unwrap(root: Record<string, Object>): Record<string, Object> {
     // 某些导出格式会将真实 maFile 内容包装在 steam 或 external 节点中。
     const nested = root['steam'] ?? root['external'];
@@ -102,6 +105,7 @@ export class SteamImportService {
     return root;
   }
 
+  /** 按别名优先级读取第一个非空字段，兼容 snake_case 与 camelCase。 */
   private static first(source: Record<string, Object>, keys: string[]): string {
     for (const key of keys) {
       const value = source[key];

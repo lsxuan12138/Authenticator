@@ -1,0 +1,34 @@
+{
+  "routerMap": [
+    {
+      "name": "add",
+      "pageSourceFile": "src/main/ets/pages/AddTokenPage.ets",
+      "buildFunction": "AddTokenPageBuilder"
+    },
+    {
+      "name": "settings",
+      "pageSourceFile": "src/main/ets/pages/SettingsPage.ets",
+      "buildFunction": "SettingsPageBuilder"
+    },
+    {
+      "name": "steam",
+      "pageSourceFile": "src/main/ets/pages/SteamConfirmationsPage.ets",
+      "buildFunction": "SteamConfirmationsPageBuilder"
+    },
+    {
+      "name": "steamManagement",
+      "pageSourceFile": "src/main/ets/pages/SteamManagementPage.ets",
+      "buildFunction": "SteamManagementPageBuilder"
+    },
+    {
+      "name": "detail",
+      "pageSourceFile": "src/main/ets/pages/TokenDetailPage.ets",
+      "buildFunction": "TokenDetailPageBuilder"
+    },
+    {
+      "name": "iconPicker",
+      "pageSourceFile": "src/main/ets/pages/IconPickerPage.ets",
+      "buildFunction": "IconPickerPageBuilder"
+    }
+  ]
+}

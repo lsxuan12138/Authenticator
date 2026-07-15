@@ -6,14 +6,33 @@ import { Base32 } from '../core/Base32';
 import { SteamGuardService } from '../services/SteamGuardService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { IconPack, IconPackService } from '../services/IconPackService';
+import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
+
+/** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
+@Builder
+export function TokenDetailPageBuilder(_name: string, param: ESObject) {
+  NavDestination() {
+    TokenDetailPage({
+      tokenId: AppRouter.tokenId(param),
+      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+      onClose: (): void => AppRouter.pop(),
+      onOpenIconPicker: (issuer: string): void =>
+        AppRouter.pushToken(AppRoute.ICON_PICKER, AppRouter.tokenId(param), issuer),
+      onOpenConfirm: (): void => AppRouter.pushToken(AppRoute.STEAM, AppRouter.tokenId(param)),
+      onOpenSteamManagement: (): void =>
+        AppRouter.pushToken(AppRoute.STEAM_MANAGEMENT, AppRouter.tokenId(param))
+    })
+  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.DETAIL))
+}
 
 /** Token 基础信息页。Steam 高级设置已拆分到独立管理页。 */
 @Component
 export struct TokenDetailPage {
-  @Prop tokens: StoredToken[] = [];
-  @Prop iconPacks: IconPack[] = [];
-  @Prop activeIconPackKey: string = IconPackService.defaultPackKey();
-  tokenIndex: number = -1;
+  @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
+  @StorageLink(APP_ICON_PACKS_KEY) iconPacks: IconPack[] = [];
+  @StorageLink(APP_ACTIVE_ICON_PACK_KEY) activeIconPackKey: string = IconPackService.noPackKey();
+  tokenId: string = '';
   onTokensChanged: (tokens: StoredToken[]) => Promise<void> = async (_tokens: StoredToken[]): Promise<void> => {};
   onClose: () => void = (): void => {};
   onOpenIconPicker: (issuer: string) => void = (_issuer: string): void => {};
@@ -28,15 +47,15 @@ export struct TokenDetailPage {
   @State private errorMessage: string = '';
   @State private steamQrLoading: boolean = false;
 
+  /** 页面显示时把当前 Token 字段复制到可编辑状态。 */
   aboutToAppear(): void {
     this.loadToken();
   }
 
+  /** 从父页面数组读取目标 Token，并初始化表单和错误状态。 */
   private loadToken(): void {
-    if (this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) {
-      return;
-    }
-    const token = this.tokens[this.tokenIndex];
+    const token = this.currentToken();
+    if (!token) return;
     this.issuer = token.issuer;
     this.account = token.account;
     this.secret = token.secret;
@@ -44,11 +63,9 @@ export struct TokenDetailPage {
     this.periodValue = `${token.period}`;
   }
 
+  /** 按稳定 UUID 返回当前 Token，排序、插入或删除其他条目均不会改变目标。 */
   private currentToken(): StoredToken | null {
-    if (this.tokenIndex < 0 || this.tokenIndex >= this.tokens.length) {
-      return null;
-    }
-    return this.tokens[this.tokenIndex];
+    return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
   }
 
   /** 详情页与首页使用完全相同的解析顺序：手动图标优先，否则从当前图标包自动匹配。 */
@@ -62,11 +79,13 @@ export struct TokenDetailPage {
       this.iconPacks, this.activeIconPackKey);
   }
 
+  /** 生成无图片图标时显示的 issuer/account 首字符。 */
   private fallbackIconText(): string {
     const name = this.issuer.trim() || this.currentToken()?.issuer || '?';
     return name.substring(0, 1).toUpperCase();
   }
 
+  /** 显示详情页操作反馈，UIContext 不可用时仅记录日志。 */
   private showToast(message: string, duration: number = 2000): void {
     try {
       this.getUIContext().getPromptAction().showToast({ message: message, duration: duration });
@@ -76,6 +95,7 @@ export struct TokenDetailPage {
     }
   }
 
+  /** 汇总 Steam 联网字段完整度，提示确认和扫码功能是否可用。 */
   private steamMetadataSummary(): string {
     const metadata = this.currentToken()?.steam;
     if (!metadata) {
@@ -88,6 +108,7 @@ export struct TokenDetailPage {
       `联网信息 ${complete}/${fields.length}，进入管理页继续配置`;
   }
 
+  /** 校验基础字段、处理 Steam 类型切换并持久化编辑结果。 */
   private async saveTokenDetail(): Promise<void> {
     try {
       const token = this.currentToken();
@@ -131,6 +152,7 @@ export struct TokenDetailPage {
     }
   }
 
+  /** 扫描另一设备的 Steam 登录挑战，二次确认后使用当前 Token 批准。 */
   private async scanSteamQrLogin(): Promise<void> {
     const token = this.currentToken();
     if (!token?.steam?.steamId || !token.steam.refreshToken || !token.secret) {
@@ -179,6 +201,7 @@ export struct TokenDetailPage {
     }
   }
 
+  /** 构建 Token 编辑表单、图标入口以及 Steam 专属操作。 */
   build() {
     Scroll() {
       Column({ space: 14 }) {

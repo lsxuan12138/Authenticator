@@ -8,7 +8,8 @@ export class AppSettingsService {
   private static readonly STORE_NAME: string = 'authenticator_settings';
   private static readonly SCREENSHOT_PROTECTION_KEY: string = 'screenshot_protection';
 
-  static async screenshotProtectionEnabled(context: common.Context): Promise<boolean> {
+  /** 读取用户保存的防截屏开关，默认关闭以保持系统常规行为。 */
+  static async getScreenshotProtectionEnabled(context: common.Context): Promise<boolean> {
     try {
       const store = await preferences.getPreferences(context, AppSettingsService.STORE_NAME);
       return await store.get(AppSettingsService.SCREENSHOT_PROTECTION_KEY, false) as boolean;
@@ -18,6 +19,7 @@ export class AppSettingsService {
     }
   }
 
+  /** 持久化防截屏设置，供下次 Ability 启动时恢复。 */
   static async setScreenshotProtection(context: common.Context, enabled: boolean): Promise<void> {
     try {
       const store = await preferences.getPreferences(context, AppSettingsService.STORE_NAME);
@@ -29,6 +31,7 @@ export class AppSettingsService {
     }
   }
 
+  /** 将防截屏标志应用到指定窗口，不负责保存用户设置。 */
   static async applyToWindow(target: window.Window, enabled: boolean): Promise<void> {
     try {
       await target.setWindowPrivacyMode(enabled);
@@ -38,6 +41,7 @@ export class AppSettingsService {
     }
   }
 
+  /** 设置页切换开关时立即更新当前 Ability 主窗口。 */
   static async applyToCurrentWindow(context: common.UIAbilityContext, enabled: boolean): Promise<void> {
     try {
       const target = await window.getLastWindow(context);

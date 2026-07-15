@@ -5,10 +5,12 @@
 export class Base32 {
   private static readonly ALPHABET: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
+  /** 统一密钥大小写并移除空白、分隔符和填充符，供解析与去重使用。 */
   static normalize(value: string): string {
     return value.toUpperCase().replaceAll(' ', '').replaceAll('-', '').replaceAll('=', '');
   }
 
+  /** 将用户输入的 Base32 密钥解码为 HMAC 所需字节，并拒绝非法字符。 */
   static decode(value: string): Uint8Array {
     const input = Base32.normalize(value);
     if (input.length === 0) {
@@ -33,6 +35,7 @@ export class Base32 {
     return new Uint8Array(bytes);
   }
 
+  /** 将二进制 Steam 密钥编码为不带填充的标准 Base32 文本。 */
   static encode(data: Uint8Array): string {
     let buffer = 0;
     let bits = 0;
