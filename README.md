@@ -155,7 +155,21 @@ Steam 协议定义位于：
 entry/src/main/ets/services/protobuf/steam_auth.proto
 ```
 
-`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件。修改协议时，应先与 SteamTracking 的 `steammessages_auth.steamclient.proto`、`steammessages_twofactor.steamclient.proto` 比对，再使用 `protobufjs-cli@1.1.3` 的 `pbjs` 从 `.proto` 生成运行时代码，并使用 `pbts` 生成声明文件；最后保留项目针对 HarmonyOS `@ohos/protobufjs` 与 `long` 的导入适配。新版 `pbjs` 生成的 `reader.tag()` 与当前 HarmonyOS 运行时不兼容；不要直接手工修改消息字段编号。
+`steam_auth.js` 与 `steam_auth.d.ts` 是生成文件，不应直接修改。修改协议时，应先与 SteamTracking 的 `steammessages_auth.steamclient.proto`、`steammessages_twofactor.steamclient.proto` 比对，然后在项目根目录执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/generate_steam_protobuf.ps1
+```
+
+脚本按照 `@ohos/protobufjs@2.1.0` 上游说明固定使用 `protobufjs@7.2.4` 和 `protobufjs-cli@1.1.3`，并自动完成 HarmonyOS 导入、`long` 和 ArkTS 声明的兼容处理。`protobufjs-cli@1.1.3` 的 `pbts` 在输入含顶层枚举时会引用消息的 `I*` 接口却漏掉接口定义；脚本优先保留 `pbts` 已生成的接口，并根据 `.proto` 自动补齐缺失定义。不要手工维护接口或消息字段编号。升级 `@ohos/protobufjs` 或生成器前必须重新验证运行时和生成代码兼容性。
+
+Steam 代码按职责分为三层：
+
+- `SteamWebApiClient` 是唯一的 Network Kit 入口，统一处理超时、HTTP 状态、`x-eresult`、日志和请求释放。
+- `SteamProtocol` 是生成代码的唯一业务适配入口，负责 protobuf 请求构造、响应解码和领域模型转换。
+- 登录、会话、验证器和移动确认服务只编排各自流程，不再各自实现 HTTP 或 protobuf 解析。
+
+RSA 公钥和 `GenerateAccessTokenForApp` 保留 kdada/Authenticator 已验证的 JSON/表单调用形式；登录会话与 TwoFactor 接口使用 SteamTracking 定义生成的 protobuf。两类请求都经过同一个网络底层。
 
 ## 权限与网络
 

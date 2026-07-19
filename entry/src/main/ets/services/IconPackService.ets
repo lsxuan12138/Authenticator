@@ -160,23 +160,8 @@ export class IconPackService {
       const result: IconPack[] = [];
       for (const folder of folders) {
         const directory = `${root}/${folder}`;
-        const manifest = `${directory}/pack.json`;
-        if (!fs.accessSync(manifest)) {
-          continue;
-        }
         try {
-          const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
-          const icons = (parsed['icons'] ?? []) as IconDefinition[];
-          // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
-          const safeIcons = icons.filter((icon: IconDefinition) => IconPackService.isSafeRelativePath(icon.filename) &&
-            fs.accessSync(`${directory}/${icon.filename}`));
-          result.push({
-            id: `${parsed['uuid'] ?? folder}`,
-            name: `${parsed['name'] ?? folder}`,
-            version: Number(parsed['version'] ?? 0),
-            directory: directory,
-            icons: safeIcons
-          });
+          result.push(IconPackService.readPack(directory, folder));
         } catch (error) {
           const detail = error as BusinessError;
           DiagnosticLogService.warn('IconPack',
@@ -193,29 +178,64 @@ export class IconPackService {
   /** 将单个 ZIP 解压到随机临时目录，校验清单后再移动到正式目录。 */
   private static async importZip(context: common.UIAbilityContext, uri: string): Promise<void> {
     const root = IconPackService.ensureRoot(context);
-    const target = `${root}/pack_${Date.now()}_${util.generateRandomUUID().substring(0, 8)}`;
+    const suffix = `${Date.now()}_${util.generateRandomUUID().substring(0, 8)}`;
+    const staging = `${context.tempDir}/icon_pack_${suffix}`;
+    const target = `${root}/pack_${suffix}`;
     // 输出实际解压目录，便于设备日志定位包结构或权限问题。
-    DiagnosticLogService.info('IconPack', `Extracting icon pack to: ${target}`);
+    DiagnosticLogService.info('IconPack', `Extracting icon pack to temporary directory: ${staging}`);
     try {
-      fs.mkdirSync(target);
+      fs.mkdirSync(staging);
       const file = fs.openSync(uri, fs.OpenMode.READ_ONLY);
       const source = file.path;
       fs.closeSync(file.fd);
-      await zlib.decompressFile(source, target);
-      const pack = (await IconPackService.list(context)).find((item: IconPack) => item.directory === target);
-      if (!pack || pack.icons.length === 0) {
+      await zlib.decompressFile(source, staging);
+      const pack = IconPackService.readPack(staging, `pack_${suffix}`);
+      if (pack.icons.length === 0) {
         throw new Error('图标包缺少有效的 pack.json 或图片');
       }
+      // rename 对目录生效；成功前临时目录不会被已安装图标包扫描发现。
+      await fs.rename(staging, target);
     } catch (error) {
       const detail = error as BusinessError;
       try {
-        IconPackService.removeDirectory(target);
+        IconPackService.removeDirectory(staging);
       } catch (cleanupError) {
         const cleanupDetail = cleanupError as BusinessError;
         DiagnosticLogService.error('IconPack',
-          `Failed to clean icon pack directory: ${cleanupDetail.message ?? 'unknown'}`);
+          `Failed to clean temporary icon pack directory: ${cleanupDetail.message ?? 'unknown'}`);
       }
       throw new Error(`图标包导入失败：${detail.message ?? '未知错误'}`);
+    }
+    DiagnosticLogService.info('IconPack', `Installed icon pack directory: ${target}`);
+  }
+
+  /** 从指定目录读取并校验图标包清单，可同时用于临时安装区和正式安装区。 */
+  private static readPack(directory: string, fallbackId: string): IconPack {
+    const manifest = `${directory}/pack.json`;
+    if (!IconPackService.isAccessible(manifest)) {
+      throw new Error('图标包缺少 pack.json');
+    }
+    const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
+    const icons = (parsed['icons'] ?? []) as IconDefinition[];
+    // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
+    const safeIcons = icons.filter((icon: IconDefinition): boolean =>
+      IconPackService.isSafeRelativePath(icon.filename) &&
+      IconPackService.isAccessible(`${directory}/${icon.filename}`));
+    return {
+      id: `${parsed['uuid'] ?? fallbackId}`,
+      name: `${parsed['name'] ?? fallbackId}`,
+      version: Number(parsed['version'] ?? 0),
+      directory: directory,
+      icons: safeIcons
+    };
+  }
+
+  /** 将可能抛出文件系统异常的存在性检查转换为安全布尔结果。 */
+  private static isAccessible(path: string): boolean {
+    try {
+      return fs.accessSync(path);
+    } catch (_error) {
+      return false;
     }
   }
 

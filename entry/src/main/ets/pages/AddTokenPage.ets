@@ -9,7 +9,7 @@ import { OtpUriParser } from '../core/OtpUriParser';
 import { OtpEngine } from '../core/OtpEngine';
 import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLoginService';
 import { SteamAuthenticatorEnrollment, SteamAuthenticatorService } from '../services/SteamAuthenticatorService';
-import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessionTokens } from '../services/SteamProto';
+import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessionTokens } from '../services/SteamProtocol';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
@@ -55,9 +55,15 @@ export struct AddTokenPage {
   private steamAddTimeOffset: number = 0;
   private steamLoginCancellation?: SteamLoginCancellation;
 
-  /** 页面离开时取消尚未完成的 Steam 登录轮询。 */
+  /** 页面离开时取消轮询，并主动丢弃仍停留在内存中的密码、验证码和临时密钥。 */
   aboutToDisappear(): void {
     this.steamLoginCancellation?.cancel();
+    this.steamAddPassword = '';
+    this.steamAddCode = '';
+    this.steamAddActivationCode = '';
+    this.steamAddSession = undefined;
+    this.steamAddTokens = undefined;
+    this.steamAddEnrollment = undefined;
   }
 
   /** 显示轻量操作结果；Toast 失败只写日志，不中断添加流程。 */
@@ -158,15 +164,7 @@ export struct AddTokenPage {
 
   /** 从服务端允许列表中选择当前 UI 能处理的第一种验证方式。 */
   private supportedSteamConfirmation(session: SteamAuthSession): SteamAllowedConfirmation | undefined {
-    // 与上游 kdada/Authenticator 一致：遵循 Steam 返回的验证方式顺序，不由客户端重排优先级。
-    for (const confirmation of session.confirmations) {
-      if (confirmation.type === SteamGuardType.EMAIL_CODE || confirmation.type === SteamGuardType.DEVICE_CODE ||
-        confirmation.type === SteamGuardType.DEVICE_CONFIRMATION ||
-        confirmation.type === SteamGuardType.EMAIL_CONFIRMATION) {
-        return confirmation;
-      }
-    }
-    return undefined;
+    return SteamLoginService.preferredConfirmation(session);
   }
 
   /** 为当前 Steam 验证方式生成明确的用户操作提示。 */
@@ -202,12 +200,17 @@ export struct AddTokenPage {
       this.steamAddSession = session;
       const confirmation = this.supportedSteamConfirmation(session);
       if (confirmation) {
+        if (confirmation.type === SteamGuardType.NONE) {
+          const tokens = await service.pollUntilComplete(session, cancellation);
+          await this.startSteamAuthenticator(session, tokens);
+          return;
+        }
         this.steamAddConfirmationType = confirmation.type;
         this.steamAddStep = 1;
         this.steamAddStatus = confirmation.message || this.steamConfirmationPrompt();
         if (confirmation.type === SteamGuardType.DEVICE_CONFIRMATION ||
           confirmation.type === SteamGuardType.EMAIL_CONFIRMATION) {
-          const tokens = await service.pollUntilComplete(session, cancellation);
+          const tokens = await service.pollUntilComplete(session, cancellation, 90000, true);
           await this.startSteamAuthenticator(session, tokens);
         }
       } else {
@@ -303,9 +306,6 @@ export struct AddTokenPage {
       const finalized = await new SteamAuthenticatorService().finalizeAuthenticator(
         this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken,
         authenticatorCode, seconds, this.steamAddActivationCode.trim());
-      if (finalized.wantMore) {
-        throw new Error('Steam 验证码时间不匹配，请稍后重新提交激活码');
-      }
       if (!finalized.success) {
         throw new Error(`Steam Guard 激活失败（status ${finalized.status}）`);
       }

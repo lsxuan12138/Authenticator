@@ -1,7 +1,6 @@
 /*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
 import { index } from '@ohos/protobufjs';
 import Long from 'long';
-
 const $protobuf = index;
 $protobuf.util.Long = Long;
 $protobuf.configure();
@@ -146,7 +145,7 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
     function CAuthentication_DeviceDetails(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -227,13 +226,9 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_DeviceDetails.encode = function encode(message, writer, q) {
+    CAuthentication_DeviceDetails.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
             writer.uint32(/* id 1, wireType 2 =*/10).string(message.deviceFriendlyName);
         if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
@@ -275,18 +270,12 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_DeviceDetails.decode = function decode(reader, length, error, long) {
+    CAuthentication_DeviceDetails.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_DeviceDetails();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.deviceFriendlyName = reader.string();
@@ -317,7 +306,7 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -348,17 +337,13 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_DeviceDetails.verify = function verify(message, long) {
+    CAuthentication_DeviceDetails.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
             if (!$util.isString(message.deviceFriendlyName))
                 return "deviceFriendlyName: string expected";
-        if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
             switch (message.platformType) {
             default:
                 return "platformType: enum value expected";
@@ -368,19 +353,19 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
             case 3:
                 break;
             }
-        if (message.osType != null && Object.hasOwnProperty.call(message, "osType"))
+        if (message.osType != null && message.hasOwnProperty("osType"))
             if (!$util.isInteger(message.osType))
                 return "osType: integer expected";
-        if (message.gamingDeviceType != null && Object.hasOwnProperty.call(message, "gamingDeviceType"))
+        if (message.gamingDeviceType != null && message.hasOwnProperty("gamingDeviceType"))
             if (!$util.isInteger(message.gamingDeviceType))
                 return "gamingDeviceType: integer expected";
-        if (message.clientCount != null && Object.hasOwnProperty.call(message, "clientCount"))
+        if (message.clientCount != null && message.hasOwnProperty("clientCount"))
             if (!$util.isInteger(message.clientCount))
                 return "clientCount: integer expected";
-        if (message.machineId != null && Object.hasOwnProperty.call(message, "machineId"))
+        if (message.machineId != null && message.hasOwnProperty("machineId"))
             if (!(message.machineId && typeof message.machineId.length === "number" || $util.isString(message.machineId)))
                 return "machineId: buffer expected";
-        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+        if (message.appType != null && message.hasOwnProperty("appType"))
             switch (message.appType) {
             default:
                 return "appType: enum value expected";
@@ -400,15 +385,9 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_DeviceDetails} CAuthentication_DeviceDetails
      */
-    CAuthentication_DeviceDetails.fromObject = function fromObject(object, long) {
+    CAuthentication_DeviceDetails.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_DeviceDetails)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_DeviceDetails: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_DeviceDetails();
         if (object.deviceFriendlyName != null)
             message.deviceFriendlyName = String(object.deviceFriendlyName);
@@ -479,13 +458,9 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_DeviceDetails.toObject = function toObject(message, options, q) {
+    CAuthentication_DeviceDetails.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.deviceFriendlyName = "";
@@ -502,19 +477,19 @@ export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails
             }
             object.appType = options.enums === String ? "k_EAuthTokenAppType_Unknown" : 0;
         }
-        if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
             object.deviceFriendlyName = message.deviceFriendlyName;
-        if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
             object.platformType = options.enums === String ? $root.EAuthTokenPlatformType[message.platformType] === undefined ? message.platformType : $root.EAuthTokenPlatformType[message.platformType] : message.platformType;
-        if (message.osType != null && Object.hasOwnProperty.call(message, "osType"))
+        if (message.osType != null && message.hasOwnProperty("osType"))
             object.osType = message.osType;
-        if (message.gamingDeviceType != null && Object.hasOwnProperty.call(message, "gamingDeviceType"))
+        if (message.gamingDeviceType != null && message.hasOwnProperty("gamingDeviceType"))
             object.gamingDeviceType = message.gamingDeviceType;
-        if (message.clientCount != null && Object.hasOwnProperty.call(message, "clientCount"))
+        if (message.clientCount != null && message.hasOwnProperty("clientCount"))
             object.clientCount = message.clientCount;
-        if (message.machineId != null && Object.hasOwnProperty.call(message, "machineId"))
+        if (message.machineId != null && message.hasOwnProperty("machineId"))
             object.machineId = options.bytes === String ? $util.base64.encode(message.machineId, 0, message.machineId.length) : options.bytes === Array ? Array.prototype.slice.call(message.machineId) : message.machineId;
-        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+        if (message.appType != null && message.hasOwnProperty("appType"))
             object.appType = options.enums === String ? $root.EAuthTokenAppType[message.appType] === undefined ? message.appType : $root.EAuthTokenAppType[message.appType] : message.appType;
         return object;
     };
@@ -569,7 +544,7 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
     function CAuthentication_AllowedConfirmation(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -610,13 +585,9 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_AllowedConfirmation.encode = function encode(message, writer, q) {
+    CAuthentication_AllowedConfirmation.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
             writer.uint32(/* id 1, wireType 0 =*/8).int32(message.confirmationType);
         if (message.associatedMessage != null && Object.hasOwnProperty.call(message, "associatedMessage"))
@@ -648,18 +619,12 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_AllowedConfirmation.decode = function decode(reader, length, error, long) {
+    CAuthentication_AllowedConfirmation.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_AllowedConfirmation();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.confirmationType = reader.int32();
@@ -670,7 +635,7 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -701,14 +666,10 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_AllowedConfirmation.verify = function verify(message, long) {
+    CAuthentication_AllowedConfirmation.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+        if (message.confirmationType != null && message.hasOwnProperty("confirmationType"))
             switch (message.confirmationType) {
             default:
                 return "confirmationType: enum value expected";
@@ -722,7 +683,7 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
             case 7:
                 break;
             }
-        if (message.associatedMessage != null && Object.hasOwnProperty.call(message, "associatedMessage"))
+        if (message.associatedMessage != null && message.hasOwnProperty("associatedMessage"))
             if (!$util.isString(message.associatedMessage))
                 return "associatedMessage: string expected";
         return null;
@@ -736,15 +697,9 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_AllowedConfirmation} CAuthentication_AllowedConfirmation
      */
-    CAuthentication_AllowedConfirmation.fromObject = function fromObject(object, long) {
+    CAuthentication_AllowedConfirmation.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_AllowedConfirmation)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_AllowedConfirmation: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_AllowedConfirmation();
         switch (object.confirmationType) {
         default:
@@ -800,21 +755,17 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_AllowedConfirmation.toObject = function toObject(message, options, q) {
+    CAuthentication_AllowedConfirmation.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.confirmationType = options.enums === String ? "k_EAuthSessionGuardType_Unknown" : 0;
             object.associatedMessage = "";
         }
-        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+        if (message.confirmationType != null && message.hasOwnProperty("confirmationType"))
             object.confirmationType = options.enums === String ? $root.EAuthSessionGuardType[message.confirmationType] === undefined ? message.confirmationType : $root.EAuthSessionGuardType[message.confirmationType] : message.confirmationType;
-        if (message.associatedMessage != null && Object.hasOwnProperty.call(message, "associatedMessage"))
+        if (message.associatedMessage != null && message.hasOwnProperty("associatedMessage"))
             object.associatedMessage = message.associatedMessage;
         return object;
     };
@@ -848,165 +799,161 @@ export const CAuthentication_AllowedConfirmation = $root.CAuthentication_Allowed
     return CAuthentication_AllowedConfirmation;
 })();
 
-export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData = $root.CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData = (() => {
+export const CAuthentication_BeginAuthSessionViaCredentials_Request = $root.CAuthentication_BeginAuthSessionViaCredentials_Request = (() => {
 
     /**
-     * Properties of a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.
-     * @exports ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
-     * @interface ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
-     * @property {string|null} [deviceFriendlyName] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceFriendlyName
-     * @property {string|null} [accountName] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData accountName
-     * @property {string|null} [encryptedPassword] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptedPassword
-     * @property {number|Long|null} [encryptionTimestamp] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptionTimestamp
-     * @property {boolean|null} [rememberLogin] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData rememberLogin
-     * @property {EAuthTokenPlatformType|null} [platformType] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData platformType
-     * @property {ESessionPersistence|null} [persistence] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData persistence
-     * @property {string|null} [websiteId] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData websiteId
-     * @property {ICAuthentication_DeviceDetails|null} [deviceDetails] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceDetails
-     * @property {string|null} [guardData] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData
-     * @property {number|null} [language] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData language
-     * @property {number|null} [qosLevel] CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData qosLevel
+     * Properties of a CAuthentication_BeginAuthSessionViaCredentials_Request.
+     * @exports ICAuthentication_BeginAuthSessionViaCredentials_Request
+     * @interface ICAuthentication_BeginAuthSessionViaCredentials_Request
+     * @property {string|null} [deviceFriendlyName] CAuthentication_BeginAuthSessionViaCredentials_Request deviceFriendlyName
+     * @property {string|null} [accountName] CAuthentication_BeginAuthSessionViaCredentials_Request accountName
+     * @property {string|null} [encryptedPassword] CAuthentication_BeginAuthSessionViaCredentials_Request encryptedPassword
+     * @property {Long|null} [encryptionTimestamp] CAuthentication_BeginAuthSessionViaCredentials_Request encryptionTimestamp
+     * @property {boolean|null} [rememberLogin] CAuthentication_BeginAuthSessionViaCredentials_Request rememberLogin
+     * @property {EAuthTokenPlatformType|null} [platformType] CAuthentication_BeginAuthSessionViaCredentials_Request platformType
+     * @property {ESessionPersistence|null} [persistence] CAuthentication_BeginAuthSessionViaCredentials_Request persistence
+     * @property {string|null} [websiteId] CAuthentication_BeginAuthSessionViaCredentials_Request websiteId
+     * @property {ICAuthentication_DeviceDetails|null} [deviceDetails] CAuthentication_BeginAuthSessionViaCredentials_Request deviceDetails
+     * @property {string|null} [guardData] CAuthentication_BeginAuthSessionViaCredentials_Request guardData
+     * @property {number|null} [language] CAuthentication_BeginAuthSessionViaCredentials_Request language
+     * @property {number|null} [qosLevel] CAuthentication_BeginAuthSessionViaCredentials_Request qosLevel
      */
 
     /**
-     * Constructs a new CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.
-     * @exports CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
-     * @classdesc Represents a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.
-     * @implements ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * Constructs a new CAuthentication_BeginAuthSessionViaCredentials_Request.
+     * @exports CAuthentication_BeginAuthSessionViaCredentials_Request
+     * @classdesc Represents a CAuthentication_BeginAuthSessionViaCredentials_Request.
+     * @implements ICAuthentication_BeginAuthSessionViaCredentials_Request
      * @constructor
-     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData=} [properties] Properties to set
+     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request=} [properties] Properties to set
      */
-    function CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData(properties) {
+    function CAuthentication_BeginAuthSessionViaCredentials_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceFriendlyName.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request deviceFriendlyName.
      * @member {string} deviceFriendlyName
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.deviceFriendlyName = "";
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.deviceFriendlyName = "";
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData accountName.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request accountName.
      * @member {string} accountName
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.accountName = "";
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.accountName = "";
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptedPassword.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request encryptedPassword.
      * @member {string} encryptedPassword
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.encryptedPassword = "";
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.encryptedPassword = "";
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData encryptionTimestamp.
-     * @member {number|Long} encryptionTimestamp
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * CAuthentication_BeginAuthSessionViaCredentials_Request encryptionTimestamp.
+     * @member {Long} encryptionTimestamp
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.encryptionTimestamp = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.encryptionTimestamp = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData rememberLogin.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request rememberLogin.
      * @member {boolean} rememberLogin
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.rememberLogin = false;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.rememberLogin = false;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData platformType.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request platformType.
      * @member {EAuthTokenPlatformType} platformType
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.platformType = 0;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.platformType = 0;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData persistence.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request persistence.
      * @member {ESessionPersistence} persistence
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.persistence = 1;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.persistence = 1;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData websiteId.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request websiteId.
      * @member {string} websiteId
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.websiteId = "Unknown";
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.websiteId = "Unknown";
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData deviceDetails.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request deviceDetails.
      * @member {ICAuthentication_DeviceDetails|null|undefined} deviceDetails
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.deviceDetails = null;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.deviceDetails = null;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData guardData.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request guardData.
      * @member {string} guardData
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.guardData = "";
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.guardData = "";
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData language.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request language.
      * @member {number} language
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.language = 0;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.language = 0;
 
     /**
-     * CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData qosLevel.
+     * CAuthentication_BeginAuthSessionViaCredentials_Request qosLevel.
      * @member {number} qosLevel
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.qosLevel = 2;
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.qosLevel = 2;
 
     /**
-     * Creates a new CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData instance using the specified properties.
+     * Creates a new CAuthentication_BeginAuthSessionViaCredentials_Request instance using the specified properties.
      * @function create
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
-     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData=} [properties] Properties to set
-     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData instance
+     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request=} [properties] Properties to set
+     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request} CAuthentication_BeginAuthSessionViaCredentials_Request instance
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.create = function create(properties) {
-        return new CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData(properties);
+    CAuthentication_BeginAuthSessionViaCredentials_Request.create = function create(properties) {
+        return new CAuthentication_BeginAuthSessionViaCredentials_Request(properties);
     };
 
     /**
-     * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.verify|verify} messages.
+     * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request message. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request.verify|verify} messages.
      * @function encode
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
-     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} message CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message or plain object to encode
+     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request} message CAuthentication_BeginAuthSessionViaCredentials_Request message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.encode = function encode(message, writer, q) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
             writer.uint32(/* id 1, wireType 2 =*/10).string(message.deviceFriendlyName);
         if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
@@ -1024,7 +971,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
         if (message.websiteId != null && Object.hasOwnProperty.call(message, "websiteId"))
             writer.uint32(/* id 8, wireType 2 =*/66).string(message.websiteId);
         if (message.deviceDetails != null && Object.hasOwnProperty.call(message, "deviceDetails"))
-            $root.CAuthentication_DeviceDetails.encode(message.deviceDetails, writer.uint32(/* id 9, wireType 2 =*/74).fork(), q + 1).ldelim();
+            $root.CAuthentication_DeviceDetails.encode(message.deviceDetails, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
         if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
             writer.uint32(/* id 10, wireType 2 =*/82).string(message.guardData);
         if (message.language != null && Object.hasOwnProperty.call(message, "language"))
@@ -1035,41 +982,35 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
     };
 
     /**
-     * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message, length delimited. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.verify|verify} messages.
+     * Encodes the specified CAuthentication_BeginAuthSessionViaCredentials_Request message, length delimited. Does not implicitly {@link CAuthentication_BeginAuthSessionViaCredentials_Request.verify|verify} messages.
      * @function encodeDelimited
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
-     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} message CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message or plain object to encode
+     * @param {ICAuthentication_BeginAuthSessionViaCredentials_Request} message CAuthentication_BeginAuthSessionViaCredentials_Request message or plain object to encode
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.encodeDelimited = function encodeDelimited(message, writer) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.encodeDelimited = function encodeDelimited(message, writer) {
         return this.encode(message, writer).ldelim();
     };
 
     /**
-     * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from the specified reader or buffer.
+     * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request message from the specified reader or buffer.
      * @function decode
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
      * @param {number} [length] Message length if known beforehand
-     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request} CAuthentication_BeginAuthSessionViaCredentials_Request
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.decode = function decode(reader, length, error, long) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
-        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData();
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.deviceFriendlyName = reader.string();
@@ -1104,7 +1045,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
                     break;
                 }
             case 9: {
-                    message.deviceDetails = $root.CAuthentication_DeviceDetails.decode(reader, reader.uint32(), undefined, long + 1);
+                    message.deviceDetails = $root.CAuthentication_DeviceDetails.decode(reader, reader.uint32());
                     break;
                 }
             case 10: {
@@ -1120,7 +1061,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -1128,52 +1069,48 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
     };
 
     /**
-     * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from the specified reader or buffer, length delimited.
+     * Decodes a CAuthentication_BeginAuthSessionViaCredentials_Request message from the specified reader or buffer, length delimited.
      * @function decodeDelimited
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
      * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request} CAuthentication_BeginAuthSessionViaCredentials_Request
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.decodeDelimited = function decodeDelimited(reader) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.decodeDelimited = function decodeDelimited(reader) {
         if (!(reader instanceof $Reader))
             reader = new $Reader(reader);
         return this.decode(reader, reader.uint32());
     };
 
     /**
-     * Verifies a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message.
+     * Verifies a CAuthentication_BeginAuthSessionViaCredentials_Request message.
      * @function verify
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.verify = function verify(message, long) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
             if (!$util.isString(message.deviceFriendlyName))
                 return "deviceFriendlyName: string expected";
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             if (!$util.isString(message.accountName))
                 return "accountName: string expected";
-        if (message.encryptedPassword != null && Object.hasOwnProperty.call(message, "encryptedPassword"))
+        if (message.encryptedPassword != null && message.hasOwnProperty("encryptedPassword"))
             if (!$util.isString(message.encryptedPassword))
                 return "encryptedPassword: string expected";
-        if (message.encryptionTimestamp != null && Object.hasOwnProperty.call(message, "encryptionTimestamp"))
+        if (message.encryptionTimestamp != null && message.hasOwnProperty("encryptionTimestamp"))
             if (!$util.isInteger(message.encryptionTimestamp) && !(message.encryptionTimestamp && $util.isInteger(message.encryptionTimestamp.low) && $util.isInteger(message.encryptionTimestamp.high)))
                 return "encryptionTimestamp: integer|Long expected";
-        if (message.rememberLogin != null && Object.hasOwnProperty.call(message, "rememberLogin"))
+        if (message.rememberLogin != null && message.hasOwnProperty("rememberLogin"))
             if (typeof message.rememberLogin !== "boolean")
                 return "rememberLogin: boolean expected";
-        if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
             switch (message.platformType) {
             default:
                 return "platformType: enum value expected";
@@ -1183,7 +1120,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             case 3:
                 break;
             }
-        if (message.persistence != null && Object.hasOwnProperty.call(message, "persistence"))
+        if (message.persistence != null && message.hasOwnProperty("persistence"))
             switch (message.persistence) {
             default:
                 return "persistence: enum value expected";
@@ -1192,44 +1129,38 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             case 1:
                 break;
             }
-        if (message.websiteId != null && Object.hasOwnProperty.call(message, "websiteId"))
+        if (message.websiteId != null && message.hasOwnProperty("websiteId"))
             if (!$util.isString(message.websiteId))
                 return "websiteId: string expected";
-        if (message.deviceDetails != null && Object.hasOwnProperty.call(message, "deviceDetails")) {
-            let error = $root.CAuthentication_DeviceDetails.verify(message.deviceDetails, long + 1);
+        if (message.deviceDetails != null && message.hasOwnProperty("deviceDetails")) {
+            let error = $root.CAuthentication_DeviceDetails.verify(message.deviceDetails);
             if (error)
                 return "deviceDetails." + error;
         }
-        if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
+        if (message.guardData != null && message.hasOwnProperty("guardData"))
             if (!$util.isString(message.guardData))
                 return "guardData: string expected";
-        if (message.language != null && Object.hasOwnProperty.call(message, "language"))
+        if (message.language != null && message.hasOwnProperty("language"))
             if (!$util.isInteger(message.language))
                 return "language: integer expected";
-        if (message.qosLevel != null && Object.hasOwnProperty.call(message, "qosLevel"))
+        if (message.qosLevel != null && message.hasOwnProperty("qosLevel"))
             if (!$util.isInteger(message.qosLevel))
                 return "qosLevel: integer expected";
         return null;
     };
 
     /**
-     * Creates a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message from a plain object. Also converts values to their respective internal types.
+     * Creates a CAuthentication_BeginAuthSessionViaCredentials_Request message from a plain object. Also converts values to their respective internal types.
      * @function fromObject
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
      * @param {Object.<string,*>} object Plain object
-     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @returns {CAuthentication_BeginAuthSessionViaCredentials_Request} CAuthentication_BeginAuthSessionViaCredentials_Request
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.fromObject = function fromObject(object, long) {
-        if (object instanceof $root.CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData)
+    CAuthentication_BeginAuthSessionViaCredentials_Request.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_BeginAuthSessionViaCredentials_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
-        let message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData();
+        let message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Request();
         if (object.deviceFriendlyName != null)
             message.deviceFriendlyName = String(object.deviceFriendlyName);
         if (object.accountName != null)
@@ -1238,7 +1169,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             message.encryptedPassword = String(object.encryptedPassword);
         if (object.encryptionTimestamp != null)
             if ($util.Long)
-                message.encryptionTimestamp = $util.Long.fromValue(object.encryptionTimestamp, true);
+                (message.encryptionTimestamp = $util.Long.fromValue(object.encryptionTimestamp)).unsigned = true;
             else if (typeof object.encryptionTimestamp === "string")
                 message.encryptionTimestamp = parseInt(object.encryptionTimestamp, 10);
             else if (typeof object.encryptionTimestamp === "number")
@@ -1294,9 +1225,9 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
         if (object.websiteId != null)
             message.websiteId = String(object.websiteId);
         if (object.deviceDetails != null) {
-            if (!$util.isObject(object.deviceDetails))
-                throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.deviceDetails: object expected");
-            message.deviceDetails = $root.CAuthentication_DeviceDetails.fromObject(object.deviceDetails, long + 1);
+            if (typeof object.deviceDetails !== "object")
+                throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Request.deviceDetails: object expected");
+            message.deviceDetails = $root.CAuthentication_DeviceDetails.fromObject(object.deviceDetails);
         }
         if (object.guardData != null)
             message.guardData = String(object.guardData);
@@ -1308,21 +1239,17 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
     };
 
     /**
-     * Creates a plain object from a CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData message. Also converts values to other types if specified.
+     * Creates a plain object from a CAuthentication_BeginAuthSessionViaCredentials_Request message. Also converts values to other types if specified.
      * @function toObject
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
-     * @param {CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData} message CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @param {CAuthentication_BeginAuthSessionViaCredentials_Request} message CAuthentication_BeginAuthSessionViaCredentials_Request
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.toObject = function toObject(message, options, q) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.deviceFriendlyName = "";
@@ -1330,9 +1257,9 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             object.encryptedPassword = "";
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.encryptionTimestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.encryptionTimestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.encryptionTimestamp = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.encryptionTimestamp = options.longs === String ? "0" : 0;
             object.rememberLogin = false;
             object.platformType = options.enums === String ? "k_EAuthTokenPlatformType_Unknown" : 0;
             object.persistence = options.enums === String ? "k_ESessionPersistence_Persistent" : 1;
@@ -1342,65 +1269,63 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardD
             object.language = 0;
             object.qosLevel = 2;
         }
-        if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
             object.deviceFriendlyName = message.deviceFriendlyName;
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             object.accountName = message.accountName;
-        if (message.encryptedPassword != null && Object.hasOwnProperty.call(message, "encryptedPassword"))
+        if (message.encryptedPassword != null && message.hasOwnProperty("encryptedPassword"))
             object.encryptedPassword = message.encryptedPassword;
-        if (message.encryptionTimestamp != null && Object.hasOwnProperty.call(message, "encryptionTimestamp"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.encryptionTimestamp = typeof message.encryptionTimestamp === "number" ? BigInt(message.encryptionTimestamp) : $util.Long.fromBits(message.encryptionTimestamp.low >>> 0, message.encryptionTimestamp.high >>> 0, true).toBigInt();
-            else if (typeof message.encryptionTimestamp === "number")
+        if (message.encryptionTimestamp != null && message.hasOwnProperty("encryptionTimestamp"))
+            if (typeof message.encryptionTimestamp === "number")
                 object.encryptionTimestamp = options.longs === String ? String(message.encryptionTimestamp) : message.encryptionTimestamp;
             else
                 object.encryptionTimestamp = options.longs === String ? $util.Long.prototype.toString.call(message.encryptionTimestamp) : options.longs === Number ? new $util.LongBits(message.encryptionTimestamp.low >>> 0, message.encryptionTimestamp.high >>> 0).toNumber(true) : message.encryptionTimestamp;
-        if (message.rememberLogin != null && Object.hasOwnProperty.call(message, "rememberLogin"))
+        if (message.rememberLogin != null && message.hasOwnProperty("rememberLogin"))
             object.rememberLogin = message.rememberLogin;
-        if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
             object.platformType = options.enums === String ? $root.EAuthTokenPlatformType[message.platformType] === undefined ? message.platformType : $root.EAuthTokenPlatformType[message.platformType] : message.platformType;
-        if (message.persistence != null && Object.hasOwnProperty.call(message, "persistence"))
+        if (message.persistence != null && message.hasOwnProperty("persistence"))
             object.persistence = options.enums === String ? $root.ESessionPersistence[message.persistence] === undefined ? message.persistence : $root.ESessionPersistence[message.persistence] : message.persistence;
-        if (message.websiteId != null && Object.hasOwnProperty.call(message, "websiteId"))
+        if (message.websiteId != null && message.hasOwnProperty("websiteId"))
             object.websiteId = message.websiteId;
-        if (message.deviceDetails != null && Object.hasOwnProperty.call(message, "deviceDetails"))
-            object.deviceDetails = $root.CAuthentication_DeviceDetails.toObject(message.deviceDetails, options, q + 1);
-        if (message.guardData != null && Object.hasOwnProperty.call(message, "guardData"))
+        if (message.deviceDetails != null && message.hasOwnProperty("deviceDetails"))
+            object.deviceDetails = $root.CAuthentication_DeviceDetails.toObject(message.deviceDetails, options);
+        if (message.guardData != null && message.hasOwnProperty("guardData"))
             object.guardData = message.guardData;
-        if (message.language != null && Object.hasOwnProperty.call(message, "language"))
+        if (message.language != null && message.hasOwnProperty("language"))
             object.language = message.language;
-        if (message.qosLevel != null && Object.hasOwnProperty.call(message, "qosLevel"))
+        if (message.qosLevel != null && message.hasOwnProperty("qosLevel"))
             object.qosLevel = message.qosLevel;
         return object;
     };
 
     /**
-     * Converts this CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData to JSON.
+     * Converts this CAuthentication_BeginAuthSessionViaCredentials_Request to JSON.
      * @function toJSON
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @instance
      * @returns {Object.<string,*>} JSON object
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.prototype.toJSON = function toJSON() {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.prototype.toJSON = function toJSON() {
         return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
     };
 
     /**
-     * Gets the default type url for CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * Gets the default type url for CAuthentication_BeginAuthSessionViaCredentials_Request
      * @function getTypeUrl
-     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData
+     * @memberof CAuthentication_BeginAuthSessionViaCredentials_Request
      * @static
      * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns {string} The default type url
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+    CAuthentication_BeginAuthSessionViaCredentials_Request.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
         if (typeUrlPrefix === undefined) {
             typeUrlPrefix = "type.googleapis.com";
         }
-        return typeUrlPrefix + "/CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData";
+        return typeUrlPrefix + "/CAuthentication_BeginAuthSessionViaCredentials_Request";
     };
 
-    return CAuthentication_BeginAuthSessionViaCredentials_Request_BinaryGuardData;
+    return CAuthentication_BeginAuthSessionViaCredentials_Request;
 })();
 
 export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAuthentication_BeginAuthSessionViaCredentials_Response = (() => {
@@ -1409,11 +1334,11 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * Properties of a CAuthentication_BeginAuthSessionViaCredentials_Response.
      * @exports ICAuthentication_BeginAuthSessionViaCredentials_Response
      * @interface ICAuthentication_BeginAuthSessionViaCredentials_Response
-     * @property {number|Long|null} [clientId] CAuthentication_BeginAuthSessionViaCredentials_Response clientId
+     * @property {Long|null} [clientId] CAuthentication_BeginAuthSessionViaCredentials_Response clientId
      * @property {Uint8Array|null} [requestId] CAuthentication_BeginAuthSessionViaCredentials_Response requestId
      * @property {number|null} [interval] CAuthentication_BeginAuthSessionViaCredentials_Response interval
      * @property {Array.<ICAuthentication_AllowedConfirmation>|null} [allowedConfirmations] CAuthentication_BeginAuthSessionViaCredentials_Response allowedConfirmations
-     * @property {number|Long|null} [steamid] CAuthentication_BeginAuthSessionViaCredentials_Response steamid
+     * @property {Long|null} [steamid] CAuthentication_BeginAuthSessionViaCredentials_Response steamid
      * @property {string|null} [weakToken] CAuthentication_BeginAuthSessionViaCredentials_Response weakToken
      * @property {string|null} [agreementSessionUrl] CAuthentication_BeginAuthSessionViaCredentials_Response agreementSessionUrl
      * @property {string|null} [extendedErrorMessage] CAuthentication_BeginAuthSessionViaCredentials_Response extendedErrorMessage
@@ -1431,13 +1356,13 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
         this.allowedConfirmations = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CAuthentication_BeginAuthSessionViaCredentials_Response clientId.
-     * @member {number|Long} clientId
+     * @member {Long} clientId
      * @memberof CAuthentication_BeginAuthSessionViaCredentials_Response
      * @instance
      */
@@ -1469,7 +1394,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
 
     /**
      * CAuthentication_BeginAuthSessionViaCredentials_Response steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CAuthentication_BeginAuthSessionViaCredentials_Response
      * @instance
      */
@@ -1520,13 +1445,9 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Response.encode = function encode(message, writer, q) {
+    CAuthentication_BeginAuthSessionViaCredentials_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.clientId);
         if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
@@ -1535,7 +1456,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
             writer.uint32(/* id 3, wireType 5 =*/29).float(message.interval);
         if (message.allowedConfirmations != null && message.allowedConfirmations.length)
             for (let i = 0; i < message.allowedConfirmations.length; ++i)
-                $root.CAuthentication_AllowedConfirmation.encode(message.allowedConfirmations[i], writer.uint32(/* id 4, wireType 2 =*/34).fork(), q + 1).ldelim();
+                $root.CAuthentication_AllowedConfirmation.encode(message.allowedConfirmations[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             writer.uint32(/* id 5, wireType 0 =*/40).uint64(message.steamid);
         if (message.weakToken != null && Object.hasOwnProperty.call(message, "weakToken"))
@@ -1571,18 +1492,12 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Response.decode = function decode(reader, length, error, long) {
+    CAuthentication_BeginAuthSessionViaCredentials_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientId = reader.uint64();
@@ -1599,7 +1514,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
             case 4: {
                     if (!(message.allowedConfirmations && message.allowedConfirmations.length))
                         message.allowedConfirmations = [];
-                    message.allowedConfirmations.push($root.CAuthentication_AllowedConfirmation.decode(reader, reader.uint32(), undefined, long + 1));
+                    message.allowedConfirmations.push($root.CAuthentication_AllowedConfirmation.decode(reader, reader.uint32()));
                     break;
                 }
             case 5: {
@@ -1619,7 +1534,7 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -1650,41 +1565,37 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Response.verify = function verify(message, long) {
+    CAuthentication_BeginAuthSessionViaCredentials_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
             if (!$util.isInteger(message.clientId) && !(message.clientId && $util.isInteger(message.clientId.low) && $util.isInteger(message.clientId.high)))
                 return "clientId: integer|Long expected";
-        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+        if (message.requestId != null && message.hasOwnProperty("requestId"))
             if (!(message.requestId && typeof message.requestId.length === "number" || $util.isString(message.requestId)))
                 return "requestId: buffer expected";
-        if (message.interval != null && Object.hasOwnProperty.call(message, "interval"))
+        if (message.interval != null && message.hasOwnProperty("interval"))
             if (typeof message.interval !== "number")
                 return "interval: number expected";
-        if (message.allowedConfirmations != null && Object.hasOwnProperty.call(message, "allowedConfirmations")) {
+        if (message.allowedConfirmations != null && message.hasOwnProperty("allowedConfirmations")) {
             if (!Array.isArray(message.allowedConfirmations))
                 return "allowedConfirmations: array expected";
             for (let i = 0; i < message.allowedConfirmations.length; ++i) {
-                let error = $root.CAuthentication_AllowedConfirmation.verify(message.allowedConfirmations[i], long + 1);
+                let error = $root.CAuthentication_AllowedConfirmation.verify(message.allowedConfirmations[i]);
                 if (error)
                     return "allowedConfirmations." + error;
             }
         }
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
-        if (message.weakToken != null && Object.hasOwnProperty.call(message, "weakToken"))
+        if (message.weakToken != null && message.hasOwnProperty("weakToken"))
             if (!$util.isString(message.weakToken))
                 return "weakToken: string expected";
-        if (message.agreementSessionUrl != null && Object.hasOwnProperty.call(message, "agreementSessionUrl"))
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
             if (!$util.isString(message.agreementSessionUrl))
                 return "agreementSessionUrl: string expected";
-        if (message.extendedErrorMessage != null && Object.hasOwnProperty.call(message, "extendedErrorMessage"))
+        if (message.extendedErrorMessage != null && message.hasOwnProperty("extendedErrorMessage"))
             if (!$util.isString(message.extendedErrorMessage))
                 return "extendedErrorMessage: string expected";
         return null;
@@ -1698,19 +1609,13 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_BeginAuthSessionViaCredentials_Response} CAuthentication_BeginAuthSessionViaCredentials_Response
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Response.fromObject = function fromObject(object, long) {
+    CAuthentication_BeginAuthSessionViaCredentials_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_BeginAuthSessionViaCredentials_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_BeginAuthSessionViaCredentials_Response();
         if (object.clientId != null)
             if ($util.Long)
-                message.clientId = $util.Long.fromValue(object.clientId, true);
+                (message.clientId = $util.Long.fromValue(object.clientId)).unsigned = true;
             else if (typeof object.clientId === "string")
                 message.clientId = parseInt(object.clientId, 10);
             else if (typeof object.clientId === "number")
@@ -1729,14 +1634,14 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
                 throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Response.allowedConfirmations: array expected");
             message.allowedConfirmations = [];
             for (let i = 0; i < object.allowedConfirmations.length; ++i) {
-                if (!$util.isObject(object.allowedConfirmations[i]))
+                if (typeof object.allowedConfirmations[i] !== "object")
                     throw TypeError(".CAuthentication_BeginAuthSessionViaCredentials_Response.allowedConfirmations: object expected");
-                message.allowedConfirmations[i] = $root.CAuthentication_AllowedConfirmation.fromObject(object.allowedConfirmations[i], long + 1);
+                message.allowedConfirmations[i] = $root.CAuthentication_AllowedConfirmation.fromObject(object.allowedConfirmations[i]);
             }
         }
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = true;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
@@ -1761,22 +1666,18 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_BeginAuthSessionViaCredentials_Response.toObject = function toObject(message, options, q) {
+    CAuthentication_BeginAuthSessionViaCredentials_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.arrays || options.defaults)
             object.allowedConfirmations = [];
         if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.clientId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.clientId = options.longs === String ? "0" : 0;
             if (options.bytes === String)
                 object.requestId = "";
             else {
@@ -1787,41 +1688,37 @@ export const CAuthentication_BeginAuthSessionViaCredentials_Response = $root.CAu
             object.interval = 0;
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
             object.weakToken = "";
             object.agreementSessionUrl = "";
             object.extendedErrorMessage = "";
         }
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.clientId = typeof message.clientId === "number" ? BigInt(message.clientId) : $util.Long.fromBits(message.clientId.low >>> 0, message.clientId.high >>> 0, true).toBigInt();
-            else if (typeof message.clientId === "number")
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (typeof message.clientId === "number")
                 object.clientId = options.longs === String ? String(message.clientId) : message.clientId;
             else
                 object.clientId = options.longs === String ? $util.Long.prototype.toString.call(message.clientId) : options.longs === Number ? new $util.LongBits(message.clientId.low >>> 0, message.clientId.high >>> 0).toNumber(true) : message.clientId;
-        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+        if (message.requestId != null && message.hasOwnProperty("requestId"))
             object.requestId = options.bytes === String ? $util.base64.encode(message.requestId, 0, message.requestId.length) : options.bytes === Array ? Array.prototype.slice.call(message.requestId) : message.requestId;
-        if (message.interval != null && Object.hasOwnProperty.call(message, "interval"))
+        if (message.interval != null && message.hasOwnProperty("interval"))
             object.interval = options.json && !isFinite(message.interval) ? String(message.interval) : message.interval;
         if (message.allowedConfirmations && message.allowedConfirmations.length) {
             object.allowedConfirmations = [];
             for (let j = 0; j < message.allowedConfirmations.length; ++j)
-                object.allowedConfirmations[j] = $root.CAuthentication_AllowedConfirmation.toObject(message.allowedConfirmations[j], options, q + 1);
+                object.allowedConfirmations[j] = $root.CAuthentication_AllowedConfirmation.toObject(message.allowedConfirmations[j], options);
         }
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
                 object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
-        if (message.weakToken != null && Object.hasOwnProperty.call(message, "weakToken"))
+        if (message.weakToken != null && message.hasOwnProperty("weakToken"))
             object.weakToken = message.weakToken;
-        if (message.agreementSessionUrl != null && Object.hasOwnProperty.call(message, "agreementSessionUrl"))
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
             object.agreementSessionUrl = message.agreementSessionUrl;
-        if (message.extendedErrorMessage != null && Object.hasOwnProperty.call(message, "extendedErrorMessage"))
+        if (message.extendedErrorMessage != null && message.hasOwnProperty("extendedErrorMessage"))
             object.extendedErrorMessage = message.extendedErrorMessage;
         return object;
     };
@@ -1861,8 +1758,8 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * Properties of a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.
      * @exports ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      * @interface ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
-     * @property {number|Long|null} [clientId] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request clientId
-     * @property {number|Long|null} [steamid] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request steamid
+     * @property {Long|null} [clientId] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request clientId
+     * @property {Long|null} [steamid] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request steamid
      * @property {string|null} [code] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request code
      * @property {EAuthSessionGuardType|null} [codeType] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request codeType
      */
@@ -1878,13 +1775,13 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
     function CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request clientId.
-     * @member {number|Long} clientId
+     * @member {Long} clientId
      * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      * @instance
      */
@@ -1892,11 +1789,11 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
 
     /**
      * CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      * @instance
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request code.
@@ -1935,13 +1832,9 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.encode = function encode(message, writer, q) {
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.clientId);
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
@@ -1977,18 +1870,12 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.decode = function decode(reader, length, error, long) {
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientId = reader.uint64();
@@ -2007,7 +1894,7 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -2038,23 +1925,19 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.verify = function verify(message, long) {
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
             if (!$util.isInteger(message.clientId) && !(message.clientId && $util.isInteger(message.clientId.low) && $util.isInteger(message.clientId.high)))
                 return "clientId: integer|Long expected";
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
-        if (message.code != null && Object.hasOwnProperty.call(message, "code"))
+        if (message.code != null && message.hasOwnProperty("code"))
             if (!$util.isString(message.code))
                 return "code: string expected";
-        if (message.codeType != null && Object.hasOwnProperty.call(message, "codeType"))
+        if (message.codeType != null && message.hasOwnProperty("codeType"))
             switch (message.codeType) {
             default:
                 return "codeType: enum value expected";
@@ -2079,19 +1962,13 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request} CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.fromObject = function fromObject(object, long) {
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request();
         if (object.clientId != null)
             if ($util.Long)
-                message.clientId = $util.Long.fromValue(object.clientId, true);
+                (message.clientId = $util.Long.fromValue(object.clientId)).unsigned = true;
             else if (typeof object.clientId === "string")
                 message.clientId = parseInt(object.clientId, 10);
             else if (typeof object.clientId === "number")
@@ -2100,13 +1977,13 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
                 message.clientId = new $util.LongBits(object.clientId.low >>> 0, object.clientId.high >>> 0).toNumber(true);
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
-                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
         if (object.code != null)
             message.code = String(object.code);
         switch (object.codeType) {
@@ -2161,45 +2038,37 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.toObject = function toObject(message, options, q) {
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.clientId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.clientId = options.longs === String ? "0" : 0;
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
             object.code = "";
             object.codeType = options.enums === String ? "k_EAuthSessionGuardType_Unknown" : 0;
         }
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.clientId = typeof message.clientId === "number" ? BigInt(message.clientId) : $util.Long.fromBits(message.clientId.low >>> 0, message.clientId.high >>> 0, true).toBigInt();
-            else if (typeof message.clientId === "number")
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (typeof message.clientId === "number")
                 object.clientId = options.longs === String ? String(message.clientId) : message.clientId;
             else
                 object.clientId = options.longs === String ? $util.Long.prototype.toString.call(message.clientId) : options.longs === Number ? new $util.LongBits(message.clientId.low >>> 0, message.clientId.high >>> 0).toNumber(true) : message.clientId;
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
-                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
-        if (message.code != null && Object.hasOwnProperty.call(message, "code"))
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
+        if (message.code != null && message.hasOwnProperty("code"))
             object.code = message.code;
-        if (message.codeType != null && Object.hasOwnProperty.call(message, "codeType"))
+        if (message.codeType != null && message.hasOwnProperty("codeType"))
             object.codeType = options.enums === String ? $root.EAuthSessionGuardType[message.codeType] === undefined ? message.codeType : $root.EAuthSessionGuardType[message.codeType] : message.codeType;
         return object;
     };
@@ -2233,15 +2102,218 @@ export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request = $root
     return CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request;
 })();
 
+export const CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response = $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response = (() => {
+
+    /**
+     * Properties of a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.
+     * @exports ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @interface ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @property {string|null} [agreementSessionUrl] CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response agreementSessionUrl
+     */
+
+    /**
+     * Constructs a new CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.
+     * @exports CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @classdesc Represents a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.
+     * @implements ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @constructor
+     * @param {ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response=} [properties] Properties to set
+     */
+    function CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response agreementSessionUrl.
+     * @member {string} agreementSessionUrl
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.prototype.agreementSessionUrl = "";
+
+    /**
+     * Creates a new CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response=} [properties] Properties to set
+     * @returns {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response instance
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.create = function create(properties) {
+        return new CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} message CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.agreementSessionUrl != null && Object.hasOwnProperty.call(message, "agreementSessionUrl"))
+            writer.uint32(/* id 7, wireType 2 =*/58).string(message.agreementSessionUrl);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message, length delimited. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} message CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 7: {
+                    message.agreementSessionUrl = reader.string();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message.
+     * @function verify
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
+            if (!$util.isString(message.agreementSessionUrl))
+                return "agreementSessionUrl: string expected";
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response)
+            return object;
+        let message = new $root.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response();
+        if (object.agreementSessionUrl != null)
+            message.agreementSessionUrl = String(object.agreementSessionUrl);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response} message CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            object.agreementSessionUrl = "";
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
+            object.agreementSessionUrl = message.agreementSessionUrl;
+        return object;
+    };
+
+    /**
+     * Converts this CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @function getTypeUrl
+     * @memberof CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response";
+    };
+
+    return CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response;
+})();
+
 export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthentication_PollAuthSessionStatus_Request = (() => {
 
     /**
      * Properties of a CAuthentication_PollAuthSessionStatus_Request.
      * @exports ICAuthentication_PollAuthSessionStatus_Request
      * @interface ICAuthentication_PollAuthSessionStatus_Request
-     * @property {number|Long|null} [clientId] CAuthentication_PollAuthSessionStatus_Request clientId
+     * @property {Long|null} [clientId] CAuthentication_PollAuthSessionStatus_Request clientId
      * @property {Uint8Array|null} [requestId] CAuthentication_PollAuthSessionStatus_Request requestId
-     * @property {number|Long|null} [tokenToRevoke] CAuthentication_PollAuthSessionStatus_Request tokenToRevoke
+     * @property {Long|null} [tokenToRevoke] CAuthentication_PollAuthSessionStatus_Request tokenToRevoke
      */
 
     /**
@@ -2255,13 +2327,13 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
     function CAuthentication_PollAuthSessionStatus_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CAuthentication_PollAuthSessionStatus_Request clientId.
-     * @member {number|Long} clientId
+     * @member {Long} clientId
      * @memberof CAuthentication_PollAuthSessionStatus_Request
      * @instance
      */
@@ -2277,11 +2349,11 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
 
     /**
      * CAuthentication_PollAuthSessionStatus_Request tokenToRevoke.
-     * @member {number|Long} tokenToRevoke
+     * @member {Long} tokenToRevoke
      * @memberof CAuthentication_PollAuthSessionStatus_Request
      * @instance
      */
-    CAuthentication_PollAuthSessionStatus_Request.prototype.tokenToRevoke = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CAuthentication_PollAuthSessionStatus_Request.prototype.tokenToRevoke = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * Creates a new CAuthentication_PollAuthSessionStatus_Request instance using the specified properties.
@@ -2304,13 +2376,9 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_PollAuthSessionStatus_Request.encode = function encode(message, writer, q) {
+    CAuthentication_PollAuthSessionStatus_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.clientId);
         if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
@@ -2344,18 +2412,12 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_PollAuthSessionStatus_Request.decode = function decode(reader, length, error, long) {
+    CAuthentication_PollAuthSessionStatus_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_PollAuthSessionStatus_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientId = reader.uint64();
@@ -2370,7 +2432,7 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -2401,20 +2463,16 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_PollAuthSessionStatus_Request.verify = function verify(message, long) {
+    CAuthentication_PollAuthSessionStatus_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
             if (!$util.isInteger(message.clientId) && !(message.clientId && $util.isInteger(message.clientId.low) && $util.isInteger(message.clientId.high)))
                 return "clientId: integer|Long expected";
-        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+        if (message.requestId != null && message.hasOwnProperty("requestId"))
             if (!(message.requestId && typeof message.requestId.length === "number" || $util.isString(message.requestId)))
                 return "requestId: buffer expected";
-        if (message.tokenToRevoke != null && Object.hasOwnProperty.call(message, "tokenToRevoke"))
+        if (message.tokenToRevoke != null && message.hasOwnProperty("tokenToRevoke"))
             if (!$util.isInteger(message.tokenToRevoke) && !(message.tokenToRevoke && $util.isInteger(message.tokenToRevoke.low) && $util.isInteger(message.tokenToRevoke.high)))
                 return "tokenToRevoke: integer|Long expected";
         return null;
@@ -2428,19 +2486,13 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_PollAuthSessionStatus_Request} CAuthentication_PollAuthSessionStatus_Request
      */
-    CAuthentication_PollAuthSessionStatus_Request.fromObject = function fromObject(object, long) {
+    CAuthentication_PollAuthSessionStatus_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_PollAuthSessionStatus_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_PollAuthSessionStatus_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_PollAuthSessionStatus_Request();
         if (object.clientId != null)
             if ($util.Long)
-                message.clientId = $util.Long.fromValue(object.clientId, true);
+                (message.clientId = $util.Long.fromValue(object.clientId)).unsigned = true;
             else if (typeof object.clientId === "string")
                 message.clientId = parseInt(object.clientId, 10);
             else if (typeof object.clientId === "number")
@@ -2454,13 +2506,13 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
                 message.requestId = object.requestId;
         if (object.tokenToRevoke != null)
             if ($util.Long)
-                message.tokenToRevoke = $util.Long.fromValue(object.tokenToRevoke, true);
+                (message.tokenToRevoke = $util.Long.fromValue(object.tokenToRevoke)).unsigned = false;
             else if (typeof object.tokenToRevoke === "string")
                 message.tokenToRevoke = parseInt(object.tokenToRevoke, 10);
             else if (typeof object.tokenToRevoke === "number")
                 message.tokenToRevoke = object.tokenToRevoke;
             else if (typeof object.tokenToRevoke === "object")
-                message.tokenToRevoke = new $util.LongBits(object.tokenToRevoke.low >>> 0, object.tokenToRevoke.high >>> 0).toNumber(true);
+                message.tokenToRevoke = new $util.LongBits(object.tokenToRevoke.low >>> 0, object.tokenToRevoke.high >>> 0).toNumber();
         return message;
     };
 
@@ -2473,20 +2525,16 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_PollAuthSessionStatus_Request.toObject = function toObject(message, options, q) {
+    CAuthentication_PollAuthSessionStatus_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.clientId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.clientId = options.longs === String ? "0" : 0;
             if (options.bytes === String)
                 object.requestId = "";
             else {
@@ -2495,27 +2543,23 @@ export const CAuthentication_PollAuthSessionStatus_Request = $root.CAuthenticati
                     object.requestId = $util.newBuffer(object.requestId);
             }
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.tokenToRevoke = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.tokenToRevoke = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.tokenToRevoke = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.tokenToRevoke = options.longs === String ? "0" : 0;
         }
-        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.clientId = typeof message.clientId === "number" ? BigInt(message.clientId) : $util.Long.fromBits(message.clientId.low >>> 0, message.clientId.high >>> 0, true).toBigInt();
-            else if (typeof message.clientId === "number")
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (typeof message.clientId === "number")
                 object.clientId = options.longs === String ? String(message.clientId) : message.clientId;
             else
                 object.clientId = options.longs === String ? $util.Long.prototype.toString.call(message.clientId) : options.longs === Number ? new $util.LongBits(message.clientId.low >>> 0, message.clientId.high >>> 0).toNumber(true) : message.clientId;
-        if (message.requestId != null && Object.hasOwnProperty.call(message, "requestId"))
+        if (message.requestId != null && message.hasOwnProperty("requestId"))
             object.requestId = options.bytes === String ? $util.base64.encode(message.requestId, 0, message.requestId.length) : options.bytes === Array ? Array.prototype.slice.call(message.requestId) : message.requestId;
-        if (message.tokenToRevoke != null && Object.hasOwnProperty.call(message, "tokenToRevoke"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.tokenToRevoke = typeof message.tokenToRevoke === "number" ? BigInt(message.tokenToRevoke) : $util.Long.fromBits(message.tokenToRevoke.low >>> 0, message.tokenToRevoke.high >>> 0, true).toBigInt();
-            else if (typeof message.tokenToRevoke === "number")
+        if (message.tokenToRevoke != null && message.hasOwnProperty("tokenToRevoke"))
+            if (typeof message.tokenToRevoke === "number")
                 object.tokenToRevoke = options.longs === String ? String(message.tokenToRevoke) : message.tokenToRevoke;
             else
-                object.tokenToRevoke = options.longs === String ? $util.Long.prototype.toString.call(message.tokenToRevoke) : options.longs === Number ? new $util.LongBits(message.tokenToRevoke.low >>> 0, message.tokenToRevoke.high >>> 0).toNumber(true) : message.tokenToRevoke;
+                object.tokenToRevoke = options.longs === String ? $util.Long.prototype.toString.call(message.tokenToRevoke) : options.longs === Number ? new $util.LongBits(message.tokenToRevoke.low >>> 0, message.tokenToRevoke.high >>> 0).toNumber() : message.tokenToRevoke;
         return object;
     };
 
@@ -2554,7 +2598,7 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * Properties of a CAuthentication_PollAuthSessionStatus_Response.
      * @exports ICAuthentication_PollAuthSessionStatus_Response
      * @interface ICAuthentication_PollAuthSessionStatus_Response
-     * @property {number|Long|null} [newClientId] CAuthentication_PollAuthSessionStatus_Response newClientId
+     * @property {Long|null} [newClientId] CAuthentication_PollAuthSessionStatus_Response newClientId
      * @property {string|null} [newChallengeUrl] CAuthentication_PollAuthSessionStatus_Response newChallengeUrl
      * @property {string|null} [refreshToken] CAuthentication_PollAuthSessionStatus_Response refreshToken
      * @property {string|null} [accessToken] CAuthentication_PollAuthSessionStatus_Response accessToken
@@ -2575,13 +2619,13 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
     function CAuthentication_PollAuthSessionStatus_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CAuthentication_PollAuthSessionStatus_Response newClientId.
-     * @member {number|Long} newClientId
+     * @member {Long} newClientId
      * @memberof CAuthentication_PollAuthSessionStatus_Response
      * @instance
      */
@@ -2664,13 +2708,9 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CAuthentication_PollAuthSessionStatus_Response.encode = function encode(message, writer, q) {
+    CAuthentication_PollAuthSessionStatus_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.newClientId != null && Object.hasOwnProperty.call(message, "newClientId"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.newClientId);
         if (message.newChallengeUrl != null && Object.hasOwnProperty.call(message, "newChallengeUrl"))
@@ -2714,18 +2754,12 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CAuthentication_PollAuthSessionStatus_Response.decode = function decode(reader, length, error, long) {
+    CAuthentication_PollAuthSessionStatus_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_PollAuthSessionStatus_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.newClientId = reader.uint64();
@@ -2760,7 +2794,7 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -2791,35 +2825,31 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CAuthentication_PollAuthSessionStatus_Response.verify = function verify(message, long) {
+    CAuthentication_PollAuthSessionStatus_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.newClientId != null && Object.hasOwnProperty.call(message, "newClientId"))
+        if (message.newClientId != null && message.hasOwnProperty("newClientId"))
             if (!$util.isInteger(message.newClientId) && !(message.newClientId && $util.isInteger(message.newClientId.low) && $util.isInteger(message.newClientId.high)))
                 return "newClientId: integer|Long expected";
-        if (message.newChallengeUrl != null && Object.hasOwnProperty.call(message, "newChallengeUrl"))
+        if (message.newChallengeUrl != null && message.hasOwnProperty("newChallengeUrl"))
             if (!$util.isString(message.newChallengeUrl))
                 return "newChallengeUrl: string expected";
-        if (message.refreshToken != null && Object.hasOwnProperty.call(message, "refreshToken"))
+        if (message.refreshToken != null && message.hasOwnProperty("refreshToken"))
             if (!$util.isString(message.refreshToken))
                 return "refreshToken: string expected";
-        if (message.accessToken != null && Object.hasOwnProperty.call(message, "accessToken"))
+        if (message.accessToken != null && message.hasOwnProperty("accessToken"))
             if (!$util.isString(message.accessToken))
                 return "accessToken: string expected";
-        if (message.hadRemoteInteraction != null && Object.hasOwnProperty.call(message, "hadRemoteInteraction"))
+        if (message.hadRemoteInteraction != null && message.hasOwnProperty("hadRemoteInteraction"))
             if (typeof message.hadRemoteInteraction !== "boolean")
                 return "hadRemoteInteraction: boolean expected";
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             if (!$util.isString(message.accountName))
                 return "accountName: string expected";
-        if (message.newGuardData != null && Object.hasOwnProperty.call(message, "newGuardData"))
+        if (message.newGuardData != null && message.hasOwnProperty("newGuardData"))
             if (!$util.isString(message.newGuardData))
                 return "newGuardData: string expected";
-        if (message.agreementSessionUrl != null && Object.hasOwnProperty.call(message, "agreementSessionUrl"))
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
             if (!$util.isString(message.agreementSessionUrl))
                 return "agreementSessionUrl: string expected";
         return null;
@@ -2833,19 +2863,13 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * @param {Object.<string,*>} object Plain object
      * @returns {CAuthentication_PollAuthSessionStatus_Response} CAuthentication_PollAuthSessionStatus_Response
      */
-    CAuthentication_PollAuthSessionStatus_Response.fromObject = function fromObject(object, long) {
+    CAuthentication_PollAuthSessionStatus_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CAuthentication_PollAuthSessionStatus_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CAuthentication_PollAuthSessionStatus_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CAuthentication_PollAuthSessionStatus_Response();
         if (object.newClientId != null)
             if ($util.Long)
-                message.newClientId = $util.Long.fromValue(object.newClientId, true);
+                (message.newClientId = $util.Long.fromValue(object.newClientId)).unsigned = true;
             else if (typeof object.newClientId === "string")
                 message.newClientId = parseInt(object.newClientId, 10);
             else if (typeof object.newClientId === "number")
@@ -2878,20 +2902,16 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CAuthentication_PollAuthSessionStatus_Response.toObject = function toObject(message, options, q) {
+    CAuthentication_PollAuthSessionStatus_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.newClientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.newClientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.newClientId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.newClientId = options.longs === String ? "0" : 0;
             object.newChallengeUrl = "";
             object.refreshToken = "";
             object.accessToken = "";
@@ -2900,26 +2920,24 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
             object.newGuardData = "";
             object.agreementSessionUrl = "";
         }
-        if (message.newClientId != null && Object.hasOwnProperty.call(message, "newClientId"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.newClientId = typeof message.newClientId === "number" ? BigInt(message.newClientId) : $util.Long.fromBits(message.newClientId.low >>> 0, message.newClientId.high >>> 0, true).toBigInt();
-            else if (typeof message.newClientId === "number")
+        if (message.newClientId != null && message.hasOwnProperty("newClientId"))
+            if (typeof message.newClientId === "number")
                 object.newClientId = options.longs === String ? String(message.newClientId) : message.newClientId;
             else
                 object.newClientId = options.longs === String ? $util.Long.prototype.toString.call(message.newClientId) : options.longs === Number ? new $util.LongBits(message.newClientId.low >>> 0, message.newClientId.high >>> 0).toNumber(true) : message.newClientId;
-        if (message.newChallengeUrl != null && Object.hasOwnProperty.call(message, "newChallengeUrl"))
+        if (message.newChallengeUrl != null && message.hasOwnProperty("newChallengeUrl"))
             object.newChallengeUrl = message.newChallengeUrl;
-        if (message.refreshToken != null && Object.hasOwnProperty.call(message, "refreshToken"))
+        if (message.refreshToken != null && message.hasOwnProperty("refreshToken"))
             object.refreshToken = message.refreshToken;
-        if (message.accessToken != null && Object.hasOwnProperty.call(message, "accessToken"))
+        if (message.accessToken != null && message.hasOwnProperty("accessToken"))
             object.accessToken = message.accessToken;
-        if (message.hadRemoteInteraction != null && Object.hasOwnProperty.call(message, "hadRemoteInteraction"))
+        if (message.hadRemoteInteraction != null && message.hasOwnProperty("hadRemoteInteraction"))
             object.hadRemoteInteraction = message.hadRemoteInteraction;
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             object.accountName = message.accountName;
-        if (message.newGuardData != null && Object.hasOwnProperty.call(message, "newGuardData"))
+        if (message.newGuardData != null && message.hasOwnProperty("newGuardData"))
             object.newGuardData = message.newGuardData;
-        if (message.agreementSessionUrl != null && Object.hasOwnProperty.call(message, "agreementSessionUrl"))
+        if (message.agreementSessionUrl != null && message.hasOwnProperty("agreementSessionUrl"))
             object.agreementSessionUrl = message.agreementSessionUrl;
         return object;
     };
@@ -2953,18 +2971,664 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
     return CAuthentication_PollAuthSessionStatus_Response;
 })();
 
+export const CTwoFactor_Time_Request = $root.CTwoFactor_Time_Request = (() => {
+
+    /**
+     * Properties of a CTwoFactor_Time_Request.
+     * @exports ICTwoFactor_Time_Request
+     * @interface ICTwoFactor_Time_Request
+     * @property {Long|null} [senderTime] CTwoFactor_Time_Request senderTime
+     */
+
+    /**
+     * Constructs a new CTwoFactor_Time_Request.
+     * @exports CTwoFactor_Time_Request
+     * @classdesc Represents a CTwoFactor_Time_Request.
+     * @implements ICTwoFactor_Time_Request
+     * @constructor
+     * @param {ICTwoFactor_Time_Request=} [properties] Properties to set
+     */
+    function CTwoFactor_Time_Request(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CTwoFactor_Time_Request senderTime.
+     * @member {Long} senderTime
+     * @memberof CTwoFactor_Time_Request
+     * @instance
+     */
+    CTwoFactor_Time_Request.prototype.senderTime = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * Creates a new CTwoFactor_Time_Request instance using the specified properties.
+     * @function create
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {ICTwoFactor_Time_Request=} [properties] Properties to set
+     * @returns {CTwoFactor_Time_Request} CTwoFactor_Time_Request instance
+     */
+    CTwoFactor_Time_Request.create = function create(properties) {
+        return new CTwoFactor_Time_Request(properties);
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_Time_Request message. Does not implicitly {@link CTwoFactor_Time_Request.verify|verify} messages.
+     * @function encode
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {ICTwoFactor_Time_Request} message CTwoFactor_Time_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_Time_Request.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.senderTime != null && Object.hasOwnProperty.call(message, "senderTime"))
+            writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.senderTime);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_Time_Request message, length delimited. Does not implicitly {@link CTwoFactor_Time_Request.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {ICTwoFactor_Time_Request} message CTwoFactor_Time_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_Time_Request.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CTwoFactor_Time_Request message from the specified reader or buffer.
+     * @function decode
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CTwoFactor_Time_Request} CTwoFactor_Time_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_Time_Request.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_Time_Request();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    message.senderTime = reader.uint64();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CTwoFactor_Time_Request message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CTwoFactor_Time_Request} CTwoFactor_Time_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_Time_Request.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CTwoFactor_Time_Request message.
+     * @function verify
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CTwoFactor_Time_Request.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.senderTime != null && message.hasOwnProperty("senderTime"))
+            if (!$util.isInteger(message.senderTime) && !(message.senderTime && $util.isInteger(message.senderTime.low) && $util.isInteger(message.senderTime.high)))
+                return "senderTime: integer|Long expected";
+        return null;
+    };
+
+    /**
+     * Creates a CTwoFactor_Time_Request message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CTwoFactor_Time_Request} CTwoFactor_Time_Request
+     */
+    CTwoFactor_Time_Request.fromObject = function fromObject(object) {
+        if (object instanceof $root.CTwoFactor_Time_Request)
+            return object;
+        let message = new $root.CTwoFactor_Time_Request();
+        if (object.senderTime != null)
+            if ($util.Long)
+                (message.senderTime = $util.Long.fromValue(object.senderTime)).unsigned = true;
+            else if (typeof object.senderTime === "string")
+                message.senderTime = parseInt(object.senderTime, 10);
+            else if (typeof object.senderTime === "number")
+                message.senderTime = object.senderTime;
+            else if (typeof object.senderTime === "object")
+                message.senderTime = new $util.LongBits(object.senderTime.low >>> 0, object.senderTime.high >>> 0).toNumber(true);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CTwoFactor_Time_Request message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {CTwoFactor_Time_Request} message CTwoFactor_Time_Request
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CTwoFactor_Time_Request.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.senderTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.senderTime = options.longs === String ? "0" : 0;
+        if (message.senderTime != null && message.hasOwnProperty("senderTime"))
+            if (typeof message.senderTime === "number")
+                object.senderTime = options.longs === String ? String(message.senderTime) : message.senderTime;
+            else
+                object.senderTime = options.longs === String ? $util.Long.prototype.toString.call(message.senderTime) : options.longs === Number ? new $util.LongBits(message.senderTime.low >>> 0, message.senderTime.high >>> 0).toNumber(true) : message.senderTime;
+        return object;
+    };
+
+    /**
+     * Converts this CTwoFactor_Time_Request to JSON.
+     * @function toJSON
+     * @memberof CTwoFactor_Time_Request
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CTwoFactor_Time_Request.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CTwoFactor_Time_Request
+     * @function getTypeUrl
+     * @memberof CTwoFactor_Time_Request
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CTwoFactor_Time_Request.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CTwoFactor_Time_Request";
+    };
+
+    return CTwoFactor_Time_Request;
+})();
+
+export const CTwoFactor_Time_Response = $root.CTwoFactor_Time_Response = (() => {
+
+    /**
+     * Properties of a CTwoFactor_Time_Response.
+     * @exports ICTwoFactor_Time_Response
+     * @interface ICTwoFactor_Time_Response
+     * @property {Long|null} [serverTime] CTwoFactor_Time_Response serverTime
+     * @property {Long|null} [skewToleranceSeconds] CTwoFactor_Time_Response skewToleranceSeconds
+     * @property {Long|null} [largeTimeJink] CTwoFactor_Time_Response largeTimeJink
+     * @property {number|null} [probeFrequencySeconds] CTwoFactor_Time_Response probeFrequencySeconds
+     * @property {number|null} [adjustedTimeProbeFrequencySeconds] CTwoFactor_Time_Response adjustedTimeProbeFrequencySeconds
+     * @property {number|null} [hintProbeFrequencySeconds] CTwoFactor_Time_Response hintProbeFrequencySeconds
+     * @property {number|null} [syncTimeout] CTwoFactor_Time_Response syncTimeout
+     * @property {number|null} [tryAgainSeconds] CTwoFactor_Time_Response tryAgainSeconds
+     * @property {number|null} [maxAttempts] CTwoFactor_Time_Response maxAttempts
+     */
+
+    /**
+     * Constructs a new CTwoFactor_Time_Response.
+     * @exports CTwoFactor_Time_Response
+     * @classdesc Represents a CTwoFactor_Time_Response.
+     * @implements ICTwoFactor_Time_Response
+     * @constructor
+     * @param {ICTwoFactor_Time_Response=} [properties] Properties to set
+     */
+    function CTwoFactor_Time_Response(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CTwoFactor_Time_Response serverTime.
+     * @member {Long} serverTime
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.serverTime = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CTwoFactor_Time_Response skewToleranceSeconds.
+     * @member {Long} skewToleranceSeconds
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.skewToleranceSeconds = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CTwoFactor_Time_Response largeTimeJink.
+     * @member {Long} largeTimeJink
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.largeTimeJink = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CTwoFactor_Time_Response probeFrequencySeconds.
+     * @member {number} probeFrequencySeconds
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.probeFrequencySeconds = 0;
+
+    /**
+     * CTwoFactor_Time_Response adjustedTimeProbeFrequencySeconds.
+     * @member {number} adjustedTimeProbeFrequencySeconds
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.adjustedTimeProbeFrequencySeconds = 0;
+
+    /**
+     * CTwoFactor_Time_Response hintProbeFrequencySeconds.
+     * @member {number} hintProbeFrequencySeconds
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.hintProbeFrequencySeconds = 0;
+
+    /**
+     * CTwoFactor_Time_Response syncTimeout.
+     * @member {number} syncTimeout
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.syncTimeout = 0;
+
+    /**
+     * CTwoFactor_Time_Response tryAgainSeconds.
+     * @member {number} tryAgainSeconds
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.tryAgainSeconds = 0;
+
+    /**
+     * CTwoFactor_Time_Response maxAttempts.
+     * @member {number} maxAttempts
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     */
+    CTwoFactor_Time_Response.prototype.maxAttempts = 0;
+
+    /**
+     * Creates a new CTwoFactor_Time_Response instance using the specified properties.
+     * @function create
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {ICTwoFactor_Time_Response=} [properties] Properties to set
+     * @returns {CTwoFactor_Time_Response} CTwoFactor_Time_Response instance
+     */
+    CTwoFactor_Time_Response.create = function create(properties) {
+        return new CTwoFactor_Time_Response(properties);
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_Time_Response message. Does not implicitly {@link CTwoFactor_Time_Response.verify|verify} messages.
+     * @function encode
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {ICTwoFactor_Time_Response} message CTwoFactor_Time_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_Time_Response.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
+            writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.serverTime);
+        if (message.skewToleranceSeconds != null && Object.hasOwnProperty.call(message, "skewToleranceSeconds"))
+            writer.uint32(/* id 2, wireType 0 =*/16).uint64(message.skewToleranceSeconds);
+        if (message.largeTimeJink != null && Object.hasOwnProperty.call(message, "largeTimeJink"))
+            writer.uint32(/* id 3, wireType 0 =*/24).uint64(message.largeTimeJink);
+        if (message.probeFrequencySeconds != null && Object.hasOwnProperty.call(message, "probeFrequencySeconds"))
+            writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.probeFrequencySeconds);
+        if (message.adjustedTimeProbeFrequencySeconds != null && Object.hasOwnProperty.call(message, "adjustedTimeProbeFrequencySeconds"))
+            writer.uint32(/* id 5, wireType 0 =*/40).uint32(message.adjustedTimeProbeFrequencySeconds);
+        if (message.hintProbeFrequencySeconds != null && Object.hasOwnProperty.call(message, "hintProbeFrequencySeconds"))
+            writer.uint32(/* id 6, wireType 0 =*/48).uint32(message.hintProbeFrequencySeconds);
+        if (message.syncTimeout != null && Object.hasOwnProperty.call(message, "syncTimeout"))
+            writer.uint32(/* id 7, wireType 0 =*/56).uint32(message.syncTimeout);
+        if (message.tryAgainSeconds != null && Object.hasOwnProperty.call(message, "tryAgainSeconds"))
+            writer.uint32(/* id 8, wireType 0 =*/64).uint32(message.tryAgainSeconds);
+        if (message.maxAttempts != null && Object.hasOwnProperty.call(message, "maxAttempts"))
+            writer.uint32(/* id 9, wireType 0 =*/72).uint32(message.maxAttempts);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CTwoFactor_Time_Response message, length delimited. Does not implicitly {@link CTwoFactor_Time_Response.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {ICTwoFactor_Time_Response} message CTwoFactor_Time_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CTwoFactor_Time_Response.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CTwoFactor_Time_Response message from the specified reader or buffer.
+     * @function decode
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CTwoFactor_Time_Response} CTwoFactor_Time_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_Time_Response.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_Time_Response();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    message.serverTime = reader.uint64();
+                    break;
+                }
+            case 2: {
+                    message.skewToleranceSeconds = reader.uint64();
+                    break;
+                }
+            case 3: {
+                    message.largeTimeJink = reader.uint64();
+                    break;
+                }
+            case 4: {
+                    message.probeFrequencySeconds = reader.uint32();
+                    break;
+                }
+            case 5: {
+                    message.adjustedTimeProbeFrequencySeconds = reader.uint32();
+                    break;
+                }
+            case 6: {
+                    message.hintProbeFrequencySeconds = reader.uint32();
+                    break;
+                }
+            case 7: {
+                    message.syncTimeout = reader.uint32();
+                    break;
+                }
+            case 8: {
+                    message.tryAgainSeconds = reader.uint32();
+                    break;
+                }
+            case 9: {
+                    message.maxAttempts = reader.uint32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CTwoFactor_Time_Response message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CTwoFactor_Time_Response} CTwoFactor_Time_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CTwoFactor_Time_Response.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CTwoFactor_Time_Response message.
+     * @function verify
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CTwoFactor_Time_Response.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (!$util.isInteger(message.serverTime) && !(message.serverTime && $util.isInteger(message.serverTime.low) && $util.isInteger(message.serverTime.high)))
+                return "serverTime: integer|Long expected";
+        if (message.skewToleranceSeconds != null && message.hasOwnProperty("skewToleranceSeconds"))
+            if (!$util.isInteger(message.skewToleranceSeconds) && !(message.skewToleranceSeconds && $util.isInteger(message.skewToleranceSeconds.low) && $util.isInteger(message.skewToleranceSeconds.high)))
+                return "skewToleranceSeconds: integer|Long expected";
+        if (message.largeTimeJink != null && message.hasOwnProperty("largeTimeJink"))
+            if (!$util.isInteger(message.largeTimeJink) && !(message.largeTimeJink && $util.isInteger(message.largeTimeJink.low) && $util.isInteger(message.largeTimeJink.high)))
+                return "largeTimeJink: integer|Long expected";
+        if (message.probeFrequencySeconds != null && message.hasOwnProperty("probeFrequencySeconds"))
+            if (!$util.isInteger(message.probeFrequencySeconds))
+                return "probeFrequencySeconds: integer expected";
+        if (message.adjustedTimeProbeFrequencySeconds != null && message.hasOwnProperty("adjustedTimeProbeFrequencySeconds"))
+            if (!$util.isInteger(message.adjustedTimeProbeFrequencySeconds))
+                return "adjustedTimeProbeFrequencySeconds: integer expected";
+        if (message.hintProbeFrequencySeconds != null && message.hasOwnProperty("hintProbeFrequencySeconds"))
+            if (!$util.isInteger(message.hintProbeFrequencySeconds))
+                return "hintProbeFrequencySeconds: integer expected";
+        if (message.syncTimeout != null && message.hasOwnProperty("syncTimeout"))
+            if (!$util.isInteger(message.syncTimeout))
+                return "syncTimeout: integer expected";
+        if (message.tryAgainSeconds != null && message.hasOwnProperty("tryAgainSeconds"))
+            if (!$util.isInteger(message.tryAgainSeconds))
+                return "tryAgainSeconds: integer expected";
+        if (message.maxAttempts != null && message.hasOwnProperty("maxAttempts"))
+            if (!$util.isInteger(message.maxAttempts))
+                return "maxAttempts: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a CTwoFactor_Time_Response message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CTwoFactor_Time_Response} CTwoFactor_Time_Response
+     */
+    CTwoFactor_Time_Response.fromObject = function fromObject(object) {
+        if (object instanceof $root.CTwoFactor_Time_Response)
+            return object;
+        let message = new $root.CTwoFactor_Time_Response();
+        if (object.serverTime != null)
+            if ($util.Long)
+                (message.serverTime = $util.Long.fromValue(object.serverTime)).unsigned = true;
+            else if (typeof object.serverTime === "string")
+                message.serverTime = parseInt(object.serverTime, 10);
+            else if (typeof object.serverTime === "number")
+                message.serverTime = object.serverTime;
+            else if (typeof object.serverTime === "object")
+                message.serverTime = new $util.LongBits(object.serverTime.low >>> 0, object.serverTime.high >>> 0).toNumber(true);
+        if (object.skewToleranceSeconds != null)
+            if ($util.Long)
+                (message.skewToleranceSeconds = $util.Long.fromValue(object.skewToleranceSeconds)).unsigned = true;
+            else if (typeof object.skewToleranceSeconds === "string")
+                message.skewToleranceSeconds = parseInt(object.skewToleranceSeconds, 10);
+            else if (typeof object.skewToleranceSeconds === "number")
+                message.skewToleranceSeconds = object.skewToleranceSeconds;
+            else if (typeof object.skewToleranceSeconds === "object")
+                message.skewToleranceSeconds = new $util.LongBits(object.skewToleranceSeconds.low >>> 0, object.skewToleranceSeconds.high >>> 0).toNumber(true);
+        if (object.largeTimeJink != null)
+            if ($util.Long)
+                (message.largeTimeJink = $util.Long.fromValue(object.largeTimeJink)).unsigned = true;
+            else if (typeof object.largeTimeJink === "string")
+                message.largeTimeJink = parseInt(object.largeTimeJink, 10);
+            else if (typeof object.largeTimeJink === "number")
+                message.largeTimeJink = object.largeTimeJink;
+            else if (typeof object.largeTimeJink === "object")
+                message.largeTimeJink = new $util.LongBits(object.largeTimeJink.low >>> 0, object.largeTimeJink.high >>> 0).toNumber(true);
+        if (object.probeFrequencySeconds != null)
+            message.probeFrequencySeconds = object.probeFrequencySeconds >>> 0;
+        if (object.adjustedTimeProbeFrequencySeconds != null)
+            message.adjustedTimeProbeFrequencySeconds = object.adjustedTimeProbeFrequencySeconds >>> 0;
+        if (object.hintProbeFrequencySeconds != null)
+            message.hintProbeFrequencySeconds = object.hintProbeFrequencySeconds >>> 0;
+        if (object.syncTimeout != null)
+            message.syncTimeout = object.syncTimeout >>> 0;
+        if (object.tryAgainSeconds != null)
+            message.tryAgainSeconds = object.tryAgainSeconds >>> 0;
+        if (object.maxAttempts != null)
+            message.maxAttempts = object.maxAttempts >>> 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CTwoFactor_Time_Response message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {CTwoFactor_Time_Response} message CTwoFactor_Time_Response
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CTwoFactor_Time_Response.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.serverTime = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.skewToleranceSeconds = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.skewToleranceSeconds = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.largeTimeJink = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.largeTimeJink = options.longs === String ? "0" : 0;
+            object.probeFrequencySeconds = 0;
+            object.adjustedTimeProbeFrequencySeconds = 0;
+            object.hintProbeFrequencySeconds = 0;
+            object.syncTimeout = 0;
+            object.tryAgainSeconds = 0;
+            object.maxAttempts = 0;
+        }
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (typeof message.serverTime === "number")
+                object.serverTime = options.longs === String ? String(message.serverTime) : message.serverTime;
+            else
+                object.serverTime = options.longs === String ? $util.Long.prototype.toString.call(message.serverTime) : options.longs === Number ? new $util.LongBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0).toNumber(true) : message.serverTime;
+        if (message.skewToleranceSeconds != null && message.hasOwnProperty("skewToleranceSeconds"))
+            if (typeof message.skewToleranceSeconds === "number")
+                object.skewToleranceSeconds = options.longs === String ? String(message.skewToleranceSeconds) : message.skewToleranceSeconds;
+            else
+                object.skewToleranceSeconds = options.longs === String ? $util.Long.prototype.toString.call(message.skewToleranceSeconds) : options.longs === Number ? new $util.LongBits(message.skewToleranceSeconds.low >>> 0, message.skewToleranceSeconds.high >>> 0).toNumber(true) : message.skewToleranceSeconds;
+        if (message.largeTimeJink != null && message.hasOwnProperty("largeTimeJink"))
+            if (typeof message.largeTimeJink === "number")
+                object.largeTimeJink = options.longs === String ? String(message.largeTimeJink) : message.largeTimeJink;
+            else
+                object.largeTimeJink = options.longs === String ? $util.Long.prototype.toString.call(message.largeTimeJink) : options.longs === Number ? new $util.LongBits(message.largeTimeJink.low >>> 0, message.largeTimeJink.high >>> 0).toNumber(true) : message.largeTimeJink;
+        if (message.probeFrequencySeconds != null && message.hasOwnProperty("probeFrequencySeconds"))
+            object.probeFrequencySeconds = message.probeFrequencySeconds;
+        if (message.adjustedTimeProbeFrequencySeconds != null && message.hasOwnProperty("adjustedTimeProbeFrequencySeconds"))
+            object.adjustedTimeProbeFrequencySeconds = message.adjustedTimeProbeFrequencySeconds;
+        if (message.hintProbeFrequencySeconds != null && message.hasOwnProperty("hintProbeFrequencySeconds"))
+            object.hintProbeFrequencySeconds = message.hintProbeFrequencySeconds;
+        if (message.syncTimeout != null && message.hasOwnProperty("syncTimeout"))
+            object.syncTimeout = message.syncTimeout;
+        if (message.tryAgainSeconds != null && message.hasOwnProperty("tryAgainSeconds"))
+            object.tryAgainSeconds = message.tryAgainSeconds;
+        if (message.maxAttempts != null && message.hasOwnProperty("maxAttempts"))
+            object.maxAttempts = message.maxAttempts;
+        return object;
+    };
+
+    /**
+     * Converts this CTwoFactor_Time_Response to JSON.
+     * @function toJSON
+     * @memberof CTwoFactor_Time_Response
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CTwoFactor_Time_Response.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CTwoFactor_Time_Response
+     * @function getTypeUrl
+     * @memberof CTwoFactor_Time_Response
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CTwoFactor_Time_Response.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CTwoFactor_Time_Response";
+    };
+
+    return CTwoFactor_Time_Response;
+})();
+
 export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthenticator_Request = (() => {
 
     /**
      * Properties of a CTwoFactor_AddAuthenticator_Request.
      * @exports ICTwoFactor_AddAuthenticator_Request
      * @interface ICTwoFactor_AddAuthenticator_Request
-     * @property {number|Long|null} [steamid] CTwoFactor_AddAuthenticator_Request steamid
-     * @property {number|Long|null} [authenticatorTime] CTwoFactor_AddAuthenticator_Request authenticatorTime
-     * @property {number|Long|null} [serialNumber] CTwoFactor_AddAuthenticator_Request serialNumber
+     * @property {Long|null} [steamid] CTwoFactor_AddAuthenticator_Request steamid
+     * @property {Long|null} [authenticatorTime] CTwoFactor_AddAuthenticator_Request authenticatorTime
+     * @property {Long|null} [serialNumber] CTwoFactor_AddAuthenticator_Request serialNumber
      * @property {number|null} [authenticatorType] CTwoFactor_AddAuthenticator_Request authenticatorType
      * @property {string|null} [deviceIdentifier] CTwoFactor_AddAuthenticator_Request deviceIdentifier
-     * @property {string|null} [smsPhoneId] CTwoFactor_AddAuthenticator_Request smsPhoneId
      * @property {Array.<string>|null} [httpHeaders] CTwoFactor_AddAuthenticator_Request httpHeaders
      * @property {number|null} [version] CTwoFactor_AddAuthenticator_Request version
      */
@@ -2981,21 +3645,21 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
         this.httpHeaders = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CTwoFactor_AddAuthenticator_Request steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CTwoFactor_AddAuthenticator_Request
      * @instance
      */
-    CTwoFactor_AddAuthenticator_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_AddAuthenticator_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_AddAuthenticator_Request authenticatorTime.
-     * @member {number|Long} authenticatorTime
+     * @member {Long} authenticatorTime
      * @memberof CTwoFactor_AddAuthenticator_Request
      * @instance
      */
@@ -3003,11 +3667,11 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
 
     /**
      * CTwoFactor_AddAuthenticator_Request serialNumber.
-     * @member {number|Long} serialNumber
+     * @member {Long} serialNumber
      * @memberof CTwoFactor_AddAuthenticator_Request
      * @instance
      */
-    CTwoFactor_AddAuthenticator_Request.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_AddAuthenticator_Request.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_AddAuthenticator_Request authenticatorType.
@@ -3024,14 +3688,6 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @instance
      */
     CTwoFactor_AddAuthenticator_Request.prototype.deviceIdentifier = "";
-
-    /**
-     * CTwoFactor_AddAuthenticator_Request smsPhoneId.
-     * @member {string} smsPhoneId
-     * @memberof CTwoFactor_AddAuthenticator_Request
-     * @instance
-     */
-    CTwoFactor_AddAuthenticator_Request.prototype.smsPhoneId = "";
 
     /**
      * CTwoFactor_AddAuthenticator_Request httpHeaders.
@@ -3070,13 +3726,9 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_AddAuthenticator_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_AddAuthenticator_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             writer.uint32(/* id 1, wireType 1 =*/9).fixed64(message.steamid);
         if (message.authenticatorTime != null && Object.hasOwnProperty.call(message, "authenticatorTime"))
@@ -3087,8 +3739,6 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
             writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.authenticatorType);
         if (message.deviceIdentifier != null && Object.hasOwnProperty.call(message, "deviceIdentifier"))
             writer.uint32(/* id 5, wireType 2 =*/42).string(message.deviceIdentifier);
-        if (message.smsPhoneId != null && Object.hasOwnProperty.call(message, "smsPhoneId"))
-            writer.uint32(/* id 6, wireType 2 =*/50).string(message.smsPhoneId);
         if (message.httpHeaders != null && message.httpHeaders.length)
             for (let i = 0; i < message.httpHeaders.length; ++i)
                 writer.uint32(/* id 7, wireType 2 =*/58).string(message.httpHeaders[i]);
@@ -3121,18 +3771,12 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_AddAuthenticator_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_AddAuthenticator_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_AddAuthenticator_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.steamid = reader.fixed64();
@@ -3154,10 +3798,6 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
                     message.deviceIdentifier = reader.string();
                     break;
                 }
-            case 6: {
-                    message.smsPhoneId = reader.string();
-                    break;
-                }
             case 7: {
                     if (!(message.httpHeaders && message.httpHeaders.length))
                         message.httpHeaders = [];
@@ -3169,7 +3809,7 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -3200,39 +3840,32 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_AddAuthenticator_Request.verify = function verify(message, long) {
+    CTwoFactor_AddAuthenticator_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
-        if (message.authenticatorTime != null && Object.hasOwnProperty.call(message, "authenticatorTime"))
+        if (message.authenticatorTime != null && message.hasOwnProperty("authenticatorTime"))
             if (!$util.isInteger(message.authenticatorTime) && !(message.authenticatorTime && $util.isInteger(message.authenticatorTime.low) && $util.isInteger(message.authenticatorTime.high)))
                 return "authenticatorTime: integer|Long expected";
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
             if (!$util.isInteger(message.serialNumber) && !(message.serialNumber && $util.isInteger(message.serialNumber.low) && $util.isInteger(message.serialNumber.high)))
                 return "serialNumber: integer|Long expected";
-        if (message.authenticatorType != null && Object.hasOwnProperty.call(message, "authenticatorType"))
+        if (message.authenticatorType != null && message.hasOwnProperty("authenticatorType"))
             if (!$util.isInteger(message.authenticatorType))
                 return "authenticatorType: integer expected";
-        if (message.deviceIdentifier != null && Object.hasOwnProperty.call(message, "deviceIdentifier"))
+        if (message.deviceIdentifier != null && message.hasOwnProperty("deviceIdentifier"))
             if (!$util.isString(message.deviceIdentifier))
                 return "deviceIdentifier: string expected";
-        if (message.smsPhoneId != null && Object.hasOwnProperty.call(message, "smsPhoneId"))
-            if (!$util.isString(message.smsPhoneId))
-                return "smsPhoneId: string expected";
-        if (message.httpHeaders != null && Object.hasOwnProperty.call(message, "httpHeaders")) {
+        if (message.httpHeaders != null && message.hasOwnProperty("httpHeaders")) {
             if (!Array.isArray(message.httpHeaders))
                 return "httpHeaders: array expected";
             for (let i = 0; i < message.httpHeaders.length; ++i)
                 if (!$util.isString(message.httpHeaders[i]))
                     return "httpHeaders: string[] expected";
         }
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             if (!$util.isInteger(message.version))
                 return "version: integer expected";
         return null;
@@ -3246,28 +3879,22 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_AddAuthenticator_Request} CTwoFactor_AddAuthenticator_Request
      */
-    CTwoFactor_AddAuthenticator_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_AddAuthenticator_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_AddAuthenticator_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_AddAuthenticator_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_AddAuthenticator_Request();
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
-                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
         if (object.authenticatorTime != null)
             if ($util.Long)
-                message.authenticatorTime = $util.Long.fromValue(object.authenticatorTime, true);
+                (message.authenticatorTime = $util.Long.fromValue(object.authenticatorTime)).unsigned = true;
             else if (typeof object.authenticatorTime === "string")
                 message.authenticatorTime = parseInt(object.authenticatorTime, 10);
             else if (typeof object.authenticatorTime === "number")
@@ -3276,19 +3903,17 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
                 message.authenticatorTime = new $util.LongBits(object.authenticatorTime.low >>> 0, object.authenticatorTime.high >>> 0).toNumber(true);
         if (object.serialNumber != null)
             if ($util.Long)
-                message.serialNumber = $util.Long.fromValue(object.serialNumber, true);
+                (message.serialNumber = $util.Long.fromValue(object.serialNumber)).unsigned = false;
             else if (typeof object.serialNumber === "string")
                 message.serialNumber = parseInt(object.serialNumber, 10);
             else if (typeof object.serialNumber === "number")
                 message.serialNumber = object.serialNumber;
             else if (typeof object.serialNumber === "object")
-                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber(true);
+                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber();
         if (object.authenticatorType != null)
             message.authenticatorType = object.authenticatorType >>> 0;
         if (object.deviceIdentifier != null)
             message.deviceIdentifier = String(object.deviceIdentifier);
-        if (object.smsPhoneId != null)
-            message.smsPhoneId = String(object.smsPhoneId);
         if (object.httpHeaders) {
             if (!Array.isArray(object.httpHeaders))
                 throw TypeError(".CTwoFactor_AddAuthenticator_Request.httpHeaders: array expected");
@@ -3310,70 +3935,57 @@ export const CTwoFactor_AddAuthenticator_Request = $root.CTwoFactor_AddAuthentic
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_AddAuthenticator_Request.toObject = function toObject(message, options, q) {
+    CTwoFactor_AddAuthenticator_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.arrays || options.defaults)
             object.httpHeaders = [];
         if (options.defaults) {
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.authenticatorTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.authenticatorTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.authenticatorTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.authenticatorTime = options.longs === String ? "0" : 0;
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serialNumber = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serialNumber = options.longs === String ? "0" : 0;
             object.authenticatorType = 0;
             object.deviceIdentifier = "";
-            object.smsPhoneId = "";
             object.version = 1;
         }
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
-                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
-        if (message.authenticatorTime != null && Object.hasOwnProperty.call(message, "authenticatorTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.authenticatorTime = typeof message.authenticatorTime === "number" ? BigInt(message.authenticatorTime) : $util.Long.fromBits(message.authenticatorTime.low >>> 0, message.authenticatorTime.high >>> 0, true).toBigInt();
-            else if (typeof message.authenticatorTime === "number")
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
+        if (message.authenticatorTime != null && message.hasOwnProperty("authenticatorTime"))
+            if (typeof message.authenticatorTime === "number")
                 object.authenticatorTime = options.longs === String ? String(message.authenticatorTime) : message.authenticatorTime;
             else
                 object.authenticatorTime = options.longs === String ? $util.Long.prototype.toString.call(message.authenticatorTime) : options.longs === Number ? new $util.LongBits(message.authenticatorTime.low >>> 0, message.authenticatorTime.high >>> 0).toNumber(true) : message.authenticatorTime;
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serialNumber = typeof message.serialNumber === "number" ? BigInt(message.serialNumber) : $util.Long.fromBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0, true).toBigInt();
-            else if (typeof message.serialNumber === "number")
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
+            if (typeof message.serialNumber === "number")
                 object.serialNumber = options.longs === String ? String(message.serialNumber) : message.serialNumber;
             else
-                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber(true) : message.serialNumber;
-        if (message.authenticatorType != null && Object.hasOwnProperty.call(message, "authenticatorType"))
+                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber() : message.serialNumber;
+        if (message.authenticatorType != null && message.hasOwnProperty("authenticatorType"))
             object.authenticatorType = message.authenticatorType;
-        if (message.deviceIdentifier != null && Object.hasOwnProperty.call(message, "deviceIdentifier"))
+        if (message.deviceIdentifier != null && message.hasOwnProperty("deviceIdentifier"))
             object.deviceIdentifier = message.deviceIdentifier;
-        if (message.smsPhoneId != null && Object.hasOwnProperty.call(message, "smsPhoneId"))
-            object.smsPhoneId = message.smsPhoneId;
         if (message.httpHeaders && message.httpHeaders.length) {
             object.httpHeaders = [];
             for (let j = 0; j < message.httpHeaders.length; ++j)
                 object.httpHeaders[j] = message.httpHeaders[j];
         }
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             object.version = message.version;
         return object;
     };
@@ -3414,10 +4026,10 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @exports ICTwoFactor_AddAuthenticator_Response
      * @interface ICTwoFactor_AddAuthenticator_Response
      * @property {Uint8Array|null} [sharedSecret] CTwoFactor_AddAuthenticator_Response sharedSecret
-     * @property {number|Long|null} [serialNumber] CTwoFactor_AddAuthenticator_Response serialNumber
+     * @property {Long|null} [serialNumber] CTwoFactor_AddAuthenticator_Response serialNumber
      * @property {string|null} [revocationCode] CTwoFactor_AddAuthenticator_Response revocationCode
      * @property {string|null} [uri] CTwoFactor_AddAuthenticator_Response uri
-     * @property {number|Long|null} [serverTime] CTwoFactor_AddAuthenticator_Response serverTime
+     * @property {Long|null} [serverTime] CTwoFactor_AddAuthenticator_Response serverTime
      * @property {string|null} [accountName] CTwoFactor_AddAuthenticator_Response accountName
      * @property {string|null} [tokenGid] CTwoFactor_AddAuthenticator_Response tokenGid
      * @property {Uint8Array|null} [identitySecret] CTwoFactor_AddAuthenticator_Response identitySecret
@@ -3438,7 +4050,7 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
     function CTwoFactor_AddAuthenticator_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -3452,11 +4064,11 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
 
     /**
      * CTwoFactor_AddAuthenticator_Response serialNumber.
-     * @member {number|Long} serialNumber
+     * @member {Long} serialNumber
      * @memberof CTwoFactor_AddAuthenticator_Response
      * @instance
      */
-    CTwoFactor_AddAuthenticator_Response.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_AddAuthenticator_Response.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_AddAuthenticator_Response revocationCode.
@@ -3476,7 +4088,7 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
 
     /**
      * CTwoFactor_AddAuthenticator_Response serverTime.
-     * @member {number|Long} serverTime
+     * @member {Long} serverTime
      * @memberof CTwoFactor_AddAuthenticator_Response
      * @instance
      */
@@ -3559,13 +4171,9 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_AddAuthenticator_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_AddAuthenticator_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
             writer.uint32(/* id 1, wireType 2 =*/10).bytes(message.sharedSecret);
         if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
@@ -3617,18 +4225,12 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_AddAuthenticator_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_AddAuthenticator_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_AddAuthenticator_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.sharedSecret = reader.bytes();
@@ -3679,7 +4281,7 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -3710,47 +4312,43 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_AddAuthenticator_Response.verify = function verify(message, long) {
+    CTwoFactor_AddAuthenticator_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
+        if (message.sharedSecret != null && message.hasOwnProperty("sharedSecret"))
             if (!(message.sharedSecret && typeof message.sharedSecret.length === "number" || $util.isString(message.sharedSecret)))
                 return "sharedSecret: buffer expected";
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
             if (!$util.isInteger(message.serialNumber) && !(message.serialNumber && $util.isInteger(message.serialNumber.low) && $util.isInteger(message.serialNumber.high)))
                 return "serialNumber: integer|Long expected";
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             if (!$util.isString(message.revocationCode))
                 return "revocationCode: string expected";
-        if (message.uri != null && Object.hasOwnProperty.call(message, "uri"))
+        if (message.uri != null && message.hasOwnProperty("uri"))
             if (!$util.isString(message.uri))
                 return "uri: string expected";
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
             if (!$util.isInteger(message.serverTime) && !(message.serverTime && $util.isInteger(message.serverTime.low) && $util.isInteger(message.serverTime.high)))
                 return "serverTime: integer|Long expected";
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             if (!$util.isString(message.accountName))
                 return "accountName: string expected";
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             if (!$util.isString(message.tokenGid))
                 return "tokenGid: string expected";
-        if (message.identitySecret != null && Object.hasOwnProperty.call(message, "identitySecret"))
+        if (message.identitySecret != null && message.hasOwnProperty("identitySecret"))
             if (!(message.identitySecret && typeof message.identitySecret.length === "number" || $util.isString(message.identitySecret)))
                 return "identitySecret: buffer expected";
-        if (message.secret_1 != null && Object.hasOwnProperty.call(message, "secret_1"))
+        if (message.secret_1 != null && message.hasOwnProperty("secret_1"))
             if (!(message.secret_1 && typeof message.secret_1.length === "number" || $util.isString(message.secret_1)))
                 return "secret_1: buffer expected";
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             if (!$util.isInteger(message.status))
                 return "status: integer expected";
-        if (message.phoneNumberHint != null && Object.hasOwnProperty.call(message, "phoneNumberHint"))
+        if (message.phoneNumberHint != null && message.hasOwnProperty("phoneNumberHint"))
             if (!$util.isString(message.phoneNumberHint))
                 return "phoneNumberHint: string expected";
-        if (message.confirmType != null && Object.hasOwnProperty.call(message, "confirmType"))
+        if (message.confirmType != null && message.hasOwnProperty("confirmType"))
             if (!$util.isInteger(message.confirmType))
                 return "confirmType: integer expected";
         return null;
@@ -3764,15 +4362,9 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_AddAuthenticator_Response} CTwoFactor_AddAuthenticator_Response
      */
-    CTwoFactor_AddAuthenticator_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_AddAuthenticator_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_AddAuthenticator_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_AddAuthenticator_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_AddAuthenticator_Response();
         if (object.sharedSecret != null)
             if (typeof object.sharedSecret === "string")
@@ -3781,20 +4373,20 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
                 message.sharedSecret = object.sharedSecret;
         if (object.serialNumber != null)
             if ($util.Long)
-                message.serialNumber = $util.Long.fromValue(object.serialNumber, true);
+                (message.serialNumber = $util.Long.fromValue(object.serialNumber)).unsigned = false;
             else if (typeof object.serialNumber === "string")
                 message.serialNumber = parseInt(object.serialNumber, 10);
             else if (typeof object.serialNumber === "number")
                 message.serialNumber = object.serialNumber;
             else if (typeof object.serialNumber === "object")
-                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber(true);
+                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber();
         if (object.revocationCode != null)
             message.revocationCode = String(object.revocationCode);
         if (object.uri != null)
             message.uri = String(object.uri);
         if (object.serverTime != null)
             if ($util.Long)
-                message.serverTime = $util.Long.fromValue(object.serverTime, true);
+                (message.serverTime = $util.Long.fromValue(object.serverTime)).unsigned = true;
             else if (typeof object.serverTime === "string")
                 message.serverTime = parseInt(object.serverTime, 10);
             else if (typeof object.serverTime === "number")
@@ -3833,13 +4425,9 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_AddAuthenticator_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_AddAuthenticator_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if (options.bytes === String)
@@ -3850,17 +4438,17 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
                     object.sharedSecret = $util.newBuffer(object.sharedSecret);
             }
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serialNumber = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serialNumber = options.longs === String ? "0" : 0;
             object.revocationCode = "";
             object.uri = "";
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serverTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serverTime = options.longs === String ? "0" : 0;
             object.accountName = "";
             object.tokenGid = "";
             if (options.bytes === String)
@@ -3881,39 +4469,35 @@ export const CTwoFactor_AddAuthenticator_Response = $root.CTwoFactor_AddAuthenti
             object.phoneNumberHint = "";
             object.confirmType = 0;
         }
-        if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
+        if (message.sharedSecret != null && message.hasOwnProperty("sharedSecret"))
             object.sharedSecret = options.bytes === String ? $util.base64.encode(message.sharedSecret, 0, message.sharedSecret.length) : options.bytes === Array ? Array.prototype.slice.call(message.sharedSecret) : message.sharedSecret;
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serialNumber = typeof message.serialNumber === "number" ? BigInt(message.serialNumber) : $util.Long.fromBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0, true).toBigInt();
-            else if (typeof message.serialNumber === "number")
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
+            if (typeof message.serialNumber === "number")
                 object.serialNumber = options.longs === String ? String(message.serialNumber) : message.serialNumber;
             else
-                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber(true) : message.serialNumber;
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber() : message.serialNumber;
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             object.revocationCode = message.revocationCode;
-        if (message.uri != null && Object.hasOwnProperty.call(message, "uri"))
+        if (message.uri != null && message.hasOwnProperty("uri"))
             object.uri = message.uri;
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serverTime = typeof message.serverTime === "number" ? BigInt(message.serverTime) : $util.Long.fromBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0, true).toBigInt();
-            else if (typeof message.serverTime === "number")
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (typeof message.serverTime === "number")
                 object.serverTime = options.longs === String ? String(message.serverTime) : message.serverTime;
             else
                 object.serverTime = options.longs === String ? $util.Long.prototype.toString.call(message.serverTime) : options.longs === Number ? new $util.LongBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0).toNumber(true) : message.serverTime;
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             object.accountName = message.accountName;
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             object.tokenGid = message.tokenGid;
-        if (message.identitySecret != null && Object.hasOwnProperty.call(message, "identitySecret"))
+        if (message.identitySecret != null && message.hasOwnProperty("identitySecret"))
             object.identitySecret = options.bytes === String ? $util.base64.encode(message.identitySecret, 0, message.identitySecret.length) : options.bytes === Array ? Array.prototype.slice.call(message.identitySecret) : message.identitySecret;
-        if (message.secret_1 != null && Object.hasOwnProperty.call(message, "secret_1"))
+        if (message.secret_1 != null && message.hasOwnProperty("secret_1"))
             object.secret_1 = options.bytes === String ? $util.base64.encode(message.secret_1, 0, message.secret_1.length) : options.bytes === Array ? Array.prototype.slice.call(message.secret_1) : message.secret_1;
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             object.status = message.status;
-        if (message.phoneNumberHint != null && Object.hasOwnProperty.call(message, "phoneNumberHint"))
+        if (message.phoneNumberHint != null && message.hasOwnProperty("phoneNumberHint"))
             object.phoneNumberHint = message.phoneNumberHint;
-        if (message.confirmType != null && Object.hasOwnProperty.call(message, "confirmType"))
+        if (message.confirmType != null && message.hasOwnProperty("confirmType"))
             object.confirmType = message.confirmType;
         return object;
     };
@@ -3953,9 +4537,9 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * Properties of a CTwoFactor_FinalizeAddAuthenticator_Request.
      * @exports ICTwoFactor_FinalizeAddAuthenticator_Request
      * @interface ICTwoFactor_FinalizeAddAuthenticator_Request
-     * @property {number|Long|null} [steamid] CTwoFactor_FinalizeAddAuthenticator_Request steamid
+     * @property {Long|null} [steamid] CTwoFactor_FinalizeAddAuthenticator_Request steamid
      * @property {string|null} [authenticatorCode] CTwoFactor_FinalizeAddAuthenticator_Request authenticatorCode
-     * @property {number|Long|null} [authenticatorTime] CTwoFactor_FinalizeAddAuthenticator_Request authenticatorTime
+     * @property {Long|null} [authenticatorTime] CTwoFactor_FinalizeAddAuthenticator_Request authenticatorTime
      * @property {string|null} [activationCode] CTwoFactor_FinalizeAddAuthenticator_Request activationCode
      * @property {Array.<string>|null} [httpHeaders] CTwoFactor_FinalizeAddAuthenticator_Request httpHeaders
      * @property {boolean|null} [validateSmsCode] CTwoFactor_FinalizeAddAuthenticator_Request validateSmsCode
@@ -3973,17 +4557,17 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
         this.httpHeaders = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CTwoFactor_FinalizeAddAuthenticator_Request steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CTwoFactor_FinalizeAddAuthenticator_Request
      * @instance
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_FinalizeAddAuthenticator_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_FinalizeAddAuthenticator_Request authenticatorCode.
@@ -3995,7 +4579,7 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
 
     /**
      * CTwoFactor_FinalizeAddAuthenticator_Request authenticatorTime.
-     * @member {number|Long} authenticatorTime
+     * @member {Long} authenticatorTime
      * @memberof CTwoFactor_FinalizeAddAuthenticator_Request
      * @instance
      */
@@ -4046,13 +4630,9 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_FinalizeAddAuthenticator_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             writer.uint32(/* id 1, wireType 1 =*/9).fixed64(message.steamid);
         if (message.authenticatorCode != null && Object.hasOwnProperty.call(message, "authenticatorCode"))
@@ -4093,18 +4673,12 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_FinalizeAddAuthenticator_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.steamid = reader.fixed64();
@@ -4133,7 +4707,7 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -4164,33 +4738,29 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.verify = function verify(message, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
-        if (message.authenticatorCode != null && Object.hasOwnProperty.call(message, "authenticatorCode"))
+        if (message.authenticatorCode != null && message.hasOwnProperty("authenticatorCode"))
             if (!$util.isString(message.authenticatorCode))
                 return "authenticatorCode: string expected";
-        if (message.authenticatorTime != null && Object.hasOwnProperty.call(message, "authenticatorTime"))
+        if (message.authenticatorTime != null && message.hasOwnProperty("authenticatorTime"))
             if (!$util.isInteger(message.authenticatorTime) && !(message.authenticatorTime && $util.isInteger(message.authenticatorTime.low) && $util.isInteger(message.authenticatorTime.high)))
                 return "authenticatorTime: integer|Long expected";
-        if (message.activationCode != null && Object.hasOwnProperty.call(message, "activationCode"))
+        if (message.activationCode != null && message.hasOwnProperty("activationCode"))
             if (!$util.isString(message.activationCode))
                 return "activationCode: string expected";
-        if (message.httpHeaders != null && Object.hasOwnProperty.call(message, "httpHeaders")) {
+        if (message.httpHeaders != null && message.hasOwnProperty("httpHeaders")) {
             if (!Array.isArray(message.httpHeaders))
                 return "httpHeaders: array expected";
             for (let i = 0; i < message.httpHeaders.length; ++i)
                 if (!$util.isString(message.httpHeaders[i]))
                     return "httpHeaders: string[] expected";
         }
-        if (message.validateSmsCode != null && Object.hasOwnProperty.call(message, "validateSmsCode"))
+        if (message.validateSmsCode != null && message.hasOwnProperty("validateSmsCode"))
             if (typeof message.validateSmsCode !== "boolean")
                 return "validateSmsCode: boolean expected";
         return null;
@@ -4204,30 +4774,24 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_FinalizeAddAuthenticator_Request} CTwoFactor_FinalizeAddAuthenticator_Request
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_FinalizeAddAuthenticator_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_FinalizeAddAuthenticator_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_FinalizeAddAuthenticator_Request();
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
-                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
         if (object.authenticatorCode != null)
             message.authenticatorCode = String(object.authenticatorCode);
         if (object.authenticatorTime != null)
             if ($util.Long)
-                message.authenticatorTime = $util.Long.fromValue(object.authenticatorTime, true);
+                (message.authenticatorTime = $util.Long.fromValue(object.authenticatorTime)).unsigned = true;
             else if (typeof object.authenticatorTime === "string")
                 message.authenticatorTime = parseInt(object.authenticatorTime, 10);
             else if (typeof object.authenticatorTime === "number")
@@ -4257,55 +4821,47 @@ export const CTwoFactor_FinalizeAddAuthenticator_Request = $root.CTwoFactor_Fina
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_FinalizeAddAuthenticator_Request.toObject = function toObject(message, options, q) {
+    CTwoFactor_FinalizeAddAuthenticator_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.arrays || options.defaults)
             object.httpHeaders = [];
         if (options.defaults) {
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
             object.authenticatorCode = "";
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.authenticatorTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.authenticatorTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.authenticatorTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.authenticatorTime = options.longs === String ? "0" : 0;
             object.activationCode = "";
             object.validateSmsCode = false;
         }
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
-                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
-        if (message.authenticatorCode != null && Object.hasOwnProperty.call(message, "authenticatorCode"))
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
+        if (message.authenticatorCode != null && message.hasOwnProperty("authenticatorCode"))
             object.authenticatorCode = message.authenticatorCode;
-        if (message.authenticatorTime != null && Object.hasOwnProperty.call(message, "authenticatorTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.authenticatorTime = typeof message.authenticatorTime === "number" ? BigInt(message.authenticatorTime) : $util.Long.fromBits(message.authenticatorTime.low >>> 0, message.authenticatorTime.high >>> 0, true).toBigInt();
-            else if (typeof message.authenticatorTime === "number")
+        if (message.authenticatorTime != null && message.hasOwnProperty("authenticatorTime"))
+            if (typeof message.authenticatorTime === "number")
                 object.authenticatorTime = options.longs === String ? String(message.authenticatorTime) : message.authenticatorTime;
             else
                 object.authenticatorTime = options.longs === String ? $util.Long.prototype.toString.call(message.authenticatorTime) : options.longs === Number ? new $util.LongBits(message.authenticatorTime.low >>> 0, message.authenticatorTime.high >>> 0).toNumber(true) : message.authenticatorTime;
-        if (message.activationCode != null && Object.hasOwnProperty.call(message, "activationCode"))
+        if (message.activationCode != null && message.hasOwnProperty("activationCode"))
             object.activationCode = message.activationCode;
         if (message.httpHeaders && message.httpHeaders.length) {
             object.httpHeaders = [];
             for (let j = 0; j < message.httpHeaders.length; ++j)
                 object.httpHeaders[j] = message.httpHeaders[j];
         }
-        if (message.validateSmsCode != null && Object.hasOwnProperty.call(message, "validateSmsCode"))
+        if (message.validateSmsCode != null && message.hasOwnProperty("validateSmsCode"))
             object.validateSmsCode = message.validateSmsCode;
         return object;
     };
@@ -4346,8 +4902,7 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @exports ICTwoFactor_FinalizeAddAuthenticator_Response
      * @interface ICTwoFactor_FinalizeAddAuthenticator_Response
      * @property {boolean|null} [success] CTwoFactor_FinalizeAddAuthenticator_Response success
-     * @property {boolean|null} [wantMore] CTwoFactor_FinalizeAddAuthenticator_Response wantMore
-     * @property {number|Long|null} [serverTime] CTwoFactor_FinalizeAddAuthenticator_Response serverTime
+     * @property {Long|null} [serverTime] CTwoFactor_FinalizeAddAuthenticator_Response serverTime
      * @property {number|null} [status] CTwoFactor_FinalizeAddAuthenticator_Response status
      */
 
@@ -4362,7 +4917,7 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
     function CTwoFactor_FinalizeAddAuthenticator_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -4375,16 +4930,8 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
     CTwoFactor_FinalizeAddAuthenticator_Response.prototype.success = false;
 
     /**
-     * CTwoFactor_FinalizeAddAuthenticator_Response wantMore.
-     * @member {boolean} wantMore
-     * @memberof CTwoFactor_FinalizeAddAuthenticator_Response
-     * @instance
-     */
-    CTwoFactor_FinalizeAddAuthenticator_Response.prototype.wantMore = false;
-
-    /**
      * CTwoFactor_FinalizeAddAuthenticator_Response serverTime.
-     * @member {number|Long} serverTime
+     * @member {Long} serverTime
      * @memberof CTwoFactor_FinalizeAddAuthenticator_Response
      * @instance
      */
@@ -4419,17 +4966,11 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_FinalizeAddAuthenticator_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_FinalizeAddAuthenticator_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.success != null && Object.hasOwnProperty.call(message, "success"))
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
-        if (message.wantMore != null && Object.hasOwnProperty.call(message, "wantMore"))
-            writer.uint32(/* id 2, wireType 0 =*/16).bool(message.wantMore);
         if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
             writer.uint32(/* id 3, wireType 0 =*/24).uint64(message.serverTime);
         if (message.status != null && Object.hasOwnProperty.call(message, "status"))
@@ -4461,25 +5002,15 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_FinalizeAddAuthenticator_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_FinalizeAddAuthenticator_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.success = reader.bool();
-                    break;
-                }
-            case 2: {
-                    message.wantMore = reader.bool();
                     break;
                 }
             case 3: {
@@ -4491,7 +5022,7 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -4522,23 +5053,16 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_FinalizeAddAuthenticator_Response.verify = function verify(message, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             if (typeof message.success !== "boolean")
                 return "success: boolean expected";
-        if (message.wantMore != null && Object.hasOwnProperty.call(message, "wantMore"))
-            if (typeof message.wantMore !== "boolean")
-                return "wantMore: boolean expected";
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
             if (!$util.isInteger(message.serverTime) && !(message.serverTime && $util.isInteger(message.serverTime.low) && $util.isInteger(message.serverTime.high)))
                 return "serverTime: integer|Long expected";
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             if (!$util.isInteger(message.status))
                 return "status: integer expected";
         return null;
@@ -4552,23 +5076,15 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_FinalizeAddAuthenticator_Response} CTwoFactor_FinalizeAddAuthenticator_Response
      */
-    CTwoFactor_FinalizeAddAuthenticator_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_FinalizeAddAuthenticator_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_FinalizeAddAuthenticator_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_FinalizeAddAuthenticator_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_FinalizeAddAuthenticator_Response();
         if (object.success != null)
             message.success = Boolean(object.success);
-        if (object.wantMore != null)
-            message.wantMore = Boolean(object.wantMore);
         if (object.serverTime != null)
             if ($util.Long)
-                message.serverTime = $util.Long.fromValue(object.serverTime, true);
+                (message.serverTime = $util.Long.fromValue(object.serverTime)).unsigned = true;
             else if (typeof object.serverTime === "string")
                 message.serverTime = parseInt(object.serverTime, 10);
             else if (typeof object.serverTime === "number")
@@ -4589,36 +5105,27 @@ export const CTwoFactor_FinalizeAddAuthenticator_Response = $root.CTwoFactor_Fin
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_FinalizeAddAuthenticator_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_FinalizeAddAuthenticator_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.success = false;
-            object.wantMore = false;
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serverTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serverTime = options.longs === String ? "0" : 0;
             object.status = 0;
         }
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             object.success = message.success;
-        if (message.wantMore != null && Object.hasOwnProperty.call(message, "wantMore"))
-            object.wantMore = message.wantMore;
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serverTime = typeof message.serverTime === "number" ? BigInt(message.serverTime) : $util.Long.fromBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0, true).toBigInt();
-            else if (typeof message.serverTime === "number")
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (typeof message.serverTime === "number")
                 object.serverTime = options.longs === String ? String(message.serverTime) : message.serverTime;
             else
                 object.serverTime = options.longs === String ? $util.Long.prototype.toString.call(message.serverTime) : options.longs === Number ? new $util.LongBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0).toNumber(true) : message.serverTime;
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             object.status = message.status;
         return object;
     };
@@ -4658,7 +5165,7 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * Properties of a CTwoFactor_Status_Request.
      * @exports ICTwoFactor_Status_Request
      * @interface ICTwoFactor_Status_Request
-     * @property {number|Long|null} [steamid] CTwoFactor_Status_Request steamid
+     * @property {Long|null} [steamid] CTwoFactor_Status_Request steamid
      * @property {ETwoFactorStatusFieldFlag|null} [include] CTwoFactor_Status_Request include
      */
 
@@ -4673,17 +5180,17 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
     function CTwoFactor_Status_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
     /**
      * CTwoFactor_Status_Request steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CTwoFactor_Status_Request
      * @instance
      */
-    CTwoFactor_Status_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_Status_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_Status_Request include.
@@ -4714,13 +5221,9 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_Status_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_Status_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
             writer.uint32(/* id 1, wireType 1 =*/9).fixed64(message.steamid);
         if (message.include != null && Object.hasOwnProperty.call(message, "include"))
@@ -4752,18 +5255,12 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_Status_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_Status_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_Status_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.steamid = reader.fixed64();
@@ -4774,7 +5271,7 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -4805,17 +5302,13 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_Status_Request.verify = function verify(message, long) {
+    CTwoFactor_Status_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
-        if (message.include != null && Object.hasOwnProperty.call(message, "include"))
+        if (message.include != null && message.hasOwnProperty("include"))
             switch (message.include) {
             default:
                 return "include: enum value expected";
@@ -4834,25 +5327,19 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_Status_Request} CTwoFactor_Status_Request
      */
-    CTwoFactor_Status_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_Status_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_Status_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_Status_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_Status_Request();
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
-                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
         switch (object.include) {
         default:
             if (typeof object.include === "number") {
@@ -4881,30 +5368,24 @@ export const CTwoFactor_Status_Request = $root.CTwoFactor_Status_Request = (() =
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_Status_Request.toObject = function toObject(message, options, q) {
+    CTwoFactor_Status_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
             object.include = options.enums === String ? "k_ETwoFactorStatusFieldFlag_None" : 0;
         }
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
-                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
-        if (message.include != null && Object.hasOwnProperty.call(message, "include"))
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
+        if (message.include != null && message.hasOwnProperty("include"))
             object.include = options.enums === String ? $root.ETwoFactorStatusFieldFlag[message.include] === undefined ? message.include : $root.ETwoFactorStatusFieldFlag[message.include] : message.include;
         return object;
     };
@@ -4961,7 +5442,7 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
     function CTwoFactor_UsageEvent(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -5018,13 +5499,9 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_UsageEvent.encode = function encode(message, writer, q) {
+    CTwoFactor_UsageEvent.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.time != null && Object.hasOwnProperty.call(message, "time"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.time);
         if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
@@ -5060,18 +5537,12 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_UsageEvent.decode = function decode(reader, length, error, long) {
+    CTwoFactor_UsageEvent.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_UsageEvent();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.time = reader.uint32();
@@ -5090,7 +5561,7 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -5121,17 +5592,13 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_UsageEvent.verify = function verify(message, long) {
+    CTwoFactor_UsageEvent.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+        if (message.time != null && message.hasOwnProperty("time"))
             if (!$util.isInteger(message.time))
                 return "time: integer expected";
-        if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+        if (message.usageType != null && message.hasOwnProperty("usageType"))
             switch (message.usageType) {
             default:
                 return "usageType: enum value expected";
@@ -5141,10 +5608,10 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
             case 3:
                 break;
             }
-        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+        if (message.confirmationType != null && message.hasOwnProperty("confirmationType"))
             if (!$util.isInteger(message.confirmationType))
                 return "confirmationType: integer expected";
-        if (message.confirmationAction != null && Object.hasOwnProperty.call(message, "confirmationAction"))
+        if (message.confirmationAction != null && message.hasOwnProperty("confirmationAction"))
             if (!$util.isInteger(message.confirmationAction))
                 return "confirmationAction: integer expected";
         return null;
@@ -5158,15 +5625,9 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_UsageEvent} CTwoFactor_UsageEvent
      */
-    CTwoFactor_UsageEvent.fromObject = function fromObject(object, long) {
+    CTwoFactor_UsageEvent.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_UsageEvent)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_UsageEvent: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_UsageEvent();
         if (object.time != null)
             message.time = object.time >>> 0;
@@ -5210,13 +5671,9 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_UsageEvent.toObject = function toObject(message, options, q) {
+    CTwoFactor_UsageEvent.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.time = 0;
@@ -5224,13 +5681,13 @@ export const CTwoFactor_UsageEvent = $root.CTwoFactor_UsageEvent = (() => {
             object.confirmationType = 0;
             object.confirmationAction = 0;
         }
-        if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+        if (message.time != null && message.hasOwnProperty("time"))
             object.time = message.time;
-        if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+        if (message.usageType != null && message.hasOwnProperty("usageType"))
             object.usageType = options.enums === String ? $root.ETwoFactorUsageType[message.usageType] === undefined ? message.usageType : $root.ETwoFactorUsageType[message.usageType] : message.usageType;
-        if (message.confirmationType != null && Object.hasOwnProperty.call(message, "confirmationType"))
+        if (message.confirmationType != null && message.hasOwnProperty("confirmationType"))
             object.confirmationType = message.confirmationType;
-        if (message.confirmationAction != null && Object.hasOwnProperty.call(message, "confirmationAction"))
+        if (message.confirmationAction != null && message.hasOwnProperty("confirmationAction"))
             object.confirmationAction = message.confirmationAction;
         return object;
     };
@@ -5284,7 +5741,7 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @property {boolean|null} [allowExternalAuthenticator] CTwoFactor_Status_Response allowExternalAuthenticator
      * @property {number|null} [timeTransferred] CTwoFactor_Status_Response timeTransferred
      * @property {number|null} [version] CTwoFactor_Status_Response version
-     * @property {number|Long|null} [lastSeenAuthTokenId] CTwoFactor_Status_Response lastSeenAuthTokenId
+     * @property {Long|null} [lastSeenAuthTokenId] CTwoFactor_Status_Response lastSeenAuthTokenId
      * @property {Array.<ICTwoFactor_UsageEvent>|null} [usages] CTwoFactor_Status_Response usages
      */
 
@@ -5300,7 +5757,7 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
         this.usages = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -5418,11 +5875,11 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
 
     /**
      * CTwoFactor_Status_Response lastSeenAuthTokenId.
-     * @member {number|Long} lastSeenAuthTokenId
+     * @member {Long} lastSeenAuthTokenId
      * @memberof CTwoFactor_Status_Response
      * @instance
      */
-    CTwoFactor_Status_Response.prototype.lastSeenAuthTokenId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CTwoFactor_Status_Response.prototype.lastSeenAuthTokenId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CTwoFactor_Status_Response usages.
@@ -5453,13 +5910,9 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_Status_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_Status_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.state != null && Object.hasOwnProperty.call(message, "state"))
             writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.state);
         if (message.inactivationReason != null && Object.hasOwnProperty.call(message, "inactivationReason"))
@@ -5492,7 +5945,7 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             writer.uint32(/* id 15, wireType 1 =*/121).fixed64(message.lastSeenAuthTokenId);
         if (message.usages != null && message.usages.length)
             for (let i = 0; i < message.usages.length; ++i)
-                $root.CTwoFactor_UsageEvent.encode(message.usages[i], writer.uint32(/* id 16, wireType 2 =*/130).fork(), q + 1).ldelim();
+                $root.CTwoFactor_UsageEvent.encode(message.usages[i], writer.uint32(/* id 16, wireType 2 =*/130).fork()).ldelim();
         return writer;
     };
 
@@ -5520,18 +5973,12 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_Status_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_Status_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_Status_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.state = reader.uint32();
@@ -5596,11 +6043,11 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             case 16: {
                     if (!(message.usages && message.usages.length))
                         message.usages = [];
-                    message.usages.push($root.CTwoFactor_UsageEvent.decode(reader, reader.uint32(), undefined, long + 1));
+                    message.usages.push($root.CTwoFactor_UsageEvent.decode(reader, reader.uint32()));
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -5631,63 +6078,59 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_Status_Response.verify = function verify(message, long) {
+    CTwoFactor_Status_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.state != null && Object.hasOwnProperty.call(message, "state"))
+        if (message.state != null && message.hasOwnProperty("state"))
             if (!$util.isInteger(message.state))
                 return "state: integer expected";
-        if (message.inactivationReason != null && Object.hasOwnProperty.call(message, "inactivationReason"))
+        if (message.inactivationReason != null && message.hasOwnProperty("inactivationReason"))
             if (!$util.isInteger(message.inactivationReason))
                 return "inactivationReason: integer expected";
-        if (message.authenticatorType != null && Object.hasOwnProperty.call(message, "authenticatorType"))
+        if (message.authenticatorType != null && message.hasOwnProperty("authenticatorType"))
             if (!$util.isInteger(message.authenticatorType))
                 return "authenticatorType: integer expected";
-        if (message.authenticatorAllowed != null && Object.hasOwnProperty.call(message, "authenticatorAllowed"))
+        if (message.authenticatorAllowed != null && message.hasOwnProperty("authenticatorAllowed"))
             if (typeof message.authenticatorAllowed !== "boolean")
                 return "authenticatorAllowed: boolean expected";
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             if (!$util.isInteger(message.steamguardScheme))
                 return "steamguardScheme: integer expected";
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             if (!$util.isString(message.tokenGid))
                 return "tokenGid: string expected";
-        if (message.emailValidated != null && Object.hasOwnProperty.call(message, "emailValidated"))
+        if (message.emailValidated != null && message.hasOwnProperty("emailValidated"))
             if (typeof message.emailValidated !== "boolean")
                 return "emailValidated: boolean expected";
-        if (message.deviceIdentifier != null && Object.hasOwnProperty.call(message, "deviceIdentifier"))
+        if (message.deviceIdentifier != null && message.hasOwnProperty("deviceIdentifier"))
             if (!$util.isString(message.deviceIdentifier))
                 return "deviceIdentifier: string expected";
-        if (message.timeCreated != null && Object.hasOwnProperty.call(message, "timeCreated"))
+        if (message.timeCreated != null && message.hasOwnProperty("timeCreated"))
             if (!$util.isInteger(message.timeCreated))
                 return "timeCreated: integer expected";
-        if (message.revocationAttemptsRemaining != null && Object.hasOwnProperty.call(message, "revocationAttemptsRemaining"))
+        if (message.revocationAttemptsRemaining != null && message.hasOwnProperty("revocationAttemptsRemaining"))
             if (!$util.isInteger(message.revocationAttemptsRemaining))
                 return "revocationAttemptsRemaining: integer expected";
-        if (message.classifiedAgent != null && Object.hasOwnProperty.call(message, "classifiedAgent"))
+        if (message.classifiedAgent != null && message.hasOwnProperty("classifiedAgent"))
             if (!$util.isString(message.classifiedAgent))
                 return "classifiedAgent: string expected";
-        if (message.allowExternalAuthenticator != null && Object.hasOwnProperty.call(message, "allowExternalAuthenticator"))
+        if (message.allowExternalAuthenticator != null && message.hasOwnProperty("allowExternalAuthenticator"))
             if (typeof message.allowExternalAuthenticator !== "boolean")
                 return "allowExternalAuthenticator: boolean expected";
-        if (message.timeTransferred != null && Object.hasOwnProperty.call(message, "timeTransferred"))
+        if (message.timeTransferred != null && message.hasOwnProperty("timeTransferred"))
             if (!$util.isInteger(message.timeTransferred))
                 return "timeTransferred: integer expected";
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             if (!$util.isInteger(message.version))
                 return "version: integer expected";
-        if (message.lastSeenAuthTokenId != null && Object.hasOwnProperty.call(message, "lastSeenAuthTokenId"))
+        if (message.lastSeenAuthTokenId != null && message.hasOwnProperty("lastSeenAuthTokenId"))
             if (!$util.isInteger(message.lastSeenAuthTokenId) && !(message.lastSeenAuthTokenId && $util.isInteger(message.lastSeenAuthTokenId.low) && $util.isInteger(message.lastSeenAuthTokenId.high)))
                 return "lastSeenAuthTokenId: integer|Long expected";
-        if (message.usages != null && Object.hasOwnProperty.call(message, "usages")) {
+        if (message.usages != null && message.hasOwnProperty("usages")) {
             if (!Array.isArray(message.usages))
                 return "usages: array expected";
             for (let i = 0; i < message.usages.length; ++i) {
-                let error = $root.CTwoFactor_UsageEvent.verify(message.usages[i], long + 1);
+                let error = $root.CTwoFactor_UsageEvent.verify(message.usages[i]);
                 if (error)
                     return "usages." + error;
             }
@@ -5703,15 +6146,9 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_Status_Response} CTwoFactor_Status_Response
      */
-    CTwoFactor_Status_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_Status_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_Status_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_Status_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_Status_Response();
         if (object.state != null)
             message.state = object.state >>> 0;
@@ -5743,21 +6180,21 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             message.version = object.version >>> 0;
         if (object.lastSeenAuthTokenId != null)
             if ($util.Long)
-                message.lastSeenAuthTokenId = $util.Long.fromValue(object.lastSeenAuthTokenId, true);
+                (message.lastSeenAuthTokenId = $util.Long.fromValue(object.lastSeenAuthTokenId)).unsigned = false;
             else if (typeof object.lastSeenAuthTokenId === "string")
                 message.lastSeenAuthTokenId = parseInt(object.lastSeenAuthTokenId, 10);
             else if (typeof object.lastSeenAuthTokenId === "number")
                 message.lastSeenAuthTokenId = object.lastSeenAuthTokenId;
             else if (typeof object.lastSeenAuthTokenId === "object")
-                message.lastSeenAuthTokenId = new $util.LongBits(object.lastSeenAuthTokenId.low >>> 0, object.lastSeenAuthTokenId.high >>> 0).toNumber(true);
+                message.lastSeenAuthTokenId = new $util.LongBits(object.lastSeenAuthTokenId.low >>> 0, object.lastSeenAuthTokenId.high >>> 0).toNumber();
         if (object.usages) {
             if (!Array.isArray(object.usages))
                 throw TypeError(".CTwoFactor_Status_Response.usages: array expected");
             message.usages = [];
             for (let i = 0; i < object.usages.length; ++i) {
-                if (!$util.isObject(object.usages[i]))
+                if (typeof object.usages[i] !== "object")
                     throw TypeError(".CTwoFactor_Status_Response.usages: object expected");
-                message.usages[i] = $root.CTwoFactor_UsageEvent.fromObject(object.usages[i], long + 1);
+                message.usages[i] = $root.CTwoFactor_UsageEvent.fromObject(object.usages[i]);
             }
         }
         return message;
@@ -5772,13 +6209,9 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_Status_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_Status_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.arrays || options.defaults)
             object.usages = [];
@@ -5798,50 +6231,48 @@ export const CTwoFactor_Status_Response = $root.CTwoFactor_Status_Response = (()
             object.timeTransferred = 0;
             object.version = 0;
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.lastSeenAuthTokenId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.lastSeenAuthTokenId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.lastSeenAuthTokenId = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.lastSeenAuthTokenId = options.longs === String ? "0" : 0;
         }
-        if (message.state != null && Object.hasOwnProperty.call(message, "state"))
+        if (message.state != null && message.hasOwnProperty("state"))
             object.state = message.state;
-        if (message.inactivationReason != null && Object.hasOwnProperty.call(message, "inactivationReason"))
+        if (message.inactivationReason != null && message.hasOwnProperty("inactivationReason"))
             object.inactivationReason = message.inactivationReason;
-        if (message.authenticatorType != null && Object.hasOwnProperty.call(message, "authenticatorType"))
+        if (message.authenticatorType != null && message.hasOwnProperty("authenticatorType"))
             object.authenticatorType = message.authenticatorType;
-        if (message.authenticatorAllowed != null && Object.hasOwnProperty.call(message, "authenticatorAllowed"))
+        if (message.authenticatorAllowed != null && message.hasOwnProperty("authenticatorAllowed"))
             object.authenticatorAllowed = message.authenticatorAllowed;
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             object.steamguardScheme = message.steamguardScheme;
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             object.tokenGid = message.tokenGid;
-        if (message.emailValidated != null && Object.hasOwnProperty.call(message, "emailValidated"))
+        if (message.emailValidated != null && message.hasOwnProperty("emailValidated"))
             object.emailValidated = message.emailValidated;
-        if (message.deviceIdentifier != null && Object.hasOwnProperty.call(message, "deviceIdentifier"))
+        if (message.deviceIdentifier != null && message.hasOwnProperty("deviceIdentifier"))
             object.deviceIdentifier = message.deviceIdentifier;
-        if (message.timeCreated != null && Object.hasOwnProperty.call(message, "timeCreated"))
+        if (message.timeCreated != null && message.hasOwnProperty("timeCreated"))
             object.timeCreated = message.timeCreated;
-        if (message.revocationAttemptsRemaining != null && Object.hasOwnProperty.call(message, "revocationAttemptsRemaining"))
+        if (message.revocationAttemptsRemaining != null && message.hasOwnProperty("revocationAttemptsRemaining"))
             object.revocationAttemptsRemaining = message.revocationAttemptsRemaining;
-        if (message.classifiedAgent != null && Object.hasOwnProperty.call(message, "classifiedAgent"))
+        if (message.classifiedAgent != null && message.hasOwnProperty("classifiedAgent"))
             object.classifiedAgent = message.classifiedAgent;
-        if (message.allowExternalAuthenticator != null && Object.hasOwnProperty.call(message, "allowExternalAuthenticator"))
+        if (message.allowExternalAuthenticator != null && message.hasOwnProperty("allowExternalAuthenticator"))
             object.allowExternalAuthenticator = message.allowExternalAuthenticator;
-        if (message.timeTransferred != null && Object.hasOwnProperty.call(message, "timeTransferred"))
+        if (message.timeTransferred != null && message.hasOwnProperty("timeTransferred"))
             object.timeTransferred = message.timeTransferred;
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             object.version = message.version;
-        if (message.lastSeenAuthTokenId != null && Object.hasOwnProperty.call(message, "lastSeenAuthTokenId"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.lastSeenAuthTokenId = typeof message.lastSeenAuthTokenId === "number" ? BigInt(message.lastSeenAuthTokenId) : $util.Long.fromBits(message.lastSeenAuthTokenId.low >>> 0, message.lastSeenAuthTokenId.high >>> 0, true).toBigInt();
-            else if (typeof message.lastSeenAuthTokenId === "number")
+        if (message.lastSeenAuthTokenId != null && message.hasOwnProperty("lastSeenAuthTokenId"))
+            if (typeof message.lastSeenAuthTokenId === "number")
                 object.lastSeenAuthTokenId = options.longs === String ? String(message.lastSeenAuthTokenId) : message.lastSeenAuthTokenId;
             else
-                object.lastSeenAuthTokenId = options.longs === String ? $util.Long.prototype.toString.call(message.lastSeenAuthTokenId) : options.longs === Number ? new $util.LongBits(message.lastSeenAuthTokenId.low >>> 0, message.lastSeenAuthTokenId.high >>> 0).toNumber(true) : message.lastSeenAuthTokenId;
+                object.lastSeenAuthTokenId = options.longs === String ? $util.Long.prototype.toString.call(message.lastSeenAuthTokenId) : options.longs === Number ? new $util.LongBits(message.lastSeenAuthTokenId.low >>> 0, message.lastSeenAuthTokenId.high >>> 0).toNumber() : message.lastSeenAuthTokenId;
         if (message.usages && message.usages.length) {
             object.usages = [];
             for (let j = 0; j < message.usages.length; ++j)
-                object.usages[j] = $root.CTwoFactor_UsageEvent.toObject(message.usages[j], options, q + 1);
+                object.usages[j] = $root.CTwoFactor_UsageEvent.toObject(message.usages[j], options);
         }
         return object;
     };
@@ -5898,7 +6329,7 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
     function CTwoFactor_RemoveAuthenticator_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -5955,13 +6386,9 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticator_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticator_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.revocationCode);
         if (message.revocationReason != null && Object.hasOwnProperty.call(message, "revocationReason"))
@@ -5997,18 +6424,12 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticator_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticator_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticator_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 2: {
                     message.revocationCode = reader.string();
@@ -6027,7 +6448,7 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -6058,23 +6479,19 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticator_Request.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticator_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             if (!$util.isString(message.revocationCode))
                 return "revocationCode: string expected";
-        if (message.revocationReason != null && Object.hasOwnProperty.call(message, "revocationReason"))
+        if (message.revocationReason != null && message.hasOwnProperty("revocationReason"))
             if (!$util.isInteger(message.revocationReason))
                 return "revocationReason: integer expected";
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             if (!$util.isInteger(message.steamguardScheme))
                 return "steamguardScheme: integer expected";
-        if (message.removeAllSteamguardCookies != null && Object.hasOwnProperty.call(message, "removeAllSteamguardCookies"))
+        if (message.removeAllSteamguardCookies != null && message.hasOwnProperty("removeAllSteamguardCookies"))
             if (typeof message.removeAllSteamguardCookies !== "boolean")
                 return "removeAllSteamguardCookies: boolean expected";
         return null;
@@ -6088,15 +6505,9 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticator_Request} CTwoFactor_RemoveAuthenticator_Request
      */
-    CTwoFactor_RemoveAuthenticator_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticator_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticator_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_RemoveAuthenticator_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_RemoveAuthenticator_Request();
         if (object.revocationCode != null)
             message.revocationCode = String(object.revocationCode);
@@ -6118,13 +6529,9 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_RemoveAuthenticator_Request.toObject = function toObject(message, options, q) {
+    CTwoFactor_RemoveAuthenticator_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.revocationCode = "";
@@ -6132,13 +6539,13 @@ export const CTwoFactor_RemoveAuthenticator_Request = $root.CTwoFactor_RemoveAut
             object.steamguardScheme = 0;
             object.removeAllSteamguardCookies = false;
         }
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             object.revocationCode = message.revocationCode;
-        if (message.revocationReason != null && Object.hasOwnProperty.call(message, "revocationReason"))
+        if (message.revocationReason != null && message.hasOwnProperty("revocationReason"))
             object.revocationReason = message.revocationReason;
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             object.steamguardScheme = message.steamguardScheme;
-        if (message.removeAllSteamguardCookies != null && Object.hasOwnProperty.call(message, "removeAllSteamguardCookies"))
+        if (message.removeAllSteamguardCookies != null && message.hasOwnProperty("removeAllSteamguardCookies"))
             object.removeAllSteamguardCookies = message.removeAllSteamguardCookies;
         return object;
     };
@@ -6179,7 +6586,7 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @exports ICTwoFactor_RemoveAuthenticator_Response
      * @interface ICTwoFactor_RemoveAuthenticator_Response
      * @property {boolean|null} [success] CTwoFactor_RemoveAuthenticator_Response success
-     * @property {number|Long|null} [serverTime] CTwoFactor_RemoveAuthenticator_Response serverTime
+     * @property {Long|null} [serverTime] CTwoFactor_RemoveAuthenticator_Response serverTime
      * @property {number|null} [revocationAttemptsRemaining] CTwoFactor_RemoveAuthenticator_Response revocationAttemptsRemaining
      */
 
@@ -6194,7 +6601,7 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
     function CTwoFactor_RemoveAuthenticator_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -6208,7 +6615,7 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
 
     /**
      * CTwoFactor_RemoveAuthenticator_Response serverTime.
-     * @member {number|Long} serverTime
+     * @member {Long} serverTime
      * @memberof CTwoFactor_RemoveAuthenticator_Response
      * @instance
      */
@@ -6243,13 +6650,9 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticator_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticator_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.success != null && Object.hasOwnProperty.call(message, "success"))
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
         if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
@@ -6283,18 +6686,12 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticator_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticator_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticator_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.success = reader.bool();
@@ -6309,7 +6706,7 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -6340,20 +6737,16 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticator_Response.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticator_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             if (typeof message.success !== "boolean")
                 return "success: boolean expected";
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
             if (!$util.isInteger(message.serverTime) && !(message.serverTime && $util.isInteger(message.serverTime.low) && $util.isInteger(message.serverTime.high)))
                 return "serverTime: integer|Long expected";
-        if (message.revocationAttemptsRemaining != null && Object.hasOwnProperty.call(message, "revocationAttemptsRemaining"))
+        if (message.revocationAttemptsRemaining != null && message.hasOwnProperty("revocationAttemptsRemaining"))
             if (!$util.isInteger(message.revocationAttemptsRemaining))
                 return "revocationAttemptsRemaining: integer expected";
         return null;
@@ -6367,21 +6760,15 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticator_Response} CTwoFactor_RemoveAuthenticator_Response
      */
-    CTwoFactor_RemoveAuthenticator_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticator_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticator_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_RemoveAuthenticator_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_RemoveAuthenticator_Response();
         if (object.success != null)
             message.success = Boolean(object.success);
         if (object.serverTime != null)
             if ($util.Long)
-                message.serverTime = $util.Long.fromValue(object.serverTime, true);
+                (message.serverTime = $util.Long.fromValue(object.serverTime)).unsigned = true;
             else if (typeof object.serverTime === "string")
                 message.serverTime = parseInt(object.serverTime, 10);
             else if (typeof object.serverTime === "number")
@@ -6402,33 +6789,27 @@ export const CTwoFactor_RemoveAuthenticator_Response = $root.CTwoFactor_RemoveAu
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_RemoveAuthenticator_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_RemoveAuthenticator_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.success = false;
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serverTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serverTime = options.longs === String ? "0" : 0;
             object.revocationAttemptsRemaining = 0;
         }
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             object.success = message.success;
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serverTime = typeof message.serverTime === "number" ? BigInt(message.serverTime) : $util.Long.fromBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0, true).toBigInt();
-            else if (typeof message.serverTime === "number")
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (typeof message.serverTime === "number")
                 object.serverTime = options.longs === String ? String(message.serverTime) : message.serverTime;
             else
                 object.serverTime = options.longs === String ? $util.Long.prototype.toString.call(message.serverTime) : options.longs === Number ? new $util.LongBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0).toNumber(true) : message.serverTime;
-        if (message.revocationAttemptsRemaining != null && Object.hasOwnProperty.call(message, "revocationAttemptsRemaining"))
+        if (message.revocationAttemptsRemaining != null && message.hasOwnProperty("revocationAttemptsRemaining"))
             object.revocationAttemptsRemaining = message.revocationAttemptsRemaining;
         return object;
     };
@@ -6469,17 +6850,17 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @exports ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @interface ICRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @property {Uint8Array|null} [sharedSecret] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token sharedSecret
-     * @property {number|Long|null} [serialNumber] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serialNumber
+     * @property {Long|null} [serialNumber] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serialNumber
      * @property {string|null} [revocationCode] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token revocationCode
      * @property {string|null} [uri] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token uri
-     * @property {number|Long|null} [serverTime] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serverTime
+     * @property {Long|null} [serverTime] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serverTime
      * @property {string|null} [accountName] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token accountName
      * @property {string|null} [tokenGid] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token tokenGid
      * @property {Uint8Array|null} [identitySecret] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token identitySecret
      * @property {Uint8Array|null} [secret_1] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token secret_1
      * @property {number|null} [status] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token status
      * @property {number|null} [steamguardScheme] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamguardScheme
-     * @property {number|Long|null} [steamid] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamid
+     * @property {Long|null} [steamid] CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamid
      */
 
     /**
@@ -6493,7 +6874,7 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
     function CRemoveAuthenticatorViaChallengeContinue_Replacement_Token(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -6507,11 +6888,11 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
 
     /**
      * CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serialNumber.
-     * @member {number|Long} serialNumber
+     * @member {Long} serialNumber
      * @memberof CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @instance
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.prototype.serialNumber = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * CRemoveAuthenticatorViaChallengeContinue_Replacement_Token revocationCode.
@@ -6531,7 +6912,7 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
 
     /**
      * CRemoveAuthenticatorViaChallengeContinue_Replacement_Token serverTime.
-     * @member {number|Long} serverTime
+     * @member {Long} serverTime
      * @memberof CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @instance
      */
@@ -6587,11 +6968,11 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
 
     /**
      * CRemoveAuthenticatorViaChallengeContinue_Replacement_Token steamid.
-     * @member {number|Long} steamid
+     * @member {Long} steamid
      * @memberof CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      * @instance
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
      * Creates a new CRemoveAuthenticatorViaChallengeContinue_Replacement_Token instance using the specified properties.
@@ -6614,13 +6995,9 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.encode = function encode(message, writer, q) {
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
             writer.uint32(/* id 1, wireType 2 =*/10).bytes(message.sharedSecret);
         if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
@@ -6672,18 +7049,12 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.decode = function decode(reader, length, error, long) {
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.sharedSecret = reader.bytes();
@@ -6734,7 +7105,7 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -6765,47 +7136,43 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify = function verify(message, long) {
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
+        if (message.sharedSecret != null && message.hasOwnProperty("sharedSecret"))
             if (!(message.sharedSecret && typeof message.sharedSecret.length === "number" || $util.isString(message.sharedSecret)))
                 return "sharedSecret: buffer expected";
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
             if (!$util.isInteger(message.serialNumber) && !(message.serialNumber && $util.isInteger(message.serialNumber.low) && $util.isInteger(message.serialNumber.high)))
                 return "serialNumber: integer|Long expected";
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             if (!$util.isString(message.revocationCode))
                 return "revocationCode: string expected";
-        if (message.uri != null && Object.hasOwnProperty.call(message, "uri"))
+        if (message.uri != null && message.hasOwnProperty("uri"))
             if (!$util.isString(message.uri))
                 return "uri: string expected";
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
             if (!$util.isInteger(message.serverTime) && !(message.serverTime && $util.isInteger(message.serverTime.low) && $util.isInteger(message.serverTime.high)))
                 return "serverTime: integer|Long expected";
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             if (!$util.isString(message.accountName))
                 return "accountName: string expected";
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             if (!$util.isString(message.tokenGid))
                 return "tokenGid: string expected";
-        if (message.identitySecret != null && Object.hasOwnProperty.call(message, "identitySecret"))
+        if (message.identitySecret != null && message.hasOwnProperty("identitySecret"))
             if (!(message.identitySecret && typeof message.identitySecret.length === "number" || $util.isString(message.identitySecret)))
                 return "identitySecret: buffer expected";
-        if (message.secret_1 != null && Object.hasOwnProperty.call(message, "secret_1"))
+        if (message.secret_1 != null && message.hasOwnProperty("secret_1"))
             if (!(message.secret_1 && typeof message.secret_1.length === "number" || $util.isString(message.secret_1)))
                 return "secret_1: buffer expected";
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             if (!$util.isInteger(message.status))
                 return "status: integer expected";
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             if (!$util.isInteger(message.steamguardScheme))
                 return "steamguardScheme: integer expected";
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
             if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
                 return "steamid: integer|Long expected";
         return null;
@@ -6819,15 +7186,9 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @param {Object.<string,*>} object Plain object
      * @returns {CRemoveAuthenticatorViaChallengeContinue_Replacement_Token} CRemoveAuthenticatorViaChallengeContinue_Replacement_Token
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.fromObject = function fromObject(object, long) {
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.fromObject = function fromObject(object) {
         if (object instanceof $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CRemoveAuthenticatorViaChallengeContinue_Replacement_Token: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token();
         if (object.sharedSecret != null)
             if (typeof object.sharedSecret === "string")
@@ -6836,20 +7197,20 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
                 message.sharedSecret = object.sharedSecret;
         if (object.serialNumber != null)
             if ($util.Long)
-                message.serialNumber = $util.Long.fromValue(object.serialNumber, true);
+                (message.serialNumber = $util.Long.fromValue(object.serialNumber)).unsigned = false;
             else if (typeof object.serialNumber === "string")
                 message.serialNumber = parseInt(object.serialNumber, 10);
             else if (typeof object.serialNumber === "number")
                 message.serialNumber = object.serialNumber;
             else if (typeof object.serialNumber === "object")
-                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber(true);
+                message.serialNumber = new $util.LongBits(object.serialNumber.low >>> 0, object.serialNumber.high >>> 0).toNumber();
         if (object.revocationCode != null)
             message.revocationCode = String(object.revocationCode);
         if (object.uri != null)
             message.uri = String(object.uri);
         if (object.serverTime != null)
             if ($util.Long)
-                message.serverTime = $util.Long.fromValue(object.serverTime, true);
+                (message.serverTime = $util.Long.fromValue(object.serverTime)).unsigned = true;
             else if (typeof object.serverTime === "string")
                 message.serverTime = parseInt(object.serverTime, 10);
             else if (typeof object.serverTime === "number")
@@ -6876,13 +7237,13 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
             message.steamguardScheme = object.steamguardScheme >>> 0;
         if (object.steamid != null)
             if ($util.Long)
-                message.steamid = $util.Long.fromValue(object.steamid, true);
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
             else if (typeof object.steamid === "string")
                 message.steamid = parseInt(object.steamid, 10);
             else if (typeof object.steamid === "number")
                 message.steamid = object.steamid;
             else if (typeof object.steamid === "object")
-                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber(true);
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
         return message;
     };
 
@@ -6895,13 +7256,9 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.toObject = function toObject(message, options, q) {
+    CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             if (options.bytes === String)
@@ -6912,17 +7269,17 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
                     object.sharedSecret = $util.newBuffer(object.sharedSecret);
             }
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.serialNumber = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serialNumber = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serialNumber = options.longs === String ? "0" : 0;
             object.revocationCode = "";
             object.uri = "";
             if ($util.Long) {
                 let long = new $util.Long(0, 0, true);
-                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                object.serverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.serverTime = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.serverTime = options.longs === String ? "0" : 0;
             object.accountName = "";
             object.tokenGid = "";
             if (options.bytes === String)
@@ -6942,50 +7299,44 @@ export const CRemoveAuthenticatorViaChallengeContinue_Replacement_Token = $root.
             object.status = 0;
             object.steamguardScheme = 0;
             if ($util.Long) {
-                let long = new $util.Long(0, 0, true);
-                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : typeof BigInt !== "undefined" && options.longs === BigInt ? long.toBigInt() : long;
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
-                object.steamid = options.longs === String ? "0" : typeof BigInt !== "undefined" && options.longs === BigInt ? BigInt("0") : 0;
+                object.steamid = options.longs === String ? "0" : 0;
         }
-        if (message.sharedSecret != null && Object.hasOwnProperty.call(message, "sharedSecret"))
+        if (message.sharedSecret != null && message.hasOwnProperty("sharedSecret"))
             object.sharedSecret = options.bytes === String ? $util.base64.encode(message.sharedSecret, 0, message.sharedSecret.length) : options.bytes === Array ? Array.prototype.slice.call(message.sharedSecret) : message.sharedSecret;
-        if (message.serialNumber != null && Object.hasOwnProperty.call(message, "serialNumber"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serialNumber = typeof message.serialNumber === "number" ? BigInt(message.serialNumber) : $util.Long.fromBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0, true).toBigInt();
-            else if (typeof message.serialNumber === "number")
+        if (message.serialNumber != null && message.hasOwnProperty("serialNumber"))
+            if (typeof message.serialNumber === "number")
                 object.serialNumber = options.longs === String ? String(message.serialNumber) : message.serialNumber;
             else
-                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber(true) : message.serialNumber;
-        if (message.revocationCode != null && Object.hasOwnProperty.call(message, "revocationCode"))
+                object.serialNumber = options.longs === String ? $util.Long.prototype.toString.call(message.serialNumber) : options.longs === Number ? new $util.LongBits(message.serialNumber.low >>> 0, message.serialNumber.high >>> 0).toNumber() : message.serialNumber;
+        if (message.revocationCode != null && message.hasOwnProperty("revocationCode"))
             object.revocationCode = message.revocationCode;
-        if (message.uri != null && Object.hasOwnProperty.call(message, "uri"))
+        if (message.uri != null && message.hasOwnProperty("uri"))
             object.uri = message.uri;
-        if (message.serverTime != null && Object.hasOwnProperty.call(message, "serverTime"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.serverTime = typeof message.serverTime === "number" ? BigInt(message.serverTime) : $util.Long.fromBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0, true).toBigInt();
-            else if (typeof message.serverTime === "number")
+        if (message.serverTime != null && message.hasOwnProperty("serverTime"))
+            if (typeof message.serverTime === "number")
                 object.serverTime = options.longs === String ? String(message.serverTime) : message.serverTime;
             else
                 object.serverTime = options.longs === String ? $util.Long.prototype.toString.call(message.serverTime) : options.longs === Number ? new $util.LongBits(message.serverTime.low >>> 0, message.serverTime.high >>> 0).toNumber(true) : message.serverTime;
-        if (message.accountName != null && Object.hasOwnProperty.call(message, "accountName"))
+        if (message.accountName != null && message.hasOwnProperty("accountName"))
             object.accountName = message.accountName;
-        if (message.tokenGid != null && Object.hasOwnProperty.call(message, "tokenGid"))
+        if (message.tokenGid != null && message.hasOwnProperty("tokenGid"))
             object.tokenGid = message.tokenGid;
-        if (message.identitySecret != null && Object.hasOwnProperty.call(message, "identitySecret"))
+        if (message.identitySecret != null && message.hasOwnProperty("identitySecret"))
             object.identitySecret = options.bytes === String ? $util.base64.encode(message.identitySecret, 0, message.identitySecret.length) : options.bytes === Array ? Array.prototype.slice.call(message.identitySecret) : message.identitySecret;
-        if (message.secret_1 != null && Object.hasOwnProperty.call(message, "secret_1"))
+        if (message.secret_1 != null && message.hasOwnProperty("secret_1"))
             object.secret_1 = options.bytes === String ? $util.base64.encode(message.secret_1, 0, message.secret_1.length) : options.bytes === Array ? Array.prototype.slice.call(message.secret_1) : message.secret_1;
-        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+        if (message.status != null && message.hasOwnProperty("status"))
             object.status = message.status;
-        if (message.steamguardScheme != null && Object.hasOwnProperty.call(message, "steamguardScheme"))
+        if (message.steamguardScheme != null && message.hasOwnProperty("steamguardScheme"))
             object.steamguardScheme = message.steamguardScheme;
-        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
-            if (typeof BigInt !== "undefined" && options.longs === BigInt)
-                object.steamid = typeof message.steamid === "number" ? BigInt(message.steamid) : $util.Long.fromBits(message.steamid.low >>> 0, message.steamid.high >>> 0, true).toBigInt();
-            else if (typeof message.steamid === "number")
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
                 object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
             else
-                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber(true) : message.steamid;
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
         return object;
     };
 
@@ -7037,7 +7388,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request = $root.CTw
     function CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -7062,13 +7413,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request = $root.CTw
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         return writer;
     };
 
@@ -7096,21 +7443,15 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request = $root.CTw
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -7141,13 +7482,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request = $root.CTw
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
         return null;
     };
 
@@ -7159,7 +7496,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request = $root.CTw
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request} CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request)
             return object;
         return new $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Request();
@@ -7227,7 +7564,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
     function CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -7260,13 +7597,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.success != null && Object.hasOwnProperty.call(message, "success"))
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
         return writer;
@@ -7296,25 +7629,19 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.success = reader.bool();
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -7345,14 +7672,10 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             if (typeof message.success !== "boolean")
                 return "success: boolean expected";
         return null;
@@ -7366,15 +7689,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response} CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response();
         if (object.success != null)
             message.success = Boolean(object.success);
@@ -7390,17 +7707,13 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response = $root.CT
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults)
             object.success = false;
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             object.success = message.success;
         return object;
     };
@@ -7456,7 +7769,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
     function CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -7505,13 +7818,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.smsCode != null && Object.hasOwnProperty.call(message, "smsCode"))
             writer.uint32(/* id 1, wireType 2 =*/10).string(message.smsCode);
         if (message.generateNewToken != null && Object.hasOwnProperty.call(message, "generateNewToken"))
@@ -7545,18 +7854,12 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.smsCode = reader.string();
@@ -7571,7 +7874,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -7602,20 +7905,16 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.smsCode != null && Object.hasOwnProperty.call(message, "smsCode"))
+        if (message.smsCode != null && message.hasOwnProperty("smsCode"))
             if (!$util.isString(message.smsCode))
                 return "smsCode: string expected";
-        if (message.generateNewToken != null && Object.hasOwnProperty.call(message, "generateNewToken"))
+        if (message.generateNewToken != null && message.hasOwnProperty("generateNewToken"))
             if (typeof message.generateNewToken !== "boolean")
                 return "generateNewToken: boolean expected";
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             if (!$util.isInteger(message.version))
                 return "version: integer expected";
         return null;
@@ -7629,15 +7928,9 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request} CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request();
         if (object.smsCode != null)
             message.smsCode = String(object.smsCode);
@@ -7657,24 +7950,20 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request = $root.
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.toObject = function toObject(message, options, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Request.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.smsCode = "";
             object.generateNewToken = false;
             object.version = 1;
         }
-        if (message.smsCode != null && Object.hasOwnProperty.call(message, "smsCode"))
+        if (message.smsCode != null && message.hasOwnProperty("smsCode"))
             object.smsCode = message.smsCode;
-        if (message.generateNewToken != null && Object.hasOwnProperty.call(message, "generateNewToken"))
+        if (message.generateNewToken != null && message.hasOwnProperty("generateNewToken"))
             object.generateNewToken = message.generateNewToken;
-        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+        if (message.version != null && message.hasOwnProperty("version"))
             object.version = message.version;
         return object;
     };
@@ -7729,7 +8018,7 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
     function CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                if (properties[keys[i]] != null)
                     this[keys[i]] = properties[keys[i]];
     }
 
@@ -7770,17 +8059,13 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
      * @param {$protobuf.Writer} [writer] Writer to encode to
      * @returns {$protobuf.Writer} Writer
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.encode = function encode(message, writer, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.encode = function encode(message, writer) {
         if (!writer)
             writer = $Writer.create();
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         if (message.success != null && Object.hasOwnProperty.call(message, "success"))
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
         if (message.replacementToken != null && Object.hasOwnProperty.call(message, "replacementToken"))
-            $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.encode(message.replacementToken, writer.uint32(/* id 2, wireType 2 =*/18).fork(), q + 1).ldelim();
+            $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.encode(message.replacementToken, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
         return writer;
     };
 
@@ -7808,29 +8093,23 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.decode = function decode(reader, length, error, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.decode = function decode(reader, length) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
-        if (long === undefined)
-            long = 0;
-        if (long > $Reader.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response();
         while (reader.pos < end) {
             let tag = reader.uint32();
-            if (tag === error)
-                break;
             switch (tag >>> 3) {
             case 1: {
                     message.success = reader.bool();
                     break;
                 }
             case 2: {
-                    message.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.decode(reader, reader.uint32(), undefined, long + 1);
+                    message.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.decode(reader, reader.uint32());
                     break;
                 }
             default:
-                reader.skipType(tag & 7, long);
+                reader.skipType(tag & 7);
                 break;
             }
         }
@@ -7861,18 +8140,14 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
      * @param {Object.<string,*>} message Plain object to verify
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.verify = function verify(message, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.verify = function verify(message) {
         if (typeof message !== "object" || message === null)
             return "object expected";
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            return "maximum nesting depth exceeded";
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             if (typeof message.success !== "boolean")
                 return "success: boolean expected";
-        if (message.replacementToken != null && Object.hasOwnProperty.call(message, "replacementToken")) {
-            let error = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify(message.replacementToken, long + 1);
+        if (message.replacementToken != null && message.hasOwnProperty("replacementToken")) {
+            let error = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.verify(message.replacementToken);
             if (error)
                 return "replacementToken." + error;
         }
@@ -7887,22 +8162,16 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
      * @param {Object.<string,*>} object Plain object
      * @returns {CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response} CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.fromObject = function fromObject(object, long) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.fromObject = function fromObject(object) {
         if (object instanceof $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response)
             return object;
-        if (!$util.isObject(object))
-            throw TypeError(".CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response: object expected");
-        if (long === undefined)
-            long = 0;
-        if (long > $util.recursionLimit)
-            throw Error("maximum nesting depth exceeded");
         let message = new $root.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response();
         if (object.success != null)
             message.success = Boolean(object.success);
         if (object.replacementToken != null) {
-            if (!$util.isObject(object.replacementToken))
+            if (typeof object.replacementToken !== "object")
                 throw TypeError(".CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.replacementToken: object expected");
-            message.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.fromObject(object.replacementToken, long + 1);
+            message.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.fromObject(object.replacementToken);
         }
         return message;
     };
@@ -7916,22 +8185,18 @@ export const CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response = $root
      * @param {$protobuf.IConversionOptions} [options] Conversion options
      * @returns {Object.<string,*>} Plain object
      */
-    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.toObject = function toObject(message, options, q) {
+    CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response.toObject = function toObject(message, options) {
         if (!options)
             options = {};
-        if (q === undefined)
-            q = 0;
-        if (q > $util.recursionLimit)
-            throw Error("max depth exceeded");
         let object = {};
         if (options.defaults) {
             object.success = false;
             object.replacementToken = null;
         }
-        if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+        if (message.success != null && message.hasOwnProperty("success"))
             object.success = message.success;
-        if (message.replacementToken != null && Object.hasOwnProperty.call(message, "replacementToken"))
-            object.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.toObject(message.replacementToken, options, q + 1);
+        if (message.replacementToken != null && message.hasOwnProperty("replacementToken"))
+            object.replacementToken = $root.CRemoveAuthenticatorViaChallengeContinue_Replacement_Token.toObject(message.replacementToken, options);
         return object;
     };
 

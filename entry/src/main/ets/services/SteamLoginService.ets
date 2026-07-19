@@ -1,31 +1,32 @@
-import { cryptoFramework } from '@kit.CryptoArchitectureKit';
-import { http } from '@kit.NetworkKit';
-import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { cryptoFramework } from '@kit.CryptoArchitectureKit';
+import { util } from '@kit.ArkTS';
 import {
+  SteamAllowedConfirmation,
   SteamAuthPollResult,
   SteamAuthSession,
   SteamGuardType,
-  SteamProto,
+  SteamProtocol,
   SteamSessionTokens
-} from './SteamProto';
-import { SteamResult } from './SteamResult';
+} from './SteamProtocol';
+import { SteamWebApiClient } from './SteamWebApiClient';
 
-/** 页面离开或用户取消时，让登录轮询在下一安全检查点结束。 */
+interface SteamRsaPublicKey {
+  modulus: string;
+  exponent: string;
+  timestamp: string;
+}
+
+/** 页面离开或用户取消时，让登录轮询在下一个安全检查点结束。 */
 export class SteamLoginCancellation {
   private cancelled: boolean = false;
 
-  /** 标记本次登录不再需要继续轮询；不会强行中断正在执行的网络请求。 */
+  /** 标记当前登录流程应在下一个安全检查点停止。 */
   cancel(): void {
     this.cancelled = true;
   }
 
-  /** 返回调用方是否已经请求取消。 */
-  isCancelled(): boolean {
-    return this.cancelled;
-  }
-
-  /** 在安全检查点把取消状态转换为可由页面统一处理的异常。 */
+  /** 在异步阶段切换点把取消状态转换为可被页面处理的异常。 */
   throwIfCancelled(): void {
     if (this.cancelled) {
       throw new Error('Steam 登录已取消');
@@ -33,92 +34,116 @@ export class SteamLoginCancellation {
   }
 }
 
-/**
- * Steam 凭据登录流程。密码只参与本次 RSA 加密和会话创建，不写入本地存储；
- * 登录完成后仅返回 Steam Guard 后续所需的会话令牌和账号信息。
- */
+/** Steam 凭据登录编排；协议和 HTTP 细节分别交给 SteamProtocol 与 SteamWebApiClient。 */
 export class SteamLoginService {
-  /**
-   * 使用已有 Token 自动生成的五位码重新认证。Guard Data 只帮助 Steam 识别受信任登录，
-   * 服务端仍可要求设备确认或其他验证，因此调用方必须展示等待状态并允许取消。
-   */
+  private static readonly DEFAULT_POLL_INTERVAL: number = 5000;
+
+  /** 按 SteamKit 的优先级选择客户端可以处理的确认方式。 */
+  static preferredConfirmation(session: SteamAuthSession): SteamAllowedConfirmation | undefined {
+    const priority: SteamGuardType[] = [
+      SteamGuardType.NONE,
+      SteamGuardType.DEVICE_CONFIRMATION,
+      SteamGuardType.DEVICE_CODE,
+      SteamGuardType.EMAIL_CODE,
+      SteamGuardType.EMAIL_CONFIRMATION
+    ];
+    for (const type of priority) {
+      const confirmation = session.confirmations.find(
+        (item: SteamAllowedConfirmation): boolean => item.type === type);
+      if (confirmation) {
+        return confirmation;
+      }
+    }
+    return undefined;
+  }
+
+  /** 使用当前 Token 的五位码和 Guard Data 重新建立持久会话。 */
   async refreshSession(account: string, password: string, guardCode: string, guardData: string,
     cancellation: SteamLoginCancellation,
     onWaiting: (type: number) => void = (_type: number): void => {}): Promise<SteamSessionTokens> {
     const session = await this.beginSession(account, password, guardData);
     cancellation.throwIfCancelled();
-    if (session.confirmations.some((item) => item.type === SteamGuardType.DEVICE_CODE)) {
-      await this.submitGuardCode(session, SteamGuardType.DEVICE_CODE, guardCode);
-    } else if (session.confirmations.some((item) => item.type === SteamGuardType.DEVICE_CONFIRMATION)) {
-      onWaiting(SteamGuardType.DEVICE_CONFIRMATION);
-    } else if (!session.confirmations.some((item) => item.type === SteamGuardType.NONE)) {
-      throw new Error('本次登录需要邮箱验证，请从“添加 Steam Guard”流程重新登录');
+    const confirmation = SteamLoginService.preferredConfirmation(session);
+    if (!confirmation) {
+      throw new Error('Steam 没有返回本应用支持的登录确认方式');
     }
-    return this.pollUntilComplete(session, cancellation);
+    switch (confirmation.type) {
+      case SteamGuardType.NONE:
+        return this.pollUntilComplete(session, cancellation);
+      case SteamGuardType.DEVICE_CONFIRMATION:
+      case SteamGuardType.EMAIL_CONFIRMATION:
+        onWaiting(confirmation.type);
+        return this.pollUntilComplete(session, cancellation, 90000, true);
+      case SteamGuardType.DEVICE_CODE:
+        await this.submitGuardCode(session, SteamGuardType.DEVICE_CODE, guardCode);
+        return this.pollUntilComplete(session, cancellation);
+      case SteamGuardType.EMAIL_CODE:
+        throw new Error('本次登录需要邮箱验证码，请从“添加 Steam Guard”流程重新登录');
+      default:
+        throw new Error(`暂不支持 Steam 登录确认方式 ${confirmation.type}`);
+    }
   }
 
-  /** 创建凭据登录会话，但不擅自选择验证方式，供添加 Steam Guard 的分步 UI 使用。 */
+  /** 获取临时 RSA 公钥、加密密码并创建凭据登录会话。 */
   async beginSession(account: string, password: string, guardData: string = ''): Promise<SteamAuthSession> {
-    // 多阶段协议第一步：获取临时 RSA 公钥并提交加密密码。
-    const publicKey = await this.getPublicKey(account);
+    if (!account.trim() || !password) {
+      throw new Error('请输入 Steam 账户名和密码');
+    }
+    const publicKey = await this.getRsaPublicKey(account.trim());
+    if (!publicKey.modulus || !publicKey.exponent || !publicKey.timestamp) {
+      throw new Error('Steam 未返回完整 RSA 公钥');
+    }
     const encryptedPassword = this.encryptPassword(publicKey, password);
-    const begin = await this.protobufRequest('BeginAuthSessionViaCredentials',
-      SteamProto.beginRequest(account, encryptedPassword, `${publicKey['timestamp']}`, guardData));
-    const session = SteamProto.decodeBegin(begin);
-    if (session.clientId.toString() === '0' || session.steamId.toString() === '0') {
+    const beginBytes = await SteamWebApiClient.protobuf('Authentication', 'BeginAuthSessionViaCredentials',
+      SteamProtocol.encodeBeginSession(account.trim(), encryptedPassword, publicKey.timestamp, guardData));
+    const session = SteamProtocol.decodeBeginSession(beginBytes);
+    if (session.clientId.toString() === '0' || session.steamId.toString() === '0' ||
+      session.requestId.length === 0) {
       throw new Error(session.extendedErrorMessage || 'Steam 未返回有效登录会话');
     }
     return session;
   }
 
-  /** 按 Steam 固定要求使用临时 RSA 公钥加密密码，明文不会离开本方法。 */
-  private encryptPassword(publicKey: Record<string, Object>, password: string): string {
-    try {
-      const rsaSpec: cryptoFramework.RSAPubKeySpec = {
-        algName: 'RSA',
-        specType: cryptoFramework.AsyKeySpecType.PUBLIC_KEY_SPEC,
-        params: {
-          algName: 'RSA', specType: cryptoFramework.AsyKeySpecType.COMMON_PARAMS_SPEC,
-          n: BigInt(`0x${publicKey['publickey_mod']}`)
-        },
-        pk: BigInt(`0x${publicKey['publickey_exp']}`)
-      };
-      const rsa = cryptoFramework.createAsyKeyGeneratorBySpec(rsaSpec).generatePubKeySync();
-      // eslint-disable-next-line @security/no-unsafe-rsa-encrypt -- Steam 登录端点固定要求服务端公钥与 PKCS#1 v1.5。
-      const cipher = cryptoFramework.createCipher('RSA1024|PKCS1');
-      cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, rsa, null);
-      const encrypted = cipher.doFinalSync({ data: new util.TextEncoder().encodeInto(password) });
-      return new util.Base64Helper().encodeToStringSync(encrypted.data);
-    } catch (error) {
-      const detail = error as BusinessError;
-      throw new Error(`加密 Steam 登录密码失败：${detail.message ?? 'RSA 公钥无效'}`);
+  /** RSA 公钥接口沿用 Steam 移动端兼容的 JSON 形式，并由共享网络层统一校验。 */
+  private async getRsaPublicKey(account: string): Promise<SteamRsaPublicKey> {
+    const url = 'https://api.steampowered.com/IAuthenticationService/' +
+      `GetPasswordRSAPublicKey/v1/?account_name=${encodeURIComponent(account)}`;
+    const root = await SteamWebApiClient.getJson('获取 RSA 公钥', url);
+    const value: Object | undefined = root['response'];
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      throw new Error('Steam 未返回 RSA 公钥响应');
     }
+    const response = value as Record<string, Object>;
+    return {
+      modulus: String(response['publickey_mod'] ?? ''),
+      exponent: String(response['publickey_exp'] ?? ''),
+      timestamp: String(response['timestamp'] ?? '')
+    };
   }
 
-  /** 将用户或当前 Token 提供的验证代码提交给指定登录会话。 */
-  async submitGuardCode(session: SteamAuthSession, codeType: number, code: string): Promise<void> {
-    if (!code) {
+  /** 向已有登录会话提交邮箱码或 Steam Guard 五位码。 */
+  async submitGuardCode(session: SteamAuthSession, codeType: SteamGuardType, code: string): Promise<void> {
+    if (!code.trim()) {
       throw new Error('请输入 Steam 验证码');
     }
-    // SteamKit 将 DuplicateRequest(29) 视为可继续：通常表示用户已在另一处确认，随后轮询仍会成功。
-    await this.protobufRequest('UpdateAuthSessionWithSteamGuardCode',
-      SteamProto.guardRequest(session, codeType, code), true);
-  }
-
-  /** 只轮询一次，供需要由 UI 自己控制重试节奏的调用方使用。 */
-  async pollSession(session: SteamAuthSession): Promise<SteamSessionTokens> {
-    const tokens = await this.pollOnce(session);
-    if (!tokens) {
-      throw new Error('Steam 登录尚未完成，请稍后继续');
+    const response = await SteamWebApiClient.protobuf('Authentication', 'UpdateAuthSessionWithSteamGuardCode',
+      SteamProtocol.encodeGuardCode(session, codeType, code.trim()), '', ['1', 'OK', '29']);
+    const agreementUrl = SteamProtocol.decodeGuardCodeResponse(response);
+    if (agreementUrl.length > 0) {
+      throw new Error('Steam 要求先同意最新用户协议，请在 Steam 官方客户端中完成后重试');
     }
-    return tokens;
   }
 
-  /** 按服务器给出的间隔轮询，处理 client_id 轮换，并限制最长等待时间。 */
+  /** 按服务端间隔轮询，处理 client_id 轮换并限制总等待时间。 */
   async pollUntilComplete(session: SteamAuthSession, cancellation: SteamLoginCancellation,
-    timeoutMs: number = 90000): Promise<SteamSessionTokens> {
-    const intervalMs = Math.min(10000, Math.max(1000, Math.ceil(session.interval * 1000)));
+    timeoutMs: number = 90000, waitBeforeFirstPoll: boolean = false): Promise<SteamSessionTokens> {
+    const suggested = Number.isFinite(session.interval) && session.interval > 0 ?
+      Math.ceil(session.interval * 1000) : SteamLoginService.DEFAULT_POLL_INTERVAL;
+    const intervalMs = Math.max(1000, suggested);
     const deadline = Date.now() + timeoutMs;
+    if (waitBeforeFirstPoll) {
+      await this.delay(intervalMs);
+    }
     while (Date.now() < deadline) {
       cancellation.throwIfCancelled();
       const tokens = await this.pollOnce(session);
@@ -126,17 +151,20 @@ export class SteamLoginService {
       if (tokens) {
         return tokens;
       }
-      await this.delay(intervalMs);
+      const remaining = deadline - Date.now();
+      if (remaining > 0) {
+        await this.delay(Math.min(intervalMs, remaining));
+      }
     }
     throw new Error('等待 Steam 登录确认超时，请重新发起登录');
   }
 
-  /** 执行一次状态查询；未完成返回 null，协议或协议确认问题直接抛错。 */
+  /** 轮询一次会话状态；尚未签发令牌时返回 null。 */
   private async pollOnce(session: SteamAuthSession): Promise<SteamSessionTokens | null> {
-    const poll = await this.protobufRequest('PollAuthSessionStatus', SteamProto.pollRequest(session));
-    const result: SteamAuthPollResult = SteamProto.decodePoll(poll);
+    const bytes = await SteamWebApiClient.protobuf('Authentication', 'PollAuthSessionStatus',
+      SteamProtocol.encodePollSession(session));
+    const result: SteamAuthPollResult = SteamProtocol.decodePollSession(bytes);
     if (result.newClientId.toString() !== '0') {
-      // Steam 可在轮询过程中迁移会话；后续请求必须改用新 client_id。
       session.clientId = result.newClientId;
     }
     if (result.tokens.agreementSessionUrl.length > 0 && result.tokens.refreshToken.length === 0) {
@@ -145,67 +173,35 @@ export class SteamLoginService {
     return result.tokens.refreshToken.length > 0 ? result.tokens : null;
   }
 
-  /** 在轮询之间异步等待，不阻塞 ArkUI 主线程。 */
+  /** 使用 Steam 协议固定的 RSA PKCS#1 v1.5 加密账户密码。 */
+  private encryptPassword(publicKey: SteamRsaPublicKey, password: string): string {
+    try {
+      const rsaSpec: cryptoFramework.RSAPubKeySpec = {
+        algName: 'RSA',
+        specType: cryptoFramework.AsyKeySpecType.PUBLIC_KEY_SPEC,
+        params: {
+          algName: 'RSA',
+          specType: cryptoFramework.AsyKeySpecType.COMMON_PARAMS_SPEC,
+          n: BigInt(`0x${publicKey.modulus}`)
+        },
+        pk: BigInt(`0x${publicKey.exponent}`)
+      };
+      const rsa = cryptoFramework.createAsyKeyGeneratorBySpec(rsaSpec).generatePubKeySync();
+      // eslint-disable-next-line @security/no-unsafe-rsa-encrypt -- Steam 登录协议固定使用 PKCS#1 v1.5。
+      const cipher = cryptoFramework.createCipher('RSA1024|PKCS1');
+      cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, rsa, null);
+      const encrypted = cipher.doFinalSync({ data: new util.TextEncoder().encodeInto(password) });
+      return new util.Base64Helper().encodeToStringSync(encrypted.data, util.Type.BASIC);
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`加密 Steam 登录密码失败：${detail.message ?? 'RSA 公钥无效'}`);
+    }
+  }
+
+  /** 使用异步计时器等待服务端建议的轮询间隔。 */
   private async delay(milliseconds: number): Promise<void> {
     return new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, milliseconds);
     });
-  }
-
-  /** 获取账户对应的临时 RSA 公钥和时间戳，用于凭据登录加密。 */
-  private async getPublicKey(account: string): Promise<Record<string, Object>> {
-    const request = http.createHttp();
-    try {
-      const response = await request.request(
-        `https://api.steampowered.com/IAuthenticationService/GetPasswordRSAPublicKey/v1/?account_name=${encodeURIComponent(
-          account)}`,
-        { method: http.RequestMethod.GET, expectDataType: http.HttpDataType.STRING });
-      const parsed = JSON.parse(response.result as string) as Record<string, Object>;
-      return parsed['response'] as Record<string, Object>;
-    } catch (error) {
-      const detail = error as BusinessError;
-      throw new Error(`获取 Steam RSA 公钥失败：${detail.message ?? '未知错误'}`);
-    } finally {
-      request.destroy();
-    }
-  }
-
-  /** 发送 Base64 包装的 Steam protobuf 请求并统一处理 x-eresult。 */
-  private async protobufRequest(method: string, payload: Uint8Array,
-    allowDuplicateRequest: boolean = false): Promise<Uint8Array> {
-    // Steam Web API 使用 Base64 包装 protobuf，并用 x-eresult 表达协议级错误。
-    const base64 = new util.Base64Helper().encodeToStringSync(payload);
-    const request = http.createHttp();
-    try {
-      const response = await request.request(`https://api.steampowered.com/IAuthenticationService/${method}/v1/`, {
-        method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        extraData: `input_protobuf_encoded=${encodeURIComponent(base64)}`,
-        expectDataType: http.HttpDataType.ARRAY_BUFFER,
-        connectTimeout: 15000,
-        readTimeout: 15000
-      });
-      const result = this.readEResult(response.header);
-      if (result && result !== '1' && !(allowDuplicateRequest && result === '29')) {
-        throw new Error(SteamResult.message(result, 'Steam 登录失败'));
-      }
-      return new Uint8Array(response.result as ArrayBuffer);
-    } catch (error) {
-      const detail = error as BusinessError;
-      const message = detail.message ?? '未知错误';
-      if (message.includes('EResult ')) {
-        throw new Error(message);
-      }
-      throw new Error(`Steam Protobuf 请求失败：${message}`);
-    } finally {
-      request.destroy();
-    }
-  }
-
-  /** 从 Network Kit 的不透明响应头对象中安全提取 x-eresult。 */
-  private readEResult(header: Object): string {
-    const headerText: string = JSON.stringify(header);
-    const match: RegExpMatchArray | null = headerText.match(/"x-eresult"\s*:\s*"([^"\\]*)"/i);
-    return match !== null && match.length > 1 ? match[1] : '';
   }
 }

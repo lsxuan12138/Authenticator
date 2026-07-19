@@ -7,7 +7,7 @@ import { OtpEngine } from '../core/OtpEngine';
 import { SteamAccessTokenResult, SteamGuardService } from '../services/SteamGuardService';
 import { SteamImportResult, SteamImportService } from '../services/SteamImportService';
 import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLoginService';
-import { SteamGuardType } from '../services/SteamProto';
+import { SteamGuardType } from '../services/SteamProtocol';
 import { SteamAuthenticatorService, SteamAuthenticatorStatus } from '../services/SteamAuthenticatorService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
@@ -55,9 +55,11 @@ export struct SteamManagementPage {
     this.loadMetadata();
   }
 
-  /** 页面离开时取消可能仍在等待设备确认的登录轮询。 */
+  /** 页面离开时取消登录轮询，并清除未提交的密码与导入文本。 */
   aboutToDisappear(): void {
     this.steamLoginCancellation?.cancel();
+    this.steamLoginPassword = '';
+    this.steamJsonText = '';
   }
 
   /** 将非密钥字段复制到页面状态；敏感字段继续保留在 Token 模型中。 */
@@ -133,6 +135,8 @@ export struct SteamManagementPage {
         (type: number): void => {
           if (type === SteamGuardType.DEVICE_CONFIRMATION) {
             this.steamSessionStatus = '请在已登录的 Steam 手机应用中批准登录，应用会自动继续';
+          } else if (type === SteamGuardType.EMAIL_CONFIRMATION) {
+            this.steamSessionStatus = '请点击 Steam 邮件中的确认链接，应用会自动继续';
           }
         });
       if (!token.steam) {
@@ -322,16 +326,24 @@ export struct SteamManagementPage {
       if (!token) {
         return;
       }
-      token.steam = imported.metadata;
-      if (imported.accountName.length > 0) {
-        token.account = imported.accountName;
-      }
-      if (imported.sharedSecret.length > 0) {
-        const bytes = new util.Base64Helper().decodeSync(imported.sharedSecret, util.Type.BASIC);
-        token.secret = Base32.encode(bytes);
-      }
-      this.tokens = [...this.tokens];
-      await this.onTokensChanged(this.tokens);
+      // 所有字段先在临时对象中完成校验和转换，避免失败时留下“旧密钥 + 新账户元信息”。
+      const bytes = new util.Base64Helper().decodeSync(imported.sharedSecret, util.Type.BASIC);
+      const updated: StoredToken = {
+        id: token.id,
+        issuer: token.issuer,
+        account: imported.accountName || token.account,
+        secret: Base32.encode(bytes),
+        digits: token.digits,
+        period: token.period,
+        kind: token.kind,
+        iconPath: token.iconPath,
+        iconManual: token.iconManual,
+        createdAt: token.createdAt,
+        steam: imported.metadata
+      };
+      const next = this.tokens.map((item: StoredToken): StoredToken => item.id === token.id ? updated : item);
+      this.tokens = next;
+      await this.onTokensChanged(next);
       this.steamJsonText = '';
       this.metadataRepairMode = false;
       this.loadMetadata();

@@ -27,3 +27,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## SteamTracking/Protobufs
+
+Repository: https://github.com/SteamTracking/Protobufs
+
+The reduced Steam protocol schema in `steam_auth.proto` derives message names,
+field numbers, field types, and enum values from SteamTracking/Protobufs.
+
+SteamTracking/Protobufs is published under the Unlicense:
+https://github.com/SteamTracking/Protobufs/blob/master/LICENSE
