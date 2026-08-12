@@ -119,6 +119,22 @@ export const ESessionPersistence = $root.ESessionPersistence = (() => {
     return values;
 })();
 
+/**
+ * EAuthSessionSecurityHistory enum.
+ * @exports EAuthSessionSecurityHistory
+ * @enum {number}
+ * @property {number} k_EAuthSessionSecurityHistory_Invalid=0 k_EAuthSessionSecurityHistory_Invalid value
+ * @property {number} k_EAuthSessionSecurityHistory_UsedPreviously=1 k_EAuthSessionSecurityHistory_UsedPreviously value
+ * @property {number} k_EAuthSessionSecurityHistory_NoPriorHistory=2 k_EAuthSessionSecurityHistory_NoPriorHistory value
+ */
+export const EAuthSessionSecurityHistory = $root.EAuthSessionSecurityHistory = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "k_EAuthSessionSecurityHistory_Invalid"] = 0;
+    values[valuesById[1] = "k_EAuthSessionSecurityHistory_UsedPreviously"] = 1;
+    values[valuesById[2] = "k_EAuthSessionSecurityHistory_NoPriorHistory"] = 2;
+    return values;
+})();
+
 export const CAuthentication_DeviceDetails = $root.CAuthentication_DeviceDetails = (() => {
 
     /**
@@ -2969,6 +2985,1382 @@ export const CAuthentication_PollAuthSessionStatus_Response = $root.CAuthenticat
     };
 
     return CAuthentication_PollAuthSessionStatus_Response;
+})();
+
+export const CAuthentication_GetAuthSessionInfo_Request = $root.CAuthentication_GetAuthSessionInfo_Request = (() => {
+
+    /**
+     * Properties of a CAuthentication_GetAuthSessionInfo_Request.
+     * @exports ICAuthentication_GetAuthSessionInfo_Request
+     * @interface ICAuthentication_GetAuthSessionInfo_Request
+     * @property {Long|null} [clientId] CAuthentication_GetAuthSessionInfo_Request clientId
+     */
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionInfo_Request.
+     * @exports CAuthentication_GetAuthSessionInfo_Request
+     * @classdesc Represents a CAuthentication_GetAuthSessionInfo_Request.
+     * @implements ICAuthentication_GetAuthSessionInfo_Request
+     * @constructor
+     * @param {ICAuthentication_GetAuthSessionInfo_Request=} [properties] Properties to set
+     */
+    function CAuthentication_GetAuthSessionInfo_Request(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Request clientId.
+     * @member {Long} clientId
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Request.prototype.clientId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionInfo_Request instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Request=} [properties] Properties to set
+     * @returns {CAuthentication_GetAuthSessionInfo_Request} CAuthentication_GetAuthSessionInfo_Request instance
+     */
+    CAuthentication_GetAuthSessionInfo_Request.create = function create(properties) {
+        return new CAuthentication_GetAuthSessionInfo_Request(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionInfo_Request message. Does not implicitly {@link CAuthentication_GetAuthSessionInfo_Request.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Request} message CAuthentication_GetAuthSessionInfo_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionInfo_Request.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.clientId);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionInfo_Request message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionInfo_Request.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Request} message CAuthentication_GetAuthSessionInfo_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionInfo_Request.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionInfo_Request message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_GetAuthSessionInfo_Request} CAuthentication_GetAuthSessionInfo_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionInfo_Request.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_GetAuthSessionInfo_Request();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    message.clientId = reader.uint64();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionInfo_Request message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_GetAuthSessionInfo_Request} CAuthentication_GetAuthSessionInfo_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionInfo_Request.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionInfo_Request message.
+     * @function verify
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_GetAuthSessionInfo_Request.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (!$util.isInteger(message.clientId) && !(message.clientId && $util.isInteger(message.clientId.low) && $util.isInteger(message.clientId.high)))
+                return "clientId: integer|Long expected";
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionInfo_Request message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_GetAuthSessionInfo_Request} CAuthentication_GetAuthSessionInfo_Request
+     */
+    CAuthentication_GetAuthSessionInfo_Request.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_GetAuthSessionInfo_Request)
+            return object;
+        let message = new $root.CAuthentication_GetAuthSessionInfo_Request();
+        if (object.clientId != null)
+            if ($util.Long)
+                (message.clientId = $util.Long.fromValue(object.clientId)).unsigned = true;
+            else if (typeof object.clientId === "string")
+                message.clientId = parseInt(object.clientId, 10);
+            else if (typeof object.clientId === "number")
+                message.clientId = object.clientId;
+            else if (typeof object.clientId === "object")
+                message.clientId = new $util.LongBits(object.clientId.low >>> 0, object.clientId.high >>> 0).toNumber(true);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionInfo_Request message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {CAuthentication_GetAuthSessionInfo_Request} message CAuthentication_GetAuthSessionInfo_Request
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_GetAuthSessionInfo_Request.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.clientId = options.longs === String ? "0" : 0;
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (typeof message.clientId === "number")
+                object.clientId = options.longs === String ? String(message.clientId) : message.clientId;
+            else
+                object.clientId = options.longs === String ? $util.Long.prototype.toString.call(message.clientId) : options.longs === Number ? new $util.LongBits(message.clientId.low >>> 0, message.clientId.high >>> 0).toNumber(true) : message.clientId;
+        return object;
+    };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionInfo_Request to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_GetAuthSessionInfo_Request.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionInfo_Request
+     * @function getTypeUrl
+     * @memberof CAuthentication_GetAuthSessionInfo_Request
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_GetAuthSessionInfo_Request.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_GetAuthSessionInfo_Request";
+    };
+
+    return CAuthentication_GetAuthSessionInfo_Request;
+})();
+
+export const CAuthentication_GetAuthSessionInfo_Response = $root.CAuthentication_GetAuthSessionInfo_Response = (() => {
+
+    /**
+     * Properties of a CAuthentication_GetAuthSessionInfo_Response.
+     * @exports ICAuthentication_GetAuthSessionInfo_Response
+     * @interface ICAuthentication_GetAuthSessionInfo_Response
+     * @property {string|null} [ip] CAuthentication_GetAuthSessionInfo_Response ip
+     * @property {string|null} [geoloc] CAuthentication_GetAuthSessionInfo_Response geoloc
+     * @property {string|null} [city] CAuthentication_GetAuthSessionInfo_Response city
+     * @property {string|null} [state] CAuthentication_GetAuthSessionInfo_Response state
+     * @property {string|null} [country] CAuthentication_GetAuthSessionInfo_Response country
+     * @property {EAuthTokenPlatformType|null} [platformType] CAuthentication_GetAuthSessionInfo_Response platformType
+     * @property {string|null} [deviceFriendlyName] CAuthentication_GetAuthSessionInfo_Response deviceFriendlyName
+     * @property {number|null} [version] CAuthentication_GetAuthSessionInfo_Response version
+     * @property {EAuthSessionSecurityHistory|null} [loginHistory] CAuthentication_GetAuthSessionInfo_Response loginHistory
+     * @property {boolean|null} [requestorLocationMismatch] CAuthentication_GetAuthSessionInfo_Response requestorLocationMismatch
+     * @property {boolean|null} [highUsageLogin] CAuthentication_GetAuthSessionInfo_Response highUsageLogin
+     * @property {ESessionPersistence|null} [requestedPersistence] CAuthentication_GetAuthSessionInfo_Response requestedPersistence
+     * @property {number|null} [deviceTrust] CAuthentication_GetAuthSessionInfo_Response deviceTrust
+     * @property {EAuthTokenAppType|null} [appType] CAuthentication_GetAuthSessionInfo_Response appType
+     */
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionInfo_Response.
+     * @exports CAuthentication_GetAuthSessionInfo_Response
+     * @classdesc Represents a CAuthentication_GetAuthSessionInfo_Response.
+     * @implements ICAuthentication_GetAuthSessionInfo_Response
+     * @constructor
+     * @param {ICAuthentication_GetAuthSessionInfo_Response=} [properties] Properties to set
+     */
+    function CAuthentication_GetAuthSessionInfo_Response(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response ip.
+     * @member {string} ip
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.ip = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response geoloc.
+     * @member {string} geoloc
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.geoloc = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response city.
+     * @member {string} city
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.city = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response state.
+     * @member {string} state
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.state = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response country.
+     * @member {string} country
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.country = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response platformType.
+     * @member {EAuthTokenPlatformType} platformType
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.platformType = 0;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response deviceFriendlyName.
+     * @member {string} deviceFriendlyName
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.deviceFriendlyName = "";
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response version.
+     * @member {number} version
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.version = 0;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response loginHistory.
+     * @member {EAuthSessionSecurityHistory} loginHistory
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.loginHistory = 0;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response requestorLocationMismatch.
+     * @member {boolean} requestorLocationMismatch
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.requestorLocationMismatch = false;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response highUsageLogin.
+     * @member {boolean} highUsageLogin
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.highUsageLogin = false;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response requestedPersistence.
+     * @member {ESessionPersistence} requestedPersistence
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.requestedPersistence = -1;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response deviceTrust.
+     * @member {number} deviceTrust
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.deviceTrust = 0;
+
+    /**
+     * CAuthentication_GetAuthSessionInfo_Response appType.
+     * @member {EAuthTokenAppType} appType
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.appType = 0;
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionInfo_Response instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Response=} [properties] Properties to set
+     * @returns {CAuthentication_GetAuthSessionInfo_Response} CAuthentication_GetAuthSessionInfo_Response instance
+     */
+    CAuthentication_GetAuthSessionInfo_Response.create = function create(properties) {
+        return new CAuthentication_GetAuthSessionInfo_Response(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionInfo_Response message. Does not implicitly {@link CAuthentication_GetAuthSessionInfo_Response.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Response} message CAuthentication_GetAuthSessionInfo_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionInfo_Response.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.ip != null && Object.hasOwnProperty.call(message, "ip"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.ip);
+        if (message.geoloc != null && Object.hasOwnProperty.call(message, "geoloc"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.geoloc);
+        if (message.city != null && Object.hasOwnProperty.call(message, "city"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.city);
+        if (message.state != null && Object.hasOwnProperty.call(message, "state"))
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.state);
+        if (message.country != null && Object.hasOwnProperty.call(message, "country"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.country);
+        if (message.platformType != null && Object.hasOwnProperty.call(message, "platformType"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int32(message.platformType);
+        if (message.deviceFriendlyName != null && Object.hasOwnProperty.call(message, "deviceFriendlyName"))
+            writer.uint32(/* id 7, wireType 2 =*/58).string(message.deviceFriendlyName);
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.version);
+        if (message.loginHistory != null && Object.hasOwnProperty.call(message, "loginHistory"))
+            writer.uint32(/* id 9, wireType 0 =*/72).int32(message.loginHistory);
+        if (message.requestorLocationMismatch != null && Object.hasOwnProperty.call(message, "requestorLocationMismatch"))
+            writer.uint32(/* id 10, wireType 0 =*/80).bool(message.requestorLocationMismatch);
+        if (message.highUsageLogin != null && Object.hasOwnProperty.call(message, "highUsageLogin"))
+            writer.uint32(/* id 11, wireType 0 =*/88).bool(message.highUsageLogin);
+        if (message.requestedPersistence != null && Object.hasOwnProperty.call(message, "requestedPersistence"))
+            writer.uint32(/* id 12, wireType 0 =*/96).int32(message.requestedPersistence);
+        if (message.deviceTrust != null && Object.hasOwnProperty.call(message, "deviceTrust"))
+            writer.uint32(/* id 13, wireType 0 =*/104).int32(message.deviceTrust);
+        if (message.appType != null && Object.hasOwnProperty.call(message, "appType"))
+            writer.uint32(/* id 14, wireType 0 =*/112).int32(message.appType);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionInfo_Response message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionInfo_Response.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionInfo_Response} message CAuthentication_GetAuthSessionInfo_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionInfo_Response.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionInfo_Response message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_GetAuthSessionInfo_Response} CAuthentication_GetAuthSessionInfo_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionInfo_Response.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_GetAuthSessionInfo_Response();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    message.ip = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.geoloc = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.city = reader.string();
+                    break;
+                }
+            case 4: {
+                    message.state = reader.string();
+                    break;
+                }
+            case 5: {
+                    message.country = reader.string();
+                    break;
+                }
+            case 6: {
+                    message.platformType = reader.int32();
+                    break;
+                }
+            case 7: {
+                    message.deviceFriendlyName = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.version = reader.int32();
+                    break;
+                }
+            case 9: {
+                    message.loginHistory = reader.int32();
+                    break;
+                }
+            case 10: {
+                    message.requestorLocationMismatch = reader.bool();
+                    break;
+                }
+            case 11: {
+                    message.highUsageLogin = reader.bool();
+                    break;
+                }
+            case 12: {
+                    message.requestedPersistence = reader.int32();
+                    break;
+                }
+            case 13: {
+                    message.deviceTrust = reader.int32();
+                    break;
+                }
+            case 14: {
+                    message.appType = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionInfo_Response message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_GetAuthSessionInfo_Response} CAuthentication_GetAuthSessionInfo_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionInfo_Response.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionInfo_Response message.
+     * @function verify
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_GetAuthSessionInfo_Response.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.ip != null && message.hasOwnProperty("ip"))
+            if (!$util.isString(message.ip))
+                return "ip: string expected";
+        if (message.geoloc != null && message.hasOwnProperty("geoloc"))
+            if (!$util.isString(message.geoloc))
+                return "geoloc: string expected";
+        if (message.city != null && message.hasOwnProperty("city"))
+            if (!$util.isString(message.city))
+                return "city: string expected";
+        if (message.state != null && message.hasOwnProperty("state"))
+            if (!$util.isString(message.state))
+                return "state: string expected";
+        if (message.country != null && message.hasOwnProperty("country"))
+            if (!$util.isString(message.country))
+                return "country: string expected";
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
+            switch (message.platformType) {
+            default:
+                return "platformType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                break;
+            }
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
+            if (!$util.isString(message.deviceFriendlyName))
+                return "deviceFriendlyName: string expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isInteger(message.version))
+                return "version: integer expected";
+        if (message.loginHistory != null && message.hasOwnProperty("loginHistory"))
+            switch (message.loginHistory) {
+            default:
+                return "loginHistory: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        if (message.requestorLocationMismatch != null && message.hasOwnProperty("requestorLocationMismatch"))
+            if (typeof message.requestorLocationMismatch !== "boolean")
+                return "requestorLocationMismatch: boolean expected";
+        if (message.highUsageLogin != null && message.hasOwnProperty("highUsageLogin"))
+            if (typeof message.highUsageLogin !== "boolean")
+                return "highUsageLogin: boolean expected";
+        if (message.requestedPersistence != null && message.hasOwnProperty("requestedPersistence"))
+            switch (message.requestedPersistence) {
+            default:
+                return "requestedPersistence: enum value expected";
+            case -1:
+            case 0:
+            case 1:
+                break;
+            }
+        if (message.deviceTrust != null && message.hasOwnProperty("deviceTrust"))
+            if (!$util.isInteger(message.deviceTrust))
+                return "deviceTrust: integer expected";
+        if (message.appType != null && message.hasOwnProperty("appType"))
+            switch (message.appType) {
+            default:
+                return "appType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionInfo_Response message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_GetAuthSessionInfo_Response} CAuthentication_GetAuthSessionInfo_Response
+     */
+    CAuthentication_GetAuthSessionInfo_Response.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_GetAuthSessionInfo_Response)
+            return object;
+        let message = new $root.CAuthentication_GetAuthSessionInfo_Response();
+        if (object.ip != null)
+            message.ip = String(object.ip);
+        if (object.geoloc != null)
+            message.geoloc = String(object.geoloc);
+        if (object.city != null)
+            message.city = String(object.city);
+        if (object.state != null)
+            message.state = String(object.state);
+        if (object.country != null)
+            message.country = String(object.country);
+        switch (object.platformType) {
+        default:
+            if (typeof object.platformType === "number") {
+                message.platformType = object.platformType;
+                break;
+            }
+            break;
+        case "k_EAuthTokenPlatformType_Unknown":
+        case 0:
+            message.platformType = 0;
+            break;
+        case "k_EAuthTokenPlatformType_SteamClient":
+        case 1:
+            message.platformType = 1;
+            break;
+        case "k_EAuthTokenPlatformType_WebBrowser":
+        case 2:
+            message.platformType = 2;
+            break;
+        case "k_EAuthTokenPlatformType_MobileApp":
+        case 3:
+            message.platformType = 3;
+            break;
+        }
+        if (object.deviceFriendlyName != null)
+            message.deviceFriendlyName = String(object.deviceFriendlyName);
+        if (object.version != null)
+            message.version = object.version | 0;
+        switch (object.loginHistory) {
+        default:
+            if (typeof object.loginHistory === "number") {
+                message.loginHistory = object.loginHistory;
+                break;
+            }
+            break;
+        case "k_EAuthSessionSecurityHistory_Invalid":
+        case 0:
+            message.loginHistory = 0;
+            break;
+        case "k_EAuthSessionSecurityHistory_UsedPreviously":
+        case 1:
+            message.loginHistory = 1;
+            break;
+        case "k_EAuthSessionSecurityHistory_NoPriorHistory":
+        case 2:
+            message.loginHistory = 2;
+            break;
+        }
+        if (object.requestorLocationMismatch != null)
+            message.requestorLocationMismatch = Boolean(object.requestorLocationMismatch);
+        if (object.highUsageLogin != null)
+            message.highUsageLogin = Boolean(object.highUsageLogin);
+        switch (object.requestedPersistence) {
+        default:
+            if (typeof object.requestedPersistence === "number") {
+                message.requestedPersistence = object.requestedPersistence;
+                break;
+            }
+            break;
+        case "k_ESessionPersistence_Invalid":
+        case -1:
+            message.requestedPersistence = -1;
+            break;
+        case "k_ESessionPersistence_Ephemeral":
+        case 0:
+            message.requestedPersistence = 0;
+            break;
+        case "k_ESessionPersistence_Persistent":
+        case 1:
+            message.requestedPersistence = 1;
+            break;
+        }
+        if (object.deviceTrust != null)
+            message.deviceTrust = object.deviceTrust | 0;
+        switch (object.appType) {
+        default:
+            if (typeof object.appType === "number") {
+                message.appType = object.appType;
+                break;
+            }
+            break;
+        case "k_EAuthTokenAppType_Unknown":
+        case 0:
+            message.appType = 0;
+            break;
+        case "k_EAuthTokenAppType_Mobile_SteamApp":
+        case 1:
+            message.appType = 1;
+            break;
+        case "k_EAuthTokenAppType_Mobile_ChatApp":
+        case 2:
+            message.appType = 2;
+            break;
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionInfo_Response message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {CAuthentication_GetAuthSessionInfo_Response} message CAuthentication_GetAuthSessionInfo_Response
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_GetAuthSessionInfo_Response.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.ip = "";
+            object.geoloc = "";
+            object.city = "";
+            object.state = "";
+            object.country = "";
+            object.platformType = options.enums === String ? "k_EAuthTokenPlatformType_Unknown" : 0;
+            object.deviceFriendlyName = "";
+            object.version = 0;
+            object.loginHistory = options.enums === String ? "k_EAuthSessionSecurityHistory_Invalid" : 0;
+            object.requestorLocationMismatch = false;
+            object.highUsageLogin = false;
+            object.requestedPersistence = options.enums === String ? "k_ESessionPersistence_Invalid" : -1;
+            object.deviceTrust = 0;
+            object.appType = options.enums === String ? "k_EAuthTokenAppType_Unknown" : 0;
+        }
+        if (message.ip != null && message.hasOwnProperty("ip"))
+            object.ip = message.ip;
+        if (message.geoloc != null && message.hasOwnProperty("geoloc"))
+            object.geoloc = message.geoloc;
+        if (message.city != null && message.hasOwnProperty("city"))
+            object.city = message.city;
+        if (message.state != null && message.hasOwnProperty("state"))
+            object.state = message.state;
+        if (message.country != null && message.hasOwnProperty("country"))
+            object.country = message.country;
+        if (message.platformType != null && message.hasOwnProperty("platformType"))
+            object.platformType = options.enums === String ? $root.EAuthTokenPlatformType[message.platformType] === undefined ? message.platformType : $root.EAuthTokenPlatformType[message.platformType] : message.platformType;
+        if (message.deviceFriendlyName != null && message.hasOwnProperty("deviceFriendlyName"))
+            object.deviceFriendlyName = message.deviceFriendlyName;
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
+        if (message.loginHistory != null && message.hasOwnProperty("loginHistory"))
+            object.loginHistory = options.enums === String ? $root.EAuthSessionSecurityHistory[message.loginHistory] === undefined ? message.loginHistory : $root.EAuthSessionSecurityHistory[message.loginHistory] : message.loginHistory;
+        if (message.requestorLocationMismatch != null && message.hasOwnProperty("requestorLocationMismatch"))
+            object.requestorLocationMismatch = message.requestorLocationMismatch;
+        if (message.highUsageLogin != null && message.hasOwnProperty("highUsageLogin"))
+            object.highUsageLogin = message.highUsageLogin;
+        if (message.requestedPersistence != null && message.hasOwnProperty("requestedPersistence"))
+            object.requestedPersistence = options.enums === String ? $root.ESessionPersistence[message.requestedPersistence] === undefined ? message.requestedPersistence : $root.ESessionPersistence[message.requestedPersistence] : message.requestedPersistence;
+        if (message.deviceTrust != null && message.hasOwnProperty("deviceTrust"))
+            object.deviceTrust = message.deviceTrust;
+        if (message.appType != null && message.hasOwnProperty("appType"))
+            object.appType = options.enums === String ? $root.EAuthTokenAppType[message.appType] === undefined ? message.appType : $root.EAuthTokenAppType[message.appType] : message.appType;
+        return object;
+    };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionInfo_Response to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_GetAuthSessionInfo_Response.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionInfo_Response
+     * @function getTypeUrl
+     * @memberof CAuthentication_GetAuthSessionInfo_Response
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_GetAuthSessionInfo_Response.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_GetAuthSessionInfo_Response";
+    };
+
+    return CAuthentication_GetAuthSessionInfo_Response;
+})();
+
+export const CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request = $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request = (() => {
+
+    /**
+     * Properties of a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.
+     * @exports ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @interface ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @property {number|null} [version] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request version
+     * @property {Long|null} [clientId] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request clientId
+     * @property {Long|null} [steamid] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request steamid
+     * @property {Uint8Array|null} [signature] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request signature
+     * @property {boolean|null} [confirm] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request confirm
+     * @property {ESessionPersistence|null} [persistence] CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request persistence
+     */
+
+    /**
+     * Constructs a new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.
+     * @exports CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @classdesc Represents a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.
+     * @implements ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @constructor
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request=} [properties] Properties to set
+     */
+    function CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request version.
+     * @member {number} version
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.version = 0;
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request clientId.
+     * @member {Long} clientId
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.clientId = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request steamid.
+     * @member {Long} steamid
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.steamid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request signature.
+     * @member {Uint8Array} signature
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.signature = $util.newBuffer([]);
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request confirm.
+     * @member {boolean} confirm
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.confirm = false;
+
+    /**
+     * CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request persistence.
+     * @member {ESessionPersistence} persistence
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.persistence = 1;
+
+    /**
+     * Creates a new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request=} [properties] Properties to set
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.create = function create(properties) {
+        return new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.version);
+        if (message.clientId != null && Object.hasOwnProperty.call(message, "clientId"))
+            writer.uint32(/* id 2, wireType 0 =*/16).uint64(message.clientId);
+        if (message.steamid != null && Object.hasOwnProperty.call(message, "steamid"))
+            writer.uint32(/* id 3, wireType 1 =*/25).fixed64(message.steamid);
+        if (message.signature != null && Object.hasOwnProperty.call(message, "signature"))
+            writer.uint32(/* id 4, wireType 2 =*/34).bytes(message.signature);
+        if (message.confirm != null && Object.hasOwnProperty.call(message, "confirm"))
+            writer.uint32(/* id 5, wireType 0 =*/40).bool(message.confirm);
+        if (message.persistence != null && Object.hasOwnProperty.call(message, "persistence"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int32(message.persistence);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message, length delimited. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    message.version = reader.int32();
+                    break;
+                }
+            case 2: {
+                    message.clientId = reader.uint64();
+                    break;
+                }
+            case 3: {
+                    message.steamid = reader.fixed64();
+                    break;
+                }
+            case 4: {
+                    message.signature = reader.bytes();
+                    break;
+                }
+            case 5: {
+                    message.confirm = reader.bool();
+                    break;
+                }
+            case 6: {
+                    message.persistence = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message.
+     * @function verify
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isInteger(message.version))
+                return "version: integer expected";
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (!$util.isInteger(message.clientId) && !(message.clientId && $util.isInteger(message.clientId.low) && $util.isInteger(message.clientId.high)))
+                return "clientId: integer|Long expected";
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (!$util.isInteger(message.steamid) && !(message.steamid && $util.isInteger(message.steamid.low) && $util.isInteger(message.steamid.high)))
+                return "steamid: integer|Long expected";
+        if (message.signature != null && message.hasOwnProperty("signature"))
+            if (!(message.signature && typeof message.signature.length === "number" || $util.isString(message.signature)))
+                return "signature: buffer expected";
+        if (message.confirm != null && message.hasOwnProperty("confirm"))
+            if (typeof message.confirm !== "boolean")
+                return "confirm: boolean expected";
+        if (message.persistence != null && message.hasOwnProperty("persistence"))
+            switch (message.persistence) {
+            default:
+                return "persistence: enum value expected";
+            case -1:
+            case 0:
+            case 1:
+                break;
+            }
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request)
+            return object;
+        let message = new $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request();
+        if (object.version != null)
+            message.version = object.version | 0;
+        if (object.clientId != null)
+            if ($util.Long)
+                (message.clientId = $util.Long.fromValue(object.clientId)).unsigned = true;
+            else if (typeof object.clientId === "string")
+                message.clientId = parseInt(object.clientId, 10);
+            else if (typeof object.clientId === "number")
+                message.clientId = object.clientId;
+            else if (typeof object.clientId === "object")
+                message.clientId = new $util.LongBits(object.clientId.low >>> 0, object.clientId.high >>> 0).toNumber(true);
+        if (object.steamid != null)
+            if ($util.Long)
+                (message.steamid = $util.Long.fromValue(object.steamid)).unsigned = false;
+            else if (typeof object.steamid === "string")
+                message.steamid = parseInt(object.steamid, 10);
+            else if (typeof object.steamid === "number")
+                message.steamid = object.steamid;
+            else if (typeof object.steamid === "object")
+                message.steamid = new $util.LongBits(object.steamid.low >>> 0, object.steamid.high >>> 0).toNumber();
+        if (object.signature != null)
+            if (typeof object.signature === "string")
+                $util.base64.decode(object.signature, message.signature = $util.newBuffer($util.base64.length(object.signature)), 0);
+            else if (object.signature.length >= 0)
+                message.signature = object.signature;
+        if (object.confirm != null)
+            message.confirm = Boolean(object.confirm);
+        switch (object.persistence) {
+        case "k_ESessionPersistence_Invalid":
+        case -1:
+            message.persistence = -1;
+            break;
+        case "k_ESessionPersistence_Ephemeral":
+        case 0:
+            message.persistence = 0;
+            break;
+        default:
+            if (typeof object.persistence === "number") {
+                message.persistence = object.persistence;
+                break;
+            }
+            break;
+        case "k_ESessionPersistence_Persistent":
+        case 1:
+            message.persistence = 1;
+            break;
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.version = 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, true);
+                object.clientId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.clientId = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.steamid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.steamid = options.longs === String ? "0" : 0;
+            if (options.bytes === String)
+                object.signature = "";
+            else {
+                object.signature = [];
+                if (options.bytes !== Array)
+                    object.signature = $util.newBuffer(object.signature);
+            }
+            object.confirm = false;
+            object.persistence = options.enums === String ? "k_ESessionPersistence_Persistent" : 1;
+        }
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
+        if (message.clientId != null && message.hasOwnProperty("clientId"))
+            if (typeof message.clientId === "number")
+                object.clientId = options.longs === String ? String(message.clientId) : message.clientId;
+            else
+                object.clientId = options.longs === String ? $util.Long.prototype.toString.call(message.clientId) : options.longs === Number ? new $util.LongBits(message.clientId.low >>> 0, message.clientId.high >>> 0).toNumber(true) : message.clientId;
+        if (message.steamid != null && message.hasOwnProperty("steamid"))
+            if (typeof message.steamid === "number")
+                object.steamid = options.longs === String ? String(message.steamid) : message.steamid;
+            else
+                object.steamid = options.longs === String ? $util.Long.prototype.toString.call(message.steamid) : options.longs === Number ? new $util.LongBits(message.steamid.low >>> 0, message.steamid.high >>> 0).toNumber() : message.steamid;
+        if (message.signature != null && message.hasOwnProperty("signature"))
+            object.signature = options.bytes === String ? $util.base64.encode(message.signature, 0, message.signature.length) : options.bytes === Array ? Array.prototype.slice.call(message.signature) : message.signature;
+        if (message.confirm != null && message.hasOwnProperty("confirm"))
+            object.confirm = message.confirm;
+        if (message.persistence != null && message.hasOwnProperty("persistence"))
+            object.persistence = options.enums === String ? $root.ESessionPersistence[message.persistence] === undefined ? message.persistence : $root.ESessionPersistence[message.persistence] : message.persistence;
+        return object;
+    };
+
+    /**
+     * Converts this CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @function getTypeUrl
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request";
+    };
+
+    return CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request;
+})();
+
+export const CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response = $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response = (() => {
+
+    /**
+     * Properties of a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.
+     * @exports ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @interface ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     */
+
+    /**
+     * Constructs a new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.
+     * @exports CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @classdesc Represents a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.
+     * @implements ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @constructor
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response=} [properties] Properties to set
+     */
+    function CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * Creates a new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response=} [properties] Properties to set
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response instance
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.create = function create(properties) {
+        return new CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message, length delimited. Does not implicitly {@link CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {ICAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message.
+     * @function verify
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response)
+            return object;
+        return new $root.CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response();
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response} message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.toObject = function toObject() {
+        return {};
+    };
+
+    /**
+     * Converts this CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @function getTypeUrl
+     * @memberof CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response";
+    };
+
+    return CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response;
 })();
 
 export const CTwoFactor_Time_Request = $root.CTwoFactor_Time_Request = (() => {

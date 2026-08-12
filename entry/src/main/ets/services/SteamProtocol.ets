@@ -4,8 +4,11 @@ import {
   CAuthentication_BeginAuthSessionViaCredentials_Request,
   CAuthentication_BeginAuthSessionViaCredentials_Response,
   CAuthentication_DeviceDetails,
+  CAuthentication_GetAuthSessionInfo_Request,
+  CAuthentication_GetAuthSessionInfo_Response,
   CAuthentication_PollAuthSessionStatus_Request,
   CAuthentication_PollAuthSessionStatus_Response,
+  CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request,
   CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request,
   CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response,
   CRemoveAuthenticatorViaChallengeContinue_Replacement_Token,
@@ -68,6 +71,24 @@ export interface SteamSessionTokens {
 export interface SteamAuthPollResult {
   tokens: SteamSessionTokens;
   newClientId: Long;
+}
+
+/** 扫码登录请求中由 Steam 返回的设备、位置与风险信息。 */
+export interface SteamQrSessionInfoData {
+  ip: string;
+  geoloc: string;
+  city: string;
+  state: string;
+  country: string;
+  platformType: number;
+  deviceFriendlyName: string;
+  version: number;
+  loginHistory: number;
+  requestorLocationMismatch: boolean;
+  highUsageLogin: boolean;
+  persistent: boolean;
+  deviceTrust: number;
+  appType: number;
 }
 
 export interface SteamAuthenticatorEnrollmentData {
@@ -245,6 +266,54 @@ export class SteamProtocol {
     } catch (error) {
       throw SteamProtocol.decodeError('会话轮询结果', error as Object);
     }
+  }
+
+  /** 构造扫码登录会话详情查询，clientId 按 uint64 保留完整精度。 */
+  static encodeQrSessionInfo(clientId: string): Uint8Array {
+    return CAuthentication_GetAuthSessionInfo_Request.encode(
+      CAuthentication_GetAuthSessionInfo_Request.create({
+        clientId: Long.fromString(clientId, true)
+      })).finish();
+  }
+
+  /** 解码扫码请求的来源设备、位置、持久性和风险标记。 */
+  static decodeQrSessionInfo(data: Uint8Array): SteamQrSessionInfoData {
+    try {
+      const response = CAuthentication_GetAuthSessionInfo_Response.decode(data);
+      return {
+        ip: response.ip,
+        geoloc: response.geoloc,
+        city: response.city,
+        state: response.state,
+        country: response.country,
+        platformType: response.platformType,
+        deviceFriendlyName: response.deviceFriendlyName,
+        version: response.version,
+        loginHistory: response.loginHistory,
+        requestorLocationMismatch: response.requestorLocationMismatch,
+        highUsageLogin: response.highUsageLogin,
+        persistent: response.requestedPersistence === ESessionPersistence.k_ESessionPersistence_Persistent,
+        deviceTrust: response.deviceTrust,
+        appType: response.appType
+      };
+    } catch (error) {
+      throw SteamProtocol.decodeError('扫码登录会话详情', error as Object);
+    }
+  }
+
+  /** 构造扫码登录批准或拒绝请求，并沿用请求方声明的会话持久性。 */
+  static encodeQrResponse(version: string, clientId: string, steamId: string, signature: Uint8Array,
+    confirm: boolean, persistent: boolean): Uint8Array {
+    return CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.encode(
+      CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.create({
+        version: Number.parseInt(version),
+        clientId: Long.fromString(clientId, true),
+        steamid: Long.fromString(steamId, true),
+        signature: signature,
+        confirm: confirm,
+        persistence: persistent ? ESessionPersistence.k_ESessionPersistence_Persistent :
+          ESessionPersistence.k_ESessionPersistence_Ephemeral
+      })).finish();
   }
 
   /** 构造新移动验证器申请，并带上本机 Device ID 与当前时间。 */

@@ -199,6 +199,8 @@ export struct SettingsPage {
 
   /** 同时更新当前窗口和持久化设置，失败时恢复原开关状态。 */
   private async updateScreenshotProtection(enabled: boolean): Promise<void> {
+    // 进入页面恢复持久化状态时，Toggle 也可能触发 onChange；相同值不是用户修改，无需重复应用或提示。
+    if (enabled === this.screenshotProtectionEnabled) return;
     if (this.screenshotProtectionBusy) return;
     const previous = this.screenshotProtectionEnabled;
     this.screenshotProtectionEnabled = enabled;
@@ -208,7 +210,7 @@ export struct SettingsPage {
       await AppSettingsService.applyToCurrentWindow(context, enabled);
       await AppSettingsService.setScreenshotProtection(context, enabled);
       DiagnosticLogService.info('Privacy', `Screenshot protection changed, enabled=${enabled}`);
-      this.showToast(enabled ? '已禁止截屏和录屏' : '已允许截屏和录屏', 1800);
+      this.showToast(enabled ? '截屏保护已开启' : '截屏保护已关闭', 1800);
     } catch (error) {
       this.screenshotProtectionEnabled = previous;
       DiagnosticLogService.error('Privacy', `Failed to change screenshot protection: ${(error as Error).message}`);

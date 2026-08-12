@@ -3,7 +3,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { SteamGuardMetadata, StoredToken, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
-import { SteamGuardService } from '../services/SteamGuardService';
+import { SteamGuardService, SteamQrLoginInfo } from '../services/SteamGuardService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { IconPack, IconPackService } from '../services/IconPackService';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
@@ -108,7 +108,7 @@ export struct TokenDetailPage {
       `联网信息 ${complete}/${fields.length}，进入管理页继续配置`;
   }
 
-  /** 校验基础字段、处理 Steam 类型切换并持久化编辑结果。 */
+  /** 校验基础字段、不可变地替换目标 Token，并持久化编辑结果。 */
   private async saveTokenDetail(): Promise<void> {
     try {
       const token = this.currentToken();
@@ -125,37 +125,60 @@ export struct TokenDetailPage {
         throw new Error('刷新周期必须是 1 到 300 秒之间的整数');
       }
       const isSteam = this.issuer.trim().toLowerCase() === 'steam';
-      token.issuer = this.issuer.trim();
-      token.account = this.account.trim();
-      token.secret = normalizedSecret;
-      token.kind = isSteam ? TokenKind.STEAM : TokenKind.TOTP;
-      token.digits = isSteam ? 5 : this.digits;
-      token.period = isSteam ? 30 : parsedPeriod;
+      const normalizedIssuer = this.issuer.trim();
+      const normalizedAccount = this.account.trim();
+      let steam: SteamGuardMetadata | undefined;
       if (isSteam) {
         if (token.steam) {
-          token.steam.accountName = token.account;
+          steam = {
+            steamId: token.steam.steamId,
+            accountName: normalizedAccount,
+            identitySecret: token.steam.identitySecret,
+            deviceId: token.steam.deviceId,
+            accessToken: token.steam.accessToken,
+            refreshToken: token.steam.refreshToken,
+            guardData: token.steam.guardData,
+            revocationCode: token.steam.revocationCode,
+            serialNumber: token.steam.serialNumber,
+            tokenGid: token.steam.tokenGid,
+            uri: token.steam.uri,
+            secret1: token.steam.secret1
+          };
         } else {
-          const metadata: SteamGuardMetadata = {
-            steamId: '', accountName: token.account, identitySecret: '', deviceId: '',
+          steam = {
+            steamId: '', accountName: normalizedAccount, identitySecret: '', deviceId: '',
             accessToken: '', refreshToken: '', guardData: '', revocationCode: ''
           };
-          token.steam = metadata;
         }
-      } else {
-        token.steam = undefined;
       }
-      this.tokens = [...this.tokens];
-      await this.onTokensChanged(this.tokens);
+      // 不修改 @StorageLink 数组中的旧对象；新引用能让首页正确感知同 UUID 条目的字段变化。
+      const updated: StoredToken = {
+        id: token.id,
+        issuer: normalizedIssuer,
+        account: normalizedAccount,
+        secret: normalizedSecret,
+        kind: isSteam ? TokenKind.STEAM : TokenKind.TOTP,
+        digits: isSteam ? 5 : this.digits,
+        period: isSteam ? 30 : parsedPeriod,
+        iconPath: token.iconPath,
+        iconManual: token.iconManual,
+        createdAt: token.createdAt,
+        steam: steam
+      };
+      const next = this.tokens.map((item: StoredToken): StoredToken =>
+        item.id === token.id ? updated : item);
+      await this.onTokensChanged(next);
+      this.tokens = next;
       this.onClose();
     } catch (error) {
       this.errorMessage = (error as Error).message;
     }
   }
 
-  /** 扫描另一设备的 Steam 登录挑战，二次确认后使用当前 Token 批准。 */
+  /** 扫描另一设备的 Steam 登录挑战，展示来源详情后允许明确批准或拒绝。 */
   private async scanSteamQrLogin(): Promise<void> {
     const token = this.currentToken();
-    if (!token?.steam?.steamId || !token.steam.refreshToken || !token.secret) {
+    if (!token?.steam?.steamId || (!token.steam.accessToken && !token.steam.refreshToken) || !token.secret) {
       this.showToast('请先在 Steam 管理页配置完整会话信息', 2400);
       return;
     }
@@ -173,32 +196,71 @@ export struct TokenDetailPage {
       if (!SteamGuardService.isQrLoginChallenge(challenge)) {
         throw new Error('这不是有效的 Steam 登录二维码');
       }
+      this.steamQrLoading = true;
+      const service = new SteamGuardService();
+      let info: SteamQrLoginInfo;
+      let detailsAvailable = true;
+      try {
+        info = await service.getQrLoginInfo(token.steam.steamId, token.steam.accessToken,
+          token.steam.refreshToken, challenge);
+      } catch (error) {
+        detailsAvailable = false;
+        info = {
+          ip: '', location: '', deviceName: '', persistent: false,
+          locationMismatch: false, highUsage: false, deviceTrust: 0
+        };
+        const detail = error as BusinessError;
+        DiagnosticLogService.warn('SteamQrLogin',
+          `Failed to load QR request details: ${detail.message ?? 'unknown'}`);
+      }
+      const message = this.qrLoginMessage(token.steam.accountName || token.account, info, detailsAvailable);
       const dialog = await this.getUIContext().getPromptAction().showDialog({
-        title: '批准 Steam 登录？',
-        message: `将使用账户“${token.steam.accountName || token.account}”批准这次登录。` +
-          '仅当二维码来自你刚刚打开的 Steam 登录页面时继续。',
+        title: 'Steam 登录请求',
+        message: message,
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '取消', color: $r('app.color.text_tertiary') },
+          { text: '拒绝登录', color: $r('app.color.danger_strong') },
           { text: '批准登录', color: $r('app.color.brand_strong') }
         ]
       });
-      if (dialog.index !== 1) {
+      if (dialog.index !== 0 && dialog.index !== 1) {
         return;
       }
-      this.steamQrLoading = true;
-      await new SteamGuardService().approveQrLogin(token.steam.steamId, token.steam.refreshToken,
-        Base32.decode(token.secret), challenge, false);
-      this.showToast('Steam 登录已批准', 2200);
+      const approve = dialog.index === 1;
+      await service.respondQrLogin(token.steam.steamId, token.steam.accessToken, token.steam.refreshToken,
+        Base32.decode(token.secret), challenge, approve, info.persistent);
+      this.showToast(approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝', 2200);
     } catch (error) {
       const detail = error as BusinessError;
-      if (detail.code === 10010012 || detail.code === 10010013) {
+      // Scan Kit 将用户主动关闭扫码页作为异常返回；这是正常取消，不应显示英文系统错误。
+      if (detail.code === 1000500002) {
         return;
       }
       this.showToast(detail.message ?? `${error}`, 3500);
     } finally {
       this.steamQrLoading = false;
     }
+  }
+
+  /** 将扫码登录请求详情整理成紧凑、可核对的安全确认文案。 */
+  private qrLoginMessage(account: string, info: SteamQrLoginInfo, detailsAvailable: boolean): string {
+    const lines: string[] = [`账户：${account}`];
+    if (detailsAvailable) {
+      lines.push(`设备：${info.deviceName || 'Steam 未提供'}`);
+      lines.push(`位置：${info.location || 'Steam 未提供'}`);
+      lines.push(`IP：${info.ip || 'Steam 未提供'}`);
+      lines.push(`会话：${info.persistent ? '保持登录' : '临时登录'}`);
+      if (info.locationMismatch) {
+        lines.push('警告：请求位置与 Steam 预期位置不一致');
+      }
+      if (info.highUsage) {
+        lines.push('警告：Steam 将此请求标记为高频登录');
+      }
+    } else {
+      lines.push('未能读取来源详情，请只批准你刚刚主动扫描的登录页面。');
+    }
+    lines.push('如果设备或位置不符合预期，请拒绝。');
+    return lines.join('\n');
   }
 
   /** 构建 Token 编辑表单、图标入口以及 Steam 专属操作。 */
@@ -249,7 +311,7 @@ export struct TokenDetailPage {
               }
             }.width(48).height(48).borderRadius(14)
               .backgroundColor(this.currentIconPath().length > 0 ?
-                $r('app.color.icon_surface') : '#4668E8')
+                $r('app.color.icon_surface') : IconPackService.fallbackColor(this.issuer.trim()))
             Column({ space: 3 }) {
               Text('Token 图标').fontSize(15).fontWeight(FontWeight.Medium)
               Text(this.currentToken()?.iconManual === true ? '已手动选择' : '跟随当前图标包自动匹配')

@@ -455,7 +455,8 @@ export struct AddTokenPage {
       }
     } catch (error) {
       const detail = error as BusinessError;
-      if (detail.code === 10010012 || detail.code === 10010013) {
+      // Scan Kit 将用户主动关闭扫码页作为异常返回；这是正常取消，不应显示英文系统错误。
+      if (detail.code === 1000500002) {
         return;
       }
       this.showToast(`扫码失败（${detail.code ?? 'unknown'}）：${detail.message ?? error}`, 3000);

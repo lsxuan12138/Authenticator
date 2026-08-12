@@ -34,6 +34,16 @@ export class IconPackService {
     return IconPackService.NO_PACK_KEY;
   }
 
+  /** 从 issuer 生成稳定的默认图标背景色，保证各页面预览结果一致。 */
+  static fallbackColor(issuer: string): string {
+    let hash = 0;
+    for (let index = 0; index < issuer.length; index++) {
+      hash = issuer.charCodeAt(index) + ((hash << 5) - hash);
+    }
+    const colors: string[] = ['#4668E8', '#287A52', '#A65B25', '#7A4DA3', '#176C82', '#A33143'];
+    return colors[Math.abs(hash) % colors.length];
+  }
+
   /** 从安装目录生成图标包唯一键，供设置持久化使用。 */
   static packKey(pack: IconPack): string {
     return pack.directory;

@@ -165,16 +165,6 @@ struct Index {
       this.iconPacks, this.activeIconPackKey);
   }
 
-  /** 从 issuer 生成稳定色板索引，使无图标 Token 仍容易区分。 */
-  private fallbackIconColor(issuer: string): string {
-    let hash = 0;
-    for (let index = 0; index < issuer.length; index++) {
-      hash = issuer.charCodeAt(index) + ((hash << 5) - hash);
-    }
-    const colors: string[] = ['#4668E8', '#287A52', '#A65B25', '#7A4DA3', '#176C82', '#A33143'];
-    return colors[Math.abs(hash) % colors.length];
-  }
-
   /** 将 Token UUID 和预览 issuer 随路由入栈并进入懒加载图标选择页。 */
   private openIconPicker(index: number, issuer: string = ''): void {
     if (index < 0 || index >= this.tokens.length) {
@@ -272,7 +262,7 @@ struct Index {
     .padding(2)
     .borderRadius(14)
     .backgroundColor(
-      this.resolvedIcon(token).length > 0 ? $r('app.color.icon_surface') : this.fallbackIconColor(token.issuer))
+      this.resolvedIcon(token).length > 0 ? $r('app.color.icon_surface') : IconPackService.fallbackColor(token.issuer))
     .gesture(LongPressGesture({ repeat: false, duration: 500 })
       .onAction(() => this.openIconPicker(index)))
   }
@@ -310,6 +300,14 @@ struct Index {
           this.openTokenDetail(index);
         }
       })
+  }
+
+  /**
+   * UUID 保持数据身份稳定，追加可见字段用于通知 ForEach 重建已编辑卡片。
+   * 密钥和会话凭据不进入渲染键，避免无意义地扩大敏感数据传播范围。
+   */
+  private tokenRenderKey(token: StoredToken): string {
+    return `${token.id}:${token.issuer}:${token.account}:${token.iconPath}:${token.iconManual === true}`;
   }
 
   /** 构建支持左滑操作和拖拽排序的 Token 列表。 （包含头部）*/
@@ -378,7 +376,7 @@ struct Index {
               ListItem() {
                 this.tokenRow(token, index, true)
               }
-            }, (item: StoredToken) => item.id)
+            }, (item: StoredToken) => this.tokenRenderKey(item))
               .onMove((from: number, to: number) => this.moveToken(from, to))
           } else {
             ForEach(this.tokens, (token: StoredToken, index: number) => {
@@ -393,7 +391,7 @@ struct Index {
                   }
                 }
               })
-            }, (item: StoredToken) => item.id)
+            }, (item: StoredToken) => this.tokenRenderKey(item))
           }
         }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 8 })
       }

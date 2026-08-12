@@ -4,6 +4,7 @@ import { util } from '@kit.ArkTS';
 import { SteamSessionService } from './SteamSessionService';
 import { SteamHttpHeaders, SteamWebApiClient } from './SteamWebApiClient';
 import { SteamTimeService } from './SteamTimeService';
+import { SteamProtocol, SteamQrSessionInfoData } from './SteamProtocol';
 
 export interface SteamConfirmation {
   type: number;
@@ -25,6 +26,17 @@ interface SteamQrChallenge {
 export interface SteamAccessTokenResult {
   accessToken: string;
   refreshToken: string;
+}
+
+/** 扫码确认前展示给用户的登录来源信息。 */
+export interface SteamQrLoginInfo {
+  ip: string;
+  location: string;
+  deviceName: string;
+  persistent: boolean;
+  locationMismatch: boolean;
+  highUsage: boolean;
+  deviceTrust: number;
 }
 
 /** Steam 移动确认和扫码登录服务；会话与 HTTP 均复用统一底层。 */
@@ -55,22 +67,31 @@ export class SteamGuardService {
     return /^https:\/\/s\.team\/q\/\d+\/\d+(?:\?.*)?$/.test(challengeUrl.trim());
   }
 
-  /** 使用 shared_secret 签名并批准另一台设备展示的 Steam 登录二维码。 */
-  async approveQrLogin(steamId: string, refreshToken: string, sharedSecret: Uint8Array,
-    challengeUrl: string, persistence: boolean = false): Promise<void> {
-    if (!steamId || !refreshToken || sharedSecret.length === 0) {
+  /** 查询二维码对应的设备、位置、持久性和风险信息，供用户批准前核对。 */
+  async getQrLoginInfo(steamId: string, accessToken: string, refreshToken: string,
+    challengeUrl: string): Promise<SteamQrLoginInfo> {
+    if (!steamId || (!accessToken && !refreshToken)) {
+      throw new Error('当前 Steam Token 缺少扫码登录所需的会话信息');
+    }
+    const challenge = this.parseQrChallenge(challengeUrl);
+    const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
+    const response = await SteamWebApiClient.protobuf('Authentication', 'GetAuthSessionInfo',
+      SteamProtocol.encodeQrSessionInfo(challenge.clientId), usableAccessToken);
+    return this.qrLoginInfo(SteamProtocol.decodeQrSessionInfo(response));
+  }
+
+  /** 使用 shared_secret 签名，按用户选择批准或拒绝另一设备的登录请求。 */
+  async respondQrLogin(steamId: string, accessToken: string, refreshToken: string,
+    sharedSecret: Uint8Array, challengeUrl: string, approve: boolean, persistent: boolean): Promise<void> {
+    if (!steamId || (!accessToken && !refreshToken) || sharedSecret.length === 0) {
       throw new Error('当前 Steam Token 缺少扫码登录所需的会话信息');
     }
     const challenge = this.parseQrChallenge(challengeUrl);
     const signature = this.qrSignature(steamId, sharedSecret, challenge);
-    const accessToken = await new SteamSessionService().accessToken(steamId, '', refreshToken);
-    const data = `steamid=${steamId}&confirm=true&persistence=${persistence ? 1 : 0}` +
-      `&version=${challenge.version}&client_id=${challenge.clientId}` +
-      `&signature=${encodeURIComponent(signature)}`;
-    await SteamWebApiClient.postForm('扫码登录',
-      'https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithMobileConfirmation/v1/' +
-        `?access_token=${encodeURIComponent(accessToken)}`,
-      data, { 'Content-Type': 'application/x-www-form-urlencoded' }, true);
+    const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
+    await SteamWebApiClient.protobuf('Authentication', 'UpdateAuthSessionWithMobileConfirmation',
+      SteamProtocol.encodeQrResponse(challenge.version, challenge.clientId, steamId, signature,
+        approve, persistent), usableAccessToken);
   }
 
   /** 获取 Steam Community 返回的移动确认列表。 */
@@ -212,7 +233,7 @@ export class SteamGuardService {
   }
 
   /** 按 Steam 移动端协议签名 QR 挑战的 version、clientId 和 steamId。 */
-  private qrSignature(steamId: string, sharedSecret: Uint8Array, challenge: SteamQrChallenge): string {
+  private qrSignature(steamId: string, sharedSecret: Uint8Array, challenge: SteamQrChallenge): Uint8Array {
     try {
       const version = BigInt(challenge.version);
       const clientId = BigInt(challenge.clientId);
@@ -227,11 +248,30 @@ export class SteamGuardService {
       mac.updateSync({ data: this.littleEndian(version, 2) });
       mac.updateSync({ data: this.littleEndian(clientId, 8) });
       mac.updateSync({ data: this.littleEndian(accountId, 8) });
-      return new util.Base64Helper().encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
+      return mac.doFinalSync().data;
     } catch (error) {
       const detail = error as BusinessError;
       throw new Error(`生成 Steam 扫码登录签名失败：${detail.message ?? '二维码或密钥无效'}`);
     }
+  }
+
+  /** 将协议层的分散位置字段整理为适合确认弹窗展示的摘要。 */
+  private qrLoginInfo(data: SteamQrSessionInfoData): SteamQrLoginInfo {
+    const locationParts: string[] = [];
+    for (const part of [data.city, data.state, data.country]) {
+      if (part.length > 0 && !locationParts.includes(part)) {
+        locationParts.push(part);
+      }
+    }
+    return {
+      ip: data.ip,
+      location: locationParts.length > 0 ? locationParts.join(' · ') : data.geoloc,
+      deviceName: data.deviceFriendlyName,
+      persistent: data.persistent,
+      locationMismatch: data.requestorLocationMismatch,
+      highUsage: data.highUsageLogin,
+      deviceTrust: data.deviceTrust
+    };
   }
 
   /** 从短链接中提取并保留无精度损失的 QR 数值字段。 */

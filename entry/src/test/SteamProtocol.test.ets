@@ -1,6 +1,8 @@
 import { describe, expect, it } from '@ohos/hypium';
 import {
   CAuthentication_BeginAuthSessionViaCredentials_Request,
+  CAuthentication_GetAuthSessionInfo_Request,
+  CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request,
   CTwoFactor_AddAuthenticator_Request,
   CTwoFactor_Time_Request,
   EAuthTokenAppType,
@@ -45,6 +47,27 @@ export default function steamProtocolTest(): void {
       expect(request.authenticatorTime.toString()).assertEqual('1234567890');
       expect(request.deviceIdentifier).assertEqual('android:test');
       expect(request.version).assertEqual(1);
+    });
+
+    it('encodes QR session lookup without losing client ID precision', 0, (): void => {
+      const bytes = SteamProtocol.encodeQrSessionInfo('18446744073709551615');
+      const request = CAuthentication_GetAuthSessionInfo_Request.decode(bytes);
+
+      expect(request.clientId.toString()).assertEqual('18446744073709551615');
+    });
+
+    it('encodes QR approval with signature and requested persistence', 0, (): void => {
+      const signature = new Uint8Array([1, 2, 3, 4]);
+      const bytes = SteamProtocol.encodeQrResponse('1', '18446744073709551615',
+        '76561198000000000', signature, false, true);
+      const request = CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request.decode(bytes);
+
+      expect(request.version).assertEqual(1);
+      expect(request.clientId.toString()).assertEqual('18446744073709551615');
+      expect(request.steamid.toString()).assertEqual('76561198000000000');
+      expect(request.signature.length).assertEqual(4);
+      expect(request.confirm).assertFalse();
+      expect(request.persistence).assertEqual(ESessionPersistence.k_ESessionPersistence_Persistent);
     });
 
     it('imports numeric Steam IDs without precision loss', 0, (): void => {

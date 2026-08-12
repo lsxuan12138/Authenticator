@@ -47,6 +47,12 @@ enum ESessionPersistence {
   k_ESessionPersistence_Persistent = 1;
 }
 
+enum EAuthSessionSecurityHistory {
+  k_EAuthSessionSecurityHistory_Invalid = 0;
+  k_EAuthSessionSecurityHistory_UsedPreviously = 1;
+  k_EAuthSessionSecurityHistory_NoPriorHistory = 2;
+}
+
 message CAuthentication_DeviceDetails {
   optional string device_friendly_name = 1;
   optional EAuthTokenPlatformType platform_type = 2 [default = k_EAuthTokenPlatformType_Unknown];
@@ -116,6 +122,39 @@ message CAuthentication_PollAuthSessionStatus_Response {
   optional string agreement_session_url = 8;
 }
 
+message CAuthentication_GetAuthSessionInfo_Request {
+  optional uint64 client_id = 1;
+}
+
+message CAuthentication_GetAuthSessionInfo_Response {
+  optional string ip = 1;
+  optional string geoloc = 2;
+  optional string city = 3;
+  optional string state = 4;
+  optional string country = 5;
+  optional EAuthTokenPlatformType platform_type = 6 [default = k_EAuthTokenPlatformType_Unknown];
+  optional string device_friendly_name = 7;
+  optional int32 version = 8;
+  optional EAuthSessionSecurityHistory login_history = 9 [default = k_EAuthSessionSecurityHistory_Invalid];
+  optional bool requestor_location_mismatch = 10;
+  optional bool high_usage_login = 11;
+  optional ESessionPersistence requested_persistence = 12 [default = k_ESessionPersistence_Invalid];
+  optional int32 device_trust = 13;
+  optional EAuthTokenAppType app_type = 14 [default = k_EAuthTokenAppType_Unknown];
+}
+
+message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request {
+  optional int32 version = 1;
+  optional uint64 client_id = 2;
+  optional fixed64 steamid = 3;
+  optional bytes signature = 4;
+  optional bool confirm = 5 [default = false];
+  optional ESessionPersistence persistence = 6 [default = k_ESessionPersistence_Persistent];
+}
+
+message CAuthentication_UpdateAuthSessionWithMobileConfirmation_Response {
+}
+
 message CTwoFactor_Time_Request {
   optional uint64 sender_time = 1;
 }
@@ -169,7 +208,7 @@ message CTwoFactor_FinalizeAddAuthenticator_Request {
 
 message CTwoFactor_FinalizeAddAuthenticator_Response {
   optional bool success = 1;
-  // SteamTracking 当前未定义字段 2；后续字段仍必须保留原始 wire tag。
+  // SteamTracking 与 SteamKit 当前均已移除历史 want_more = 2；3、4 仍保留原始 wire tag。
   optional uint64 server_time = 3;
   optional int32 status = 4;
 }

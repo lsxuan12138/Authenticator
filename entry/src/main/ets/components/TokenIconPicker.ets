@@ -79,7 +79,8 @@ export struct TokenIconPicker {
         .width(54)
         .height(54)
         .borderRadius(16)
-        .backgroundColor(automatic ? '#4668E8' : $r('app.color.icon_surface'))
+        .backgroundColor(automatic ? IconPackService.fallbackColor(this.issuer.trim()) :
+          $r('app.color.icon_surface'))
         .border({ width: this.selectedPath === path ? 2 : 0, color: '#4668E8' })
 
         if (automatic) {

@@ -21,9 +21,12 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
   - 查询 Steam 服务端记录的移动验证器状态
   - 使用撤销码移除移动验证器（成功后同步删除已失效的本地 Token）
   - 查看并处理 Steam 待确认项目
-  - 扫码登录 Steam
+  - 扫码登录 Steam，并在操作前展示请求设备、位置、IP、会话类型和风险提示
+  - 支持明确批准或拒绝扫码登录，并沿用请求方声明的会话持久性
 - Token 管理
   - 编辑、删除和拖拽排序
+  - 可将 Token URI 显示为二维码，便于迁移到可信设备
+  - 新增和恢复时同时按 UUID 与实际 OTP 配置去重
   - UUID 作为唯一标识，备份恢复时按 UUID 合并
   - 普通 Token 与 Steam Token 使用不同的详情能力
 - 数据安全
@@ -31,6 +34,10 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
   - 本机主密钥保存在 HarmonyOS Asset Store，禁止跨设备同步
   - 密码加密备份使用 PBKDF2-SHA256（210,000 次迭代）和 AES-256-GCM
   - Steam 登录密码仅在登录阶段保留于内存，不写入本地存储
+  - 可选防截屏保护，设置会持久化并在下次启动时恢复
+- 诊断
+  - 本地滚动诊断日志支持导出和清理，便于反馈联网或导入问题
+  - 日志写入前会清理常见令牌、密钥和密码字段
 - 图标包
   - 支持安装、删除和切换多个 Aegis 格式图标包
   - 根据 issuer 自动匹配图标
@@ -169,7 +176,7 @@ Steam 代码按职责分为三层：
 - `SteamProtocol` 是生成代码的唯一业务适配入口，负责 protobuf 请求构造、响应解码和领域模型转换。
 - 登录、会话、验证器和移动确认服务只编排各自流程，不再各自实现 HTTP 或 protobuf 解析。
 
-RSA 公钥和 `GenerateAccessTokenForApp` 保留 kdada/Authenticator 已验证的 JSON/表单调用形式；登录会话与 TwoFactor 接口使用 SteamTracking 定义生成的 protobuf。两类请求都经过同一个网络底层。
+RSA 公钥和 `GenerateAccessTokenForApp` 保留 kdada/Authenticator 已验证的 JSON/表单调用形式；登录会话、扫码会话与 TwoFactor 接口使用 SteamTracking 定义生成的 protobuf。两类请求都经过同一个网络底层。历史协议中的 `want_more = 2` 已被当前 SteamTracking 与 SteamKit 移除；后续字段仍保留原始 wire tag，不能因为中间字段消失而重新编号。
 
 ## 权限与网络
 
