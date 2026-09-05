@@ -16,6 +16,7 @@ import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamVerificationStep } from '../components/SteamVerificationStep';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 import { Localization } from '../core/Localization';
+import { AppError } from '../core/AppError';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -85,6 +86,12 @@ export struct AddTokenPage {
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     return Localization.text(context, resource, args);
   }
+
+  /** 在 UI 边界翻译结构化错误，未知底层异常不直接暴露给用户。 */
+  private localizedError(error: Object, fallback: Resource): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.error(context, error, fallback);
+  }
   /** 清空所有普通和 Steam 添加表单，供成功提交后复用。 */
   private resetForm(): void {
     this.issuer = '';
@@ -138,7 +145,7 @@ export struct AddTokenPage {
       };
       await this.commitNewToken(token);
     } catch (error) {
-      this.errorMessage = (error as Error).message;
+      this.errorMessage = this.localizedError(error as Object, $r('app.string.error_token_save_failed'));
     }
   }
 
@@ -233,7 +240,7 @@ export struct AddTokenPage {
         await this.startSteamAuthenticator(session, tokens);
       }
     } catch (error) {
-      this.steamAddStatus = (error as Error).message;
+      this.steamAddStatus = this.localizedError(error as Object, $r('app.string.error_steam_operation_failed'));
     } finally {
       this.steamAddBusy = false;
     }
@@ -258,7 +265,7 @@ export struct AddTokenPage {
       this.steamAddCode = '';
       await this.startSteamAuthenticator(this.steamAddSession, tokens);
     } catch (error) {
-      this.steamAddStatus = (error as Error).message;
+      this.steamAddStatus = this.localizedError(error as Object, $r('app.string.error_steam_operation_failed'));
     } finally {
       this.steamAddBusy = false;
     }
@@ -274,10 +281,13 @@ export struct AddTokenPage {
       enrollment = await new SteamAuthenticatorService().addAuthenticator(
         session.steamId.toString(), tokens.refreshToken, this.steamAddDeviceId);
     } catch (error) {
-      if ((error as Error).message === 'STEAM_GUARD_ALREADY_EXISTS') {
-        this.steamAddStep = 3;
-        this.steamAddStatus = this.localized($r('app.string.steam_existing_guard_status'));
-        return;
+      if (error instanceof AppError) {
+        if (error.resourceName === 'steam_guard_already_exists') {
+          this.steamAddStep = 3;
+          this.steamAddStatus = this.localized($r('app.string.steam_existing_guard_status'));
+          return;
+        }
+        throw error;
       }
       throw new Error((error as Error).message);
     }
@@ -287,7 +297,7 @@ export struct AddTokenPage {
     const channel = enrollment.confirmType === 1 ? this.localized($r('app.string.steam_channel_sms')) :
       enrollment.confirmType === 3 ? this.localized($r('app.string.steam_channel_email')) : 'Steam';
     const hint = enrollment.phoneNumberHint ? `（${enrollment.phoneNumberHint}）` : '';
-    this.steamAddStatus = `请输入通过${channel}收到的激活码${hint}`;
+    this.steamAddStatus = this.localized($r('app.string.steam_activation_prompt'), channel, hint);
   }
 
   /** 用激活码和服务器时间校正后的验证码完成新 Steam Guard 激活。 */
@@ -323,11 +333,12 @@ export struct AddTokenPage {
         this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken,
         authenticatorCode, seconds, this.steamAddActivationCode.trim());
       if (!finalized.success) {
-        throw new Error(`Steam Guard 激活失败（status ${finalized.status}）`);
+        throw new AppError('steam_error_activation_status',
+          `Steam Guard activation failed (status ${finalized.status})`, [finalized.status]);
       }
       await this.saveSteamEnrollment(enrollment, this.localized($r('app.string.steam_guard_added')));
     } catch (error) {
-      this.steamAddStatus = (error as Error).message;
+      this.steamAddStatus = this.localizedError(error as Object, $r('app.string.error_steam_operation_failed'));
     } finally {
       this.steamAddBusy = false;
     }
@@ -349,7 +360,7 @@ export struct AddTokenPage {
     } catch (error) {
       const message = (error as Error).message;
       DiagnosticLogService.warn('SteamTransfer', `Transfer challenge start failed: ${message}`);
-      this.steamAddStatus = message;
+      this.steamAddStatus = this.localizedError(error as Object, $r('app.string.error_steam_operation_failed'));
     } finally {
       this.steamAddBusy = false;
     }
@@ -375,7 +386,7 @@ export struct AddTokenPage {
       const deviceId = await this.transferredDeviceId(service);
       await this.saveSteamEnrollment(enrollment, this.localized($r('app.string.steam_guard_transferred')), deviceId);
     } catch (error) {
-      this.steamAddStatus = (error as Error).message;
+      this.steamAddStatus = this.localizedError(error as Object, $r('app.string.error_steam_operation_failed'));
     } finally {
       this.steamAddBusy = false;
     }
@@ -452,7 +463,7 @@ export struct AddTokenPage {
       const token = OtpUriParser.parse(this.uriValue);
       await this.commitNewToken(token);
     } catch (error) {
-      this.errorMessage = (error as Error).message;
+      this.errorMessage = this.localizedError(error as Object, $r('app.string.error_token_save_failed'));
     }
   }
 
@@ -498,7 +509,8 @@ export struct AddTokenPage {
         await this.commitNewToken(token);
       } catch (parseError) {
         this.addTabIndex = 1;
-        this.errorMessage = `二维码不是可识别的 OTP 配置：${(parseError as Error).message}`;
+        this.errorMessage = this.localized($r('app.string.error_qr_otp_invalid'),
+          this.localizedError(parseError as Object, $r('app.string.error_token_save_failed')));
       }
     } catch (error) {
       const detail = error as BusinessError;

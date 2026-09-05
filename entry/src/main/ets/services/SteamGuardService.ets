@@ -6,6 +6,7 @@ import { SteamHttpHeaders, SteamWebApiClient } from './SteamWebApiClient';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamProtocol, SteamQrSessionInfoData } from './SteamProtocol';
 import { DiagnosticLogService } from './DiagnosticLogService';
+import { AppError } from '../core/AppError';
 
 export interface SteamConfirmation {
   type: number;
@@ -74,7 +75,7 @@ export class SteamGuardService {
   async getQrLoginInfo(steamId: string, accessToken: string, refreshToken: string,
     challengeUrl: string): Promise<SteamQrLoginInfo> {
     if (!steamId || (!accessToken && !refreshToken)) {
-      throw new Error('当前 Steam Token 缺少扫码登录所需的会话信息');
+      throw new AppError('steam_error_qr_session_missing', 'Steam token is missing QR sign-in session data');
     }
     const challenge = this.parseQrChallenge(challengeUrl);
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
@@ -87,7 +88,7 @@ export class SteamGuardService {
   async respondQrLogin(steamId: string, accessToken: string, refreshToken: string,
     sharedSecret: Uint8Array, challengeUrl: string, approve: boolean, persistent: boolean): Promise<void> {
     if (!steamId || (!accessToken && !refreshToken) || sharedSecret.length === 0) {
-      throw new Error('当前 Steam Token 缺少扫码登录所需的会话信息');
+      throw new AppError('steam_error_qr_session_missing', 'Steam token is missing QR sign-in session data');
     }
     const challenge = this.parseQrChallenge(challengeUrl);
     await this.respondLoginChallenge(steamId, accessToken, refreshToken, sharedSecret, challenge,
@@ -98,7 +99,8 @@ export class SteamGuardService {
   async getPendingLogins(steamId: string, accessToken: string,
     refreshToken: string): Promise<SteamPendingLoginResult> {
     if (!steamId || (!accessToken && !refreshToken)) {
-      throw new Error('当前 Steam Token 缺少登录请求列表所需的会话信息');
+      throw new AppError('steam_error_login_list_session_missing',
+        'Steam token is missing session data required to list sign-in requests');
     }
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
     // 该空请求接口当前只接受 GET；使用通用 POST 会稳定返回 HTTP 405。
@@ -192,7 +194,7 @@ export class SteamGuardService {
     identitySecret: string, deviceId: string, confirmations: SteamConfirmation[], approve: boolean): Promise<void> {
     this.validateConfirmationMetadata(steamId, identitySecret, deviceId);
     if (confirmations.length === 0) {
-      throw new Error('没有可处理的 Steam 确认');
+      throw new AppError('steam_error_no_confirmations', 'There are no Steam confirmations to process');
     }
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
     const operation = approve ? 'allow' : 'cancel';
@@ -203,7 +205,8 @@ export class SteamGuardService {
       steamId, identitySecret, deviceId, signatureTag)}&op=${operation}`;
     for (const confirmation of confirmations) {
       if (!confirmation.id || !confirmation.nonce) {
-        throw new Error('Steam 确认条目缺少 ID 或 Nonce');
+        throw new AppError('steam_error_confirmation_identity_missing',
+          'Steam confirmation is missing its ID or nonce');
       }
       data += `&cid[]=${encodeURIComponent(confirmation.id)}&ck[]=${encodeURIComponent(confirmation.nonce)}`;
     }
@@ -218,7 +221,8 @@ export class SteamGuardService {
   /** 校验移动确认签名所依赖的三项本地元信息。 */
   private validateConfirmationMetadata(steamId: string, identitySecret: string, deviceId: string): void {
     if (!steamId || !identitySecret || !deviceId) {
-      throw new Error('Steam 确认需要 Steam ID、Identity Secret 和 Device ID');
+      throw new AppError('steam_error_confirmation_data_missing',
+        'Steam confirmation requires Steam ID, Identity Secret, and Device ID');
     }
   }
 
@@ -253,7 +257,8 @@ export class SteamGuardService {
     const needAuth = this.text(parsed['needauth'] ?? parsed['needAuth']);
     const fallback = needAuth === 'true' ? 'Steam 会话需要重新认证' : 'Steam 未提供错误信息';
     const message = this.text(parsed['message'] ?? parsed['detail']) || fallback;
-    throw new Error(`Steam ${action}失败：${message}`);
+    DiagnosticLogService.warn('SteamGuard', `${action} rejected by Steam: ${message}`);
+    throw new AppError('steam_error_community_rejected', `Steam ${action} failed: ${message}`);
   }
 
   /** 按移动确认协议生成 time+tag 的 HMAC-SHA1 签名。 */
@@ -277,7 +282,8 @@ export class SteamGuardService {
       return base64.encodeToStringSync(mac.doFinalSync().data, util.Type.BASIC);
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`生成 Steam 确认密钥失败：${detail.message ?? 'Identity Secret 无效'}`);
+      throw new AppError('steam_error_confirmation_key',
+        `Failed to generate Steam confirmation key: ${detail.message ?? 'invalid Identity Secret'}`);
     }
   }
 
@@ -289,7 +295,7 @@ export class SteamGuardService {
       const accountId = BigInt(steamId);
       if (version < 0n || version > 65535n || clientId < 0n || clientId > 18446744073709551615n ||
         accountId < 0n || accountId > 18446744073709551615n) {
-        throw new Error('二维码数值超出 Steam 协议范围');
+        throw new AppError('steam_error_qr_value_range', 'QR code value is outside the Steam protocol range');
       }
       const key = cryptoFramework.createSymKeyGenerator('HMAC').convertKeySync({ data: sharedSecret });
       const mac = cryptoFramework.createMac('SHA256');
@@ -300,7 +306,9 @@ export class SteamGuardService {
       return mac.doFinalSync().data;
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`生成 Steam 扫码登录签名失败：${detail.message ?? '二维码或密钥无效'}`);
+      if (error instanceof AppError) throw error;
+      throw new AppError('steam_error_qr_signature',
+        `Failed to generate Steam QR sign-in signature: ${detail.message ?? 'invalid QR code or secret'}`);
     }
   }
 
@@ -308,7 +316,8 @@ export class SteamGuardService {
   private async respondLoginChallenge(steamId: string, accessToken: string, refreshToken: string,
     sharedSecret: Uint8Array, challenge: SteamQrChallenge, approve: boolean, persistent: boolean): Promise<void> {
     if (!steamId || (!accessToken && !refreshToken) || sharedSecret.length === 0) {
-      throw new Error('当前 Steam Token 缺少登录确认所需的会话信息');
+      throw new AppError('steam_error_login_confirmation_session_missing',
+        'Steam token is missing session data required to confirm sign-in');
     }
     const signature = this.qrSignature(steamId, sharedSecret, challenge);
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
@@ -340,7 +349,7 @@ export class SteamGuardService {
   private parseQrChallenge(challengeUrl: string): SteamQrChallenge {
     const match = /^https:\/\/s\.team\/q\/(\d+)\/(\d+)(?:\?.*)?$/.exec(challengeUrl.trim());
     if (!match || match.length < 3) {
-      throw new Error('这不是有效的 Steam 登录二维码');
+      throw new AppError('steam_error_qr_invalid', 'This is not a valid Steam sign-in QR code');
     }
     return { version: match[1], clientId: match[2] };
   }

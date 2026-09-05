@@ -1,5 +1,6 @@
 import { util } from '@kit.ArkTS';
 import { SteamWebApiClient } from './SteamWebApiClient';
+import { AppError } from '../core/AppError';
 
 export interface SteamAccessTokenPair {
   accessToken: string;
@@ -66,7 +67,7 @@ export class SteamSessionService {
   /** 优先复用仍有效的现有 Access Token，仅在需要时使用 Refresh Token 换新。 */
   async accessToken(steamId: string, currentAccessToken: string, refreshToken: string): Promise<string> {
     if (!steamId) {
-      throw new Error('缺少 Steam ID');
+      throw new AppError('steam_error_id_missing', 'Steam ID is missing');
     }
     if (this.isUsable(currentAccessToken)) {
       this.remember(steamId, currentAccessToken);
@@ -83,12 +84,14 @@ export class SteamSessionService {
       if (currentAccessToken.length > 0) {
         const expiresAt = SteamSessionService.tokenExpiresAt(currentAccessToken);
         if (expiresAt > 0 && expiresAt - SteamSessionService.EXPIRY_MARGIN <= Date.now()) {
-          throw new Error('Steam Access Token 已过期且没有 Refresh Token，请重新登录或导入完整会话');
+          throw new AppError('steam_error_access_expired',
+            'Steam Access Token expired and no Refresh Token is available');
         }
         // 兼容旧备份中无法解析为 JWT、但服务端仍可能接受的 Access Token。
         return currentAccessToken;
       }
-      throw new Error('Steam 会话缺少 Access Token 或 Refresh Token');
+      throw new AppError('steam_error_session_tokens_missing',
+        'Steam session is missing an Access Token or Refresh Token');
     }
     return (await this.generate(steamId, refreshToken, false)).accessToken;
   }
@@ -97,7 +100,7 @@ export class SteamSessionService {
   async refresh(steamId: string, refreshToken: string,
     allowRenewal: boolean = false): Promise<SteamAccessTokenPair> {
     if (!steamId || !refreshToken) {
-      throw new Error('缺少 Steam ID 或 Refresh Token');
+      throw new AppError('steam_error_refresh_data_missing', 'Steam ID or Refresh Token is missing');
     }
     return this.generate(steamId, refreshToken, allowRenewal);
   }
@@ -113,7 +116,7 @@ export class SteamSessionService {
     });
     const value: Object | undefined = root['response'];
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      throw new Error('Steam 未返回 Access Token 响应');
+      throw new AppError('steam_error_access_response_missing', 'Steam did not return an Access Token response');
     }
     const response = value as Record<string, Object>;
     const tokens: SteamAccessTokenPair = {
@@ -121,7 +124,7 @@ export class SteamSessionService {
       refreshToken: String(response['refresh_token'] ?? '')
     };
     if (!tokens.accessToken) {
-      throw new Error('Steam 未返回 Access Token');
+      throw new AppError('steam_error_access_missing', 'Steam did not return an Access Token');
     }
     this.remember(steamId, tokens.accessToken);
     return tokens;

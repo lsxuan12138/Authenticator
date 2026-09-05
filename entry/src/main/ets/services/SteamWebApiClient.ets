@@ -3,6 +3,7 @@ import { http } from '@kit.NetworkKit';
 import { util } from '@kit.ArkTS';
 import { DiagnosticLogService } from './DiagnosticLogService';
 import { SteamResult } from './SteamResult';
+import { AppError } from '../core/AppError';
 
 /** 所有 Steam HTTP 请求使用的稳定响应对象。 */
 export interface SteamTextResponse {
@@ -181,13 +182,14 @@ export class SteamWebApiClient {
     DiagnosticLogService.info('SteamWebApi',
       `${service}.${method} response: HTTP=${responseCode}, EResult=${eResult || 'missing'}${size}`);
     if (responseCode < 200 || responseCode >= 300) {
-      throw new Error(`Steam ${method} 请求失败（HTTP ${responseCode}）`);
+      throw new AppError('error_steam_http', `Steam ${method} request failed (HTTP ${responseCode})`,
+        [method, responseCode]);
     }
     if (requireEResult && eResult.length === 0) {
-      throw new Error(`Steam ${method} 响应缺少 x-eresult`);
+      throw new AppError('error_steam_result_missing', `Steam ${method} response is missing x-eresult`, [method]);
     }
     if (eResult.length > 0 && !acceptedResults.includes(eResult)) {
-      throw new Error(SteamResult.message(eResult, `Steam ${method} 请求失败`));
+      throw SteamResult.error(eResult, `Steam ${method} request failed`);
     }
   }
 
@@ -199,7 +201,8 @@ export class SteamWebApiClient {
       const detail = error as BusinessError;
       DiagnosticLogService.error('SteamWebApi',
         `${label} returned invalid JSON: length=${response.body.length}, message=${detail.message ?? 'unknown'}`);
-      throw new Error(`Steam ${label} 返回了无法解析的数据（HTTP ${response.responseCode}）`);
+      throw new AppError('error_steam_invalid_response',
+        `Steam ${label} returned invalid data (HTTP ${response.responseCode})`, [label, response.responseCode]);
     }
   }
 
@@ -220,9 +223,9 @@ export class SteamWebApiClient {
     const message = detail.message ?? `${error}`;
     DiagnosticLogService.error('SteamWebApi',
       `${label} failed: code=${detail.code !== undefined ? detail.code : 'unknown'}, message=${message}`);
-    if (message.startsWith('Steam ')) {
-      return new Error(message);
+    if (error instanceof AppError) {
+      return error;
     }
-    return new Error(`Steam ${label} 网络请求失败：${message}`);
+    return new AppError('error_steam_network', `Steam ${label} network request failed: ${message}`, [label]);
   }
 }

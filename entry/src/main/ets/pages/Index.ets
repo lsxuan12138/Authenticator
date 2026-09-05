@@ -46,6 +46,12 @@ struct Index {
     return Localization.text(context, resource, args);
   }
 
+  /** 将服务错误翻译为当前语言，未知异常仅在日志中保留技术信息。 */
+  private localizedError(error: Object, fallback: Resource): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.error(context, error, fallback);
+  }
+
   private timer: number = -1;
 
   /** 所有二级界面均进入 Navigation 路由栈，系统返回手势与页面生命周期由框架统一管理。 */
@@ -86,8 +92,7 @@ struct Index {
     } catch (error) {
       const detail = error as BusinessError;
       DiagnosticLogService.error('UI', `Application initialization failed: ${detail.message ?? 'unknown'}`);
-      this.showToast(this.localized($r('app.string.error_init'), detail.message ??
-        this.localized($r('app.string.error_unknown'))), 3500);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_operation_failed')), 3500);
     }
   }
 
@@ -138,8 +143,7 @@ struct Index {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       await SteamLocalDataCleaner.clean(context, removed);
     } catch (error) {
-      this.showToast(this.localized($r('app.string.error_token_delete_failed'),
-        (error as Error).message), 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_operation_failed')), 3000);
     }
   }
 
@@ -155,8 +159,7 @@ struct Index {
     try {
       await this.persist(next);
     } catch (error) {
-      this.showToast(this.localized($r('app.string.error_token_order_save_failed'),
-        (error as Error).message), 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_token_save_failed')), 3000);
     }
   }
 

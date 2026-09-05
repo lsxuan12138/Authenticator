@@ -6,6 +6,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken } from '../domain/Token';
 import { TokenDuplicateGuard } from '../core/TokenDuplicateGuard';
 import { TokenValidator } from '../core/TokenValidator';
+import { AppError } from '../core/AppError';
 
 interface BackupContent {
   version: number;
@@ -112,19 +113,20 @@ export class BackupService {
       };
       const serialized = JSON.stringify(backup);
       if (new util.TextEncoder().encodeInto(serialized).length > BackupService.MAX_FILE_SIZE) {
-        throw new Error('备份内容超过 8MB，无法生成可由当前版本恢复的文件');
+        throw new AppError('backup_error_content_too_large', 'Backup content exceeds 8 MB');
       }
       return serialized;
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`创建加密备份失败：${detail.message ?? '未知错误'}`);
+      if (error instanceof AppError) throw error;
+      throw new AppError('backup_error_create', `Failed to create encrypted backup: ${detail.message ?? 'unknown'}`);
     }
   }
 
   /** 校验备份格式和认证标签后解密；密码错误与文件损坏统一作为不可信输入处理。 */
   static async decrypt(serialized: string, password: string): Promise<StoredToken[]> {
     if (password.length === 0) {
-      throw new Error('请输入备份密码');
+      throw new AppError('backup_error_password_required', 'Backup password is required');
     }
     const backup = JSON.parse(serialized) as EncryptedBackup;
     BackupService.validateBackup(backup);
@@ -134,7 +136,7 @@ export class BackupService {
     const authTag = base64.decodeSync(backup.authTag, util.Type.BASIC);
     if (salt.length !== BackupService.SALT_SIZE || iv.length !== BackupService.IV_SIZE ||
       authTag.length !== BackupService.TAG_SIZE) {
-      throw new Error('备份文件的加密参数无效');
+      throw new AppError('backup_error_crypto_parameters', 'Backup encryption parameters are invalid');
     }
     const params: cryptoFramework.GcmParamsSpec = {
       iv: { data: iv },
@@ -153,13 +155,13 @@ export class BackupService {
       }).data;
       cipher.doFinalSync(null);
     } catch (_) {
-      throw new Error('无法解密备份：密码错误或文件已损坏');
+      throw new AppError('backup_error_decrypt', 'Backup password is incorrect or the file is damaged');
     }
     let content: BackupContent;
     try {
       content = JSON.parse(new util.TextDecoder().decodeToString(plaintext)) as BackupContent;
     } catch (_) {
-      throw new Error('备份已解密，但内容不是有效的 JSON');
+      throw new AppError('backup_error_plaintext_json', 'Decrypted backup content is not valid JSON');
     }
     return BackupService.validateContent(content);
   }
@@ -211,13 +213,13 @@ export class BackupService {
       return false;
     }
     let file: fs.File | undefined;
-    let failure: Error | undefined;
+    let failure: AppError | undefined;
     try {
       file = fs.openSync(selected[0], fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
       fs.writeSync(file.fd, content);
     } catch (error) {
       const detail = error as BusinessError;
-      failure = new Error(`写入备份文件失败：${detail.message ?? '未知错误'}`);
+      failure = new AppError('backup_error_write', `Failed to write backup file: ${detail.message ?? 'unknown'}`);
     }
     if (file !== undefined) {
       try {
@@ -225,7 +227,7 @@ export class BackupService {
       } catch (error) {
         if (failure === undefined) {
           const detail = error as BusinessError;
-          failure = new Error(`关闭备份文件失败：${detail.message ?? '未知错误'}`);
+          failure = new AppError('backup_error_close', `Failed to close backup file: ${detail.message ?? 'unknown'}`);
         }
       }
     }
@@ -246,20 +248,21 @@ export class BackupService {
     }
     let file: fs.File | undefined;
     let content = '';
-    let failure: Error | undefined;
+    let failure: AppError | undefined;
     try {
       file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       // 当前实现整文件读入内存，大小上限用于防止错误或恶意文件造成内存压力。
       if (size <= 0 || size > BackupService.MAX_FILE_SIZE) {
-        throw new Error('备份文件为空或超过 8MB');
+        throw new AppError('backup_error_file_size', 'Backup file is empty or exceeds 8 MB');
       }
       const buffer = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, buffer);
       content = new util.TextDecoder().decodeToString(new Uint8Array(buffer.slice(0, count)));
     } catch (error) {
       const detail = error as BusinessError;
-      failure = new Error(`读取备份文件失败：${detail.message ?? '未知错误'}`);
+      failure = error instanceof AppError ? error :
+        new AppError('backup_error_read', `Failed to read backup file: ${detail.message ?? 'unknown'}`);
     }
     if (file !== undefined) {
       try {
@@ -267,7 +270,7 @@ export class BackupService {
       } catch (error) {
         if (failure === undefined) {
           const detail = error as BusinessError;
-          failure = new Error(`关闭备份文件失败：${detail.message ?? '未知错误'}`);
+          failure = new AppError('backup_error_close', `Failed to close backup file: ${detail.message ?? 'unknown'}`);
         }
       }
     }
@@ -291,14 +294,14 @@ export class BackupService {
       return (await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec)).data;
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`派生备份密钥失败：${detail.message ?? '未知错误'}`);
+      throw new AppError('backup_error_key_derivation', `Failed to derive backup key: ${detail.message ?? 'unknown'}`);
     }
   }
 
   /** 统一约束备份密码的最低长度，避免弱口令直接进入派生流程。 */
   private static validatePassword(password: string): void {
     if (password.length < 8) {
-      throw new Error('备份密码至少需要 8 个字符');
+      throw new AppError('backup_error_password_length', 'Backup password must contain at least 8 characters');
     }
   }
 
@@ -306,22 +309,22 @@ export class BackupService {
   private static validateBackup(backup: EncryptedBackup): void {
     if (!backup || backup.format !== BackupService.FORMAT || backup.version !== 1 ||
       !backup.salt || !backup.iv || !backup.authTag || !backup.ciphertext) {
-      throw new Error('这不是受支持的 Authenticator 加密备份');
+      throw new AppError('backup_error_unsupported', 'This is not a supported Authenticator encrypted backup');
     }
     if (!Number.isInteger(backup.iterations) || backup.iterations < 10000 || backup.iterations > 1000000) {
-      throw new Error('备份文件的密钥派生参数无效');
+      throw new AppError('backup_error_kdf_parameters', 'Backup key derivation parameters are invalid');
     }
   }
 
   /** 校验解密后的内容版本、数组结构及每个 Token 的 UUID。 */
   private static validateContent(content: BackupContent): StoredToken[] {
     if (!content || content.version !== 1 || !Array.isArray(content.tokens)) {
-      throw new Error('备份内容格式无效');
+      throw new AppError('backup_error_content_invalid', 'Backup content format is invalid');
     }
     try {
       return TokenValidator.normalizeAll(content.tokens);
     } catch (error) {
-      throw new Error(`备份中包含无效的 Token 数据：${(error as Error).message}`);
+      throw new AppError('backup_error_token_data', `Backup contains invalid token data: ${(error as Error).message}`);
     }
   }
 }

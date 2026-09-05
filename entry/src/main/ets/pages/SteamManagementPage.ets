@@ -76,7 +76,7 @@ export struct SteamManagementPage {
       if (forceRefresh) this.showToast(this.localized($r('app.string.steam_profile_updated')), 1600);
     } catch (error) {
       DiagnosticLogService.warn('SteamManagement', `Profile load failed: ${(error as Error).message}`);
-      if (forceRefresh) this.showToast((error as Error).message, 2800);
+      if (forceRefresh) this.showToast(this.localizedError(error as Object), 2800);
     } finally {
       this.steamProfileLoading = false;
     }
@@ -106,6 +106,12 @@ export struct SteamManagementPage {
       const detail = error as BusinessError;
       DiagnosticLogService.error('SteamManagement', `Failed to show toast: ${detail.message ?? message}`);
     }
+  }
+
+  /** 在页面边界翻译业务错误，未知网络或解析细节只进入诊断日志。 */
+  private localizedError(error: Object): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.error(context, error, $r('app.string.error_steam_operation_failed'));
   }
 
   /** 按稳定 UUID 返回当前管理目标，索引变化时仍能阻止误操作其他账户。 */
@@ -173,7 +179,7 @@ export struct SteamManagementPage {
         this.showToast(this.localized($r('app.string.steam_access_updated')), 1800);
       }
     } catch (error) {
-      this.showToast((error as Error).message, 3200);
+      this.showToast(this.localizedError(error as Object), 3200);
     } finally {
       this.steamSessionLoading = false;
     }
@@ -232,8 +238,8 @@ export struct SteamManagementPage {
         this.steamSessionStatus = this.localized($r('app.string.steam_session_not_saved'));
       }
     } catch (error) {
-      this.steamSessionStatus = (error as Error).message;
-      this.showToast((error as Error).message, 3500);
+      this.steamSessionStatus = this.localizedError(error as Object);
+      this.showToast(this.steamSessionStatus, 3500);
     } finally {
       this.steamSessionLoading = false;
     }
@@ -281,7 +287,7 @@ export struct SteamManagementPage {
         metadata.steamId, metadata.refreshToken);
       this.showToast(this.localized($r('app.string.steam_status_updated')), 1600);
     } catch (error) {
-      this.showToast((error as Error).message, 3500);
+      this.showToast(this.localizedError(error as Object), 3500);
     } finally {
       this.steamAuthenticatorLoading = false;
     }
@@ -328,7 +334,7 @@ export struct SteamManagementPage {
       }
       this.onTokenRemoved();
     } catch (error) {
-      this.showToast((error as Error).message, 4000);
+      this.showToast(this.localizedError(error as Object), 4000);
     } finally {
       this.steamAuthenticatorLoading = false;
     }
@@ -376,8 +382,7 @@ export struct SteamManagementPage {
     } catch (error) {
       DiagnosticLogService.error('SteamManagement',
         `Failed to save repaired metadata: ${(error as Error).message}`);
-      this.showToast(this.localized($r('app.string.steam_metadata_save_failed'),
-        (error as Error).message), 3200);
+      this.showToast(this.localizedError(error as Object), 3200);
     }
   }
 
@@ -398,7 +403,7 @@ export struct SteamManagementPage {
         this.metadataRepairMode = true;
       }
     } catch (error) {
-      this.showToast((error as Error).message, 2600);
+      this.showToast(this.localizedError(error as Object), 2600);
     }
   }
 
@@ -479,7 +484,7 @@ export struct SteamManagementPage {
       this.loadMetadata();
       this.showToast(this.localized($r('app.string.steam_data_imported')), 2000);
     } catch (error) {
-      this.showToast((error as Error).message, 3200);
+      this.showToast(this.localizedError(error as Object), 3200);
     }
   }
 
@@ -492,7 +497,7 @@ export struct SteamManagementPage {
         await this.importSteamText(content);
       }
     } catch (error) {
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object), 3000);
     }
   }
 

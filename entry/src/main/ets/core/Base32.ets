@@ -1,3 +1,5 @@
+import { AppError } from './AppError';
+
 /**
  * RFC 4648 Base32 编解码工具。
  * OTP 密钥通常省略填充符，因此 normalize() 会统一大小写并移除常见分隔字符。
@@ -14,7 +16,7 @@ export class Base32 {
   static decode(value: string): Uint8Array {
     const input = Base32.normalize(value);
     if (input.length === 0) {
-      throw new Error('密钥不能为空');
+      throw new AppError('error_secret_empty', 'Secret must not be empty');
     }
     let buffer = 0;
     let bits = 0;
@@ -23,7 +25,8 @@ export class Base32 {
     for (let index = 0; index < input.length; index++) {
       const digit = Base32.ALPHABET.indexOf(input[index]);
       if (digit < 0) {
-        throw new Error(`密钥包含无效字符：${input[index]}`);
+        throw new AppError('error_secret_invalid_character', `Secret contains invalid character: ${input[index]}`,
+          [input[index]]);
       }
       buffer = (buffer << 5) | digit;
       bits += 5;
@@ -34,11 +37,11 @@ export class Base32 {
     }
     // 无填充 Base32 只能留下至多 4 bit；更多余位表示字符数量不可能对应完整字节。
     if (bits > 4 || bytes.length === 0) {
-      throw new Error('密钥长度不是有效的 Base32 编码');
+      throw new AppError('error_secret_invalid_length', 'Secret length is not valid Base32');
     }
     // RFC 4648 要求最后不足一个字节的填充位为 0，避免同一密钥存在多种非规范编码。
     if (bits > 0 && (buffer & ((1 << bits) - 1)) !== 0) {
-      throw new Error('密钥包含非零 Base32 填充位');
+      throw new AppError('error_secret_invalid_padding', 'Secret contains non-zero Base32 padding bits');
     }
     return new Uint8Array(bytes);
   }

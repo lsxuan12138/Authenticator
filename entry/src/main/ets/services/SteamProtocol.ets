@@ -1,4 +1,5 @@
 import { BusinessError } from '@kit.BasicServicesKit';
+import { AppError } from '../core/AppError';
 import Long from 'long';
 import {
   CAuthentication_BeginAuthSessionViaCredentials_Request,
@@ -497,7 +498,8 @@ export class SteamProtocol {
       const token = response.replacementToken as CRemoveAuthenticatorViaChallengeContinue_Replacement_Token |
         null | undefined;
       if (!response.success || !token) {
-        throw new Error('Steam 未返回转移后的验证器密钥');
+        throw new AppError('steam_error_transfer_payload_missing',
+          'Steam did not return the replacement authenticator secrets');
       }
       return {
         sharedSecret: token.sharedSecret,
@@ -514,9 +516,7 @@ export class SteamProtocol {
         status: token.status
       };
     } catch (error) {
-      if ((error as Error).message === 'Steam 未返回转移后的验证器密钥') {
-        throw new Error('Steam 未返回转移后的验证器密钥');
-      }
+      if (error instanceof AppError) throw error;
       throw SteamProtocol.decodeError('验证器转移结果', error as Object);
     }
   }

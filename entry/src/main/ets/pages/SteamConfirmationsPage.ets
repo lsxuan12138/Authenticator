@@ -58,6 +58,11 @@ export struct SteamConfirmationsPage {
     return Localization.text(this.context(), resource, args);
   }
 
+  /** 翻译可预期业务错误，并阻止底层异常文本直接进入页面。 */
+  private localizedError(error: Object): string {
+    return Localization.error(this.context(), error, $r('app.string.error_steam_operation_failed'));
+  }
+
   /** 按 UUID 查找当前 Steam Token，防止列表重排后误用索引。 */
   private currentToken(): StoredToken | null {
     return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
@@ -92,7 +97,7 @@ export struct SteamConfirmationsPage {
       }
     } catch (error) {
       failed = true;
-      this.pendingError = (error as Error).message;
+      this.pendingError = this.localizedError(error as Object);
       DiagnosticLogService.warn('SteamConfirmations', `Pending login load failed: ${(error as Error).message}`);
     }
     if (metadata.identitySecret && metadata.deviceId) {
@@ -101,7 +106,7 @@ export struct SteamConfirmationsPage {
           metadata.refreshToken, metadata.identitySecret, metadata.deviceId);
       } catch (error) {
         failed = true;
-        this.confirmationError = (error as Error).message;
+        this.confirmationError = this.localizedError(error as Object);
         DiagnosticLogService.warn('SteamConfirmations', `Confirmation load failed: ${(error as Error).message}`);
       }
     } else {
@@ -148,7 +153,7 @@ export struct SteamConfirmationsPage {
         $r('app.string.confirm_login_rejected'));
       this.showToast(`${result}${historySaved ? '' : this.localized($r('app.string.confirm_history_failed_suffix'))}`,
         historySaved ? 2000 : 2800);
-    } catch (error) { this.showToast((error as Error).message, 3200); }
+    } catch (error) { this.showToast(this.localizedError(error as Object), 3200); }
     finally { this.submitting = false; }
   }
 
@@ -167,7 +172,7 @@ export struct SteamConfirmationsPage {
         $r('app.string.confirm_mobile_rejected'));
       this.showToast(`${result}${historySaved ? '' : this.localized($r('app.string.confirm_history_failed_suffix'))}`,
         historySaved ? 2000 : 2800);
-    } catch (error) { this.showToast((error as Error).message, 3000); }
+    } catch (error) { this.showToast(this.localizedError(error as Object), 3000); }
     finally { this.submitting = false; }
   }
 
@@ -203,7 +208,7 @@ export struct SteamConfirmationsPage {
         $r('app.string.confirm_all_rejected'));
       this.showToast(`${result}${historySaved ? '' : this.localized($r('app.string.confirm_history_failed_suffix'))}`,
         historySaved ? 2000 : 2800);
-    } catch (error) { this.showToast((error as Error).message, 3200); }
+    } catch (error) { this.showToast(this.localizedError(error as Object), 3200); }
     finally { this.submitting = false; }
   }
 
@@ -213,7 +218,7 @@ export struct SteamConfirmationsPage {
       await new SteamConfirmationHistoryRepository().clear(this.context(), this.tokenId);
       this.history = [];
       this.showToast(this.localized($r('app.string.confirm_history_cleared')));
-    } catch (error) { this.showToast((error as Error).message, 2800); }
+    } catch (error) { this.showToast(this.localizedError(error as Object), 2800); }
   }
 
   /** 为登录请求和移动确认提供一致的拒绝/批准按钮。 */

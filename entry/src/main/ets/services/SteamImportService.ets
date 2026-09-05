@@ -3,6 +3,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { SteamGuardMetadata } from '../domain/Token';
+import { AppError } from '../core/AppError';
 
 export interface SteamImportResult {
   metadata: SteamGuardMetadata;
@@ -17,7 +18,7 @@ export class SteamImportService {
   /** 解析文本并把不同 maFile 字段命名归一到应用模型。 */
   static parse(text: string): SteamImportResult {
     if (!text.trim()) {
-      throw new Error('Steam 导入内容为空');
+      throw new AppError('steam_import_error_empty', 'Steam import content is empty');
     }
     // SteamID 超过 JavaScript 安全整数范围；在 JSON.parse 前统一把常见别名的裸数字包成字符串。
     const normalized = text.replace(
@@ -28,7 +29,8 @@ export class SteamImportService {
       root = JSON.parse(normalized) as Record<string, Object>;
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`Steam 导入内容不是有效 JSON：${detail.message ?? '格式错误'}`);
+      throw new AppError('steam_import_error_json',
+        `Steam import content is not valid JSON: ${detail.message ?? 'invalid format'}`);
     }
     const source = SteamImportService.unwrap(root);
     const tokens = SteamImportService.record(source['tokens']);
@@ -43,13 +45,14 @@ export class SteamImportService {
     const deviceId = SteamImportService.first(source, ['device_id', 'deviceID', 'deviceId']);
 
     if (!/^\d{16,20}$/.test(steamId)) {
-      throw new Error('文件缺少有效的 steam_id');
+      throw new AppError('steam_import_error_id', 'File is missing a valid steam_id');
     }
     if (!sharedSecret || !identitySecret || !deviceId) {
-      throw new Error('文件缺少 shared_secret、identity_secret 或 device_id');
+      throw new AppError('steam_import_error_secrets',
+        'File is missing shared_secret, identity_secret, or device_id');
     }
     if (!accessToken && !refreshToken) {
-      throw new Error('文件至少需要 access_token 或 refresh_token');
+      throw new AppError('steam_import_error_session', 'File requires an access_token or refresh_token');
     }
     SteamImportService.requireBase64('shared_secret', sharedSecret);
     SteamImportService.requireBase64('identity_secret', identitySecret);
@@ -85,21 +88,21 @@ export class SteamImportService {
       return '';
     }
     let file: fs.File | undefined;
-    let failure: Error | undefined;
+    let failure: AppError | undefined;
     let content = '';
     try {
       file = fs.openSync(selected[0], fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
       if (size <= 0 || size > SteamImportService.MAX_FILE_SIZE) {
-        throw new Error('Steam 导入文件应小于 2 MB 且不能为空');
+        throw new AppError('steam_import_error_file_size', 'Steam import file must be non-empty and below 2 MB');
       }
       const data = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, data);
       content = new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));
     } catch (error) {
       const detail = error as BusinessError;
-      failure = new Error(detail.message?.startsWith('Steam 导入文件') ? detail.message :
-        `读取 Steam 导入文件失败：${detail.message ?? '未知错误'}`);
+      failure = error instanceof AppError ? error :
+        new AppError('steam_import_error_read', `Failed to read Steam import file: ${detail.message ?? 'unknown'}`);
     }
     if (file !== undefined) {
       try {
@@ -107,7 +110,8 @@ export class SteamImportService {
       } catch (error) {
         if (failure === undefined) {
           const detail = error as BusinessError;
-          failure = new Error(`关闭 Steam 导入文件失败：${detail.message ?? '未知错误'}`);
+          failure = new AppError('steam_import_error_close',
+            `Failed to close Steam import file: ${detail.message ?? 'unknown'}`);
         }
       }
     }
@@ -125,7 +129,8 @@ export class SteamImportService {
         return JSON.parse(nested) as Record<string, Object>;
       } catch (error) {
         const detail = error as BusinessError;
-        throw new Error(`Steam 嵌套数据不是有效 JSON：${detail.message ?? '格式错误'}`);
+        throw new AppError('steam_import_error_nested_json',
+          `Nested Steam data is not valid JSON: ${detail.message ?? 'invalid format'}`);
       }
     }
     return SteamImportService.record(nested, root);
@@ -156,7 +161,7 @@ export class SteamImportService {
     const paddingIndex = value.indexOf('=');
     const invalidPadding = paddingIndex >= 0 && value.length % 4 !== 0;
     if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value) || value.length % 4 === 1 || invalidPadding) {
-      throw new Error(`${field} 不是有效的 Base64 数据`);
+      throw new AppError('steam_import_error_base64', `${field} is not valid Base64 data`, [field]);
     }
   }
 }

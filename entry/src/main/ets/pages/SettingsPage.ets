@@ -65,6 +65,12 @@ export struct SettingsPage {
     return Localization.text(context, resource, args);
   }
 
+  /** 把结构化服务错误转换成当前语言，未知异常使用当前操作的通用提示。 */
+  private localizedError(error: Object, fallback: Resource): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.error(context, error, fallback);
+  }
+
   /** 根据活动键解析当前图标包名称，默认模式返回明确标签。 */
   private currentIconPackName(): string {
     if (this.activeIconPackKey === IconPackService.noPackKey()) {
@@ -82,7 +88,7 @@ export struct SettingsPage {
       this.activeIconPackKey = key;
       this.onActiveIconPackChanged(key);
     } catch (error) {
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_icon_pack_operation_failed')), 3000);
     }
   }
 
@@ -97,7 +103,7 @@ export struct SettingsPage {
         this.showToast(this.localized($r('app.string.settings_icon_packs_installed'), count), 2000);
       }
     } catch (error) {
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_icon_pack_operation_failed')), 3000);
     }
   }
 
@@ -128,7 +134,7 @@ export struct SettingsPage {
       this.onIconPacksChanged(this.iconPacks);
       this.showToast(this.localized($r('app.string.settings_icon_deleted')), 1800);
     } catch (error) {
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_icon_pack_operation_failed')), 3000);
     }
   }
 
@@ -152,7 +158,7 @@ export struct SettingsPage {
       this.backupMode = 2;
     } catch (error) {
       DiagnosticLogService.error('Backup', `Select import file failed: ${(error as Error).message}`);
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_backup_operation_failed')), 3000);
     }
   }
 
@@ -175,7 +181,7 @@ export struct SettingsPage {
     } catch (error) {
       this.backupBusy = false;
       DiagnosticLogService.error('Backup', `Export failed: ${(error as Error).message}`);
-      this.showToast((error as Error).message, 3200);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_backup_operation_failed')), 3200);
     }
   }
 
@@ -200,7 +206,7 @@ export struct SettingsPage {
     } catch (error) {
       this.backupBusy = false;
       DiagnosticLogService.error('Backup', `Restore failed: ${(error as Error).message}`);
-      this.showToast((error as Error).message, 3500);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_backup_operation_failed')), 3500);
     }
   }
 
@@ -238,7 +244,7 @@ export struct SettingsPage {
       } catch (rollbackError) {
         DiagnosticLogService.error('Privacy', `Failed to roll back screenshot protection: ${(rollbackError as Error).message}`);
       }
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_settings_operation_failed')), 3000);
     } finally {
       this.screenshotProtectionBusy = false;
     }
@@ -278,7 +284,7 @@ export struct SettingsPage {
       if (exported) this.showToast(this.localized($r('app.string.settings_logs_exported')), 2000);
     } catch (error) {
       DiagnosticLogService.error('Diagnostics', `Export failed: ${(error as Error).message}`);
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_log_operation_failed')), 3000);
     } finally {
       this.diagnosticLogBusy = false;
     }
@@ -303,7 +309,7 @@ export struct SettingsPage {
       this.showToast(this.localized($r('app.string.settings_logs_cleared')), 1800);
     } catch (error) {
       DiagnosticLogService.error('Diagnostics', `Clear failed: ${(error as Error).message}`);
-      this.showToast((error as Error).message, 3000);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_log_operation_failed')), 3000);
     } finally {
       this.diagnosticLogBusy = false;
     }

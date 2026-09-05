@@ -1,8 +1,17 @@
-/** 将 Steam EResult 转换为用户可理解、同时保留协议码的错误信息。 */
+import { AppError } from '../core/AppError';
+
+/** 将 Steam EResult 转换为稳定错误码，同时保留原始协议码供日志诊断。 */
 export class SteamResult {
-  /** 组合用户可理解的错误说明与原始 EResult，兼顾提示和日志诊断。 */
-  static message(code: string, action: string): string {
-    return `${action}：${SteamResult.description(code)}（EResult ${code}）`;
+  /** 构造可由 UI 按当前语言翻译的协议错误。 */
+  static error(code: string, action: string): AppError {
+    return new AppError(`steam_result_${SteamResult.knownCode(code) ? code : 'unknown'}`,
+      `${action}: ${SteamResult.description(code)} (EResult ${code})`, [code]);
+  }
+
+  /** 仅允许返回资源文件中已经声明的结果码，未知值统一走兜底资源。 */
+  private static knownCode(code: string): boolean {
+    return ['2', '5', '8', '10', '15', '16', '18', '20', '21', '25', '26', '27', '29',
+      '63', '65', '66', '71', '84', '85', '87', '88', '89', '92', '93', '94', '101', '118'].includes(code);
   }
 
   /** 将验证器场景中常见的 Steam EResult 映射为中文含义。 */

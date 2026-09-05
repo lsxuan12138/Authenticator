@@ -2,6 +2,7 @@ import { uri } from '@kit.ArkTS';
 import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from './Base32';
 import { TokenId } from './TokenId';
+import { AppError } from './AppError';
 
 /** 解析 otpauth://totp URI，并把外部参数收敛为应用内部的 StoredToken。 */
 export class OtpUriParser {
@@ -9,7 +10,7 @@ export class OtpUriParser {
   static parse(rawValue: string): StoredToken {
     const parsed = new uri.URI(rawValue.trim());
     if (parsed.scheme !== 'otpauth' || parsed.host !== 'totp') {
-      throw new Error('仅支持 otpauth://totp 格式');
+      throw new AppError('error_uri_totp_only', 'Only otpauth://totp URIs are supported');
     }
     const secret = Base32.normalize(parsed.getQueryValue('secret') ?? '');
     Base32.decode(secret);
@@ -24,17 +25,17 @@ export class OtpUriParser {
     const period = Number(periodValue);
     // URI 是密钥配置，不能静默截断或替换非法值，否则导入后会稳定地产生错误验证码。
     if (!Number.isInteger(period) || period < 1 || period > 300) {
-      throw new Error(`不支持的 OTP 刷新周期：${periodValue}`);
+      throw new AppError('error_uri_period_unsupported', `Unsupported OTP period: ${periodValue}`, [periodValue]);
     }
     if (issuer.trim().length === 0 || account.trim().length === 0) {
-      throw new Error('OTP URI 缺少服务名称或账户名称');
+      throw new AppError('error_uri_identity_missing', 'OTP URI is missing an issuer or account name');
     }
     // Steam 的标准迁移 URI 使用 5 位验证码；普通 TOTP 仅接受应用支持的 6/8 位。
     const digitsValue = parsed.getQueryValue('digits') ?? (kind === TokenKind.STEAM ? '5' : '6');
     const digits = Number(digitsValue);
     const digitsSupported = kind === TokenKind.STEAM ? digits === 5 : digits === 6 || digits === 8;
     if (!Number.isInteger(digits) || !digitsSupported) {
-      throw new Error(`不支持的 OTP 位数：${digitsValue}`);
+      throw new AppError('error_uri_digits_unsupported', `Unsupported OTP digits: ${digitsValue}`, [digitsValue]);
     }
     const algorithm = OtpUriParser.parseAlgorithm(parsed.getQueryValue('algorithm') ?? 'SHA1');
     return {
@@ -74,7 +75,9 @@ export class OtpUriParser {
     const normalized = value.trim().toUpperCase().replace(/[-_]/g, '');
     const algorithms: TokenAlgorithm[] = [TokenAlgorithm.SHA1, TokenAlgorithm.SHA256, TokenAlgorithm.SHA512];
     const matched = algorithms.find((item: TokenAlgorithm): boolean => item === normalized);
-    if (!matched) throw new Error(`不支持的 OTP 摘要算法：${value}`);
+    if (!matched) {
+      throw new AppError('error_uri_algorithm_unsupported', `Unsupported OTP digest algorithm: ${value}`, [value]);
+    }
     return matched;
   }
 }

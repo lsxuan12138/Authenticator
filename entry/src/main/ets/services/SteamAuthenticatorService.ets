@@ -9,6 +9,7 @@ import { SteamSessionService } from './SteamSessionService';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamWebApiClient } from './SteamWebApiClient';
 import { DiagnosticLogService } from './DiagnosticLogService';
+import { AppError } from '../core/AppError';
 
 export interface SteamAuthenticatorEnrollment {
   sharedSecret: Uint8Array;
@@ -62,7 +63,8 @@ export class SteamAuthenticatorService {
   async addAuthenticator(steamId: string, refreshToken: string,
     deviceId: string): Promise<SteamAuthenticatorEnrollment> {
     if (!steamId || !refreshToken || !deviceId) {
-      throw new Error('添加验证器需要 Steam ID、Refresh Token 和 Device ID');
+      throw new AppError('steam_error_authenticator_data_required',
+        'Adding an authenticator requires Steam ID, Refresh Token, and Device ID');
     }
     const accessToken = await this.accessToken(steamId, refreshToken);
     const payload = SteamProtocol.encodeAddAuthenticator(steamId, deviceId, await SteamTimeService.now());
@@ -70,16 +72,19 @@ export class SteamAuthenticatorService {
     try {
       bytes = await SteamWebApiClient.protobuf('TwoFactor', 'AddAuthenticator', payload, accessToken);
     } catch (error) {
-      const detail = error as Error;
-      if (detail.message.includes('EResult 29')) {
-        throw new Error('STEAM_GUARD_ALREADY_EXISTS');
+      if (error instanceof AppError) {
+        if (error.resourceName === 'steam_result_29') {
+          throw new AppError('steam_guard_already_exists', 'Steam Guard already exists');
+        }
+        throw error;
       }
-      throw new Error(detail.message);
+      throw new Error((error as Error).message);
     }
     const enrollment = SteamProtocol.decodeEnrollment(bytes);
     this.validateEnrollment(enrollment);
     if (enrollment.status !== 1) {
-      throw new Error(`Steam 未创建待激活验证器（status ${enrollment.status}）`);
+      throw new AppError('steam_error_authenticator_create_status',
+        `Steam did not create a pending authenticator (status ${enrollment.status})`, [enrollment.status]);
     }
     return this.enrollment(enrollment);
   }
@@ -107,14 +112,17 @@ export class SteamAuthenticatorService {
   async revokeAuthenticator(steamId: string, refreshToken: string,
     revocationCode: string): Promise<number> {
     if (!revocationCode.trim()) {
-      throw new Error('当前 Token 没有撤销码，无法撤销 Steam 验证器');
+      throw new AppError('steam_error_revocation_code_missing',
+        'The token has no revocation code; the Steam authenticator cannot be revoked');
     }
     const accessToken = await this.accessToken(steamId, refreshToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticator',
       SteamProtocol.encodeRemoveAuthenticator(revocationCode.trim()), accessToken);
     const result = SteamProtocol.decodeRemoveAuthenticator(bytes);
     if (!result.success) {
-      throw new Error(`Steam 未撤销验证器（剩余尝试次数：${result.revocationAttemptsRemaining}）`);
+      throw new AppError('steam_error_revoke_failed',
+        `Steam did not revoke the authenticator; attempts remaining=${result.revocationAttemptsRemaining}`,
+        [result.revocationAttemptsRemaining]);
     }
     return result.revocationAttemptsRemaining;
   }
@@ -130,7 +138,7 @@ export class SteamAuthenticatorService {
         'Challenge start returned an empty protobuf body; accepted because EResult indicates success');
     }
     if (!SteamProtocol.decodeBeginTransfer(bytes)) {
-      throw new Error('Steam 未允许转移当前验证器');
+      throw new AppError('steam_error_transfer_denied', 'Steam did not allow the authenticator transfer');
     }
   }
 
@@ -138,7 +146,7 @@ export class SteamAuthenticatorService {
   async completeTransfer(steamId: string, refreshToken: string,
     smsCode: string): Promise<SteamAuthenticatorEnrollment> {
     if (!smsCode.trim()) {
-      throw new Error('请输入短信验证码');
+      throw new AppError('steam_error_sms_required', 'An SMS verification code is required');
     }
     const accessToken = await this.accessToken(steamId, refreshToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticatorViaChallengeContinue',
@@ -157,7 +165,8 @@ export class SteamAuthenticatorService {
   private validateEnrollment(enrollment: SteamAuthenticatorEnrollmentData): void {
     if (enrollment.sharedSecret.length === 0 || enrollment.identitySecret.length === 0 ||
       !enrollment.uri || !enrollment.revocationCode) {
-      throw new Error(`Steam 未返回完整 Authenticator 信息（status ${enrollment.status}）`);
+      throw new AppError('steam_error_incomplete_authenticator',
+        `Steam returned incomplete authenticator data (status ${enrollment.status})`, [enrollment.status]);
     }
   }
 

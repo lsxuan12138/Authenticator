@@ -1,4 +1,5 @@
 import { common } from '@kit.AbilityKit';
+import { AppError } from './AppError';
 
 /**
  * 为对话框、Toast 和状态字符串读取本地化资源。
@@ -12,5 +13,20 @@ export class Localization {
     } catch (_) {
       return fallback;
     }
+  }
+
+  /**
+   * 将结构化业务错误转换成当前系统语言；未知异常只显示调用方提供的通用文案。
+   * 原始 error.message 应另外写入诊断日志，不直接暴露给界面。
+   */
+  static error(context: common.Context, error: Object, fallback: Resource): string {
+    if (error instanceof AppError) {
+      try {
+        return context.resourceManager.getStringByNameSync(error.resourceName, ...error.resourceArgs);
+      } catch (_) {
+        return error.message;
+      }
+    }
+    return Localization.text(context, fallback);
   }
 }

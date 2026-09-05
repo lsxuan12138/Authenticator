@@ -62,8 +62,8 @@ struct IconPickerPage {
       this.tokens = next;
       AppRouter.pop();
     } catch (error) {
-      this.showToast(Localization.text(context, $r('app.string.error_icon_save_failed'),
-        [(error as Error).message]), 3000);
+      this.showToast(Localization.error(context, error as Object,
+        $r('app.string.error_icon_pack_operation_failed')), 3000);
     }
   }
 

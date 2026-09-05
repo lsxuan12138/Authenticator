@@ -105,6 +105,12 @@ export struct TokenDetailPage {
     return Localization.text(context, resource, args);
   }
 
+  /** 将服务错误转换为当前语言；原始异常仅保留在诊断日志中。 */
+  private localizedError(error: Object, fallback: Resource): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.error(context, error, fallback);
+  }
+
   /** 汇总 Steam 联网字段完整度，提示确认和扫码功能是否可用。 */
   private steamMetadataSummary(): string {
     const metadata = this.currentToken()?.steam;
@@ -182,7 +188,7 @@ export struct TokenDetailPage {
       this.tokens = next;
       this.onClose();
     } catch (error) {
-      this.errorMessage = (error as Error).message;
+      this.errorMessage = this.localizedError(error as Object, $r('app.string.error_token_save_failed'));
     }
   }
 
@@ -263,7 +269,8 @@ export struct TokenDetailPage {
       if (detail.code === 1000500002) {
         return;
       }
-      this.showToast(detail.message ?? `${error}`, 3500);
+      DiagnosticLogService.warn('SteamQrLogin', `QR operation failed: ${detail.message ?? `${error}`}`);
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_steam_operation_failed')), 3500);
     } finally {
       this.steamQrLoading = false;
     }

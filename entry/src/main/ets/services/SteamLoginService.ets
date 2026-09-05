@@ -1,4 +1,5 @@
 import { BusinessError } from '@kit.BasicServicesKit';
+import { AppError } from '../core/AppError';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { util } from '@kit.ArkTS';
 import {
@@ -29,7 +30,7 @@ export class SteamLoginCancellation {
   /** 在异步阶段切换点把取消状态转换为可被页面处理的异常。 */
   throwIfCancelled(): void {
     if (this.cancelled) {
-      throw new Error('Steam 登录已取消');
+      throw new AppError('steam_error_login_cancelled', 'Steam sign-in was cancelled');
     }
   }
 }
@@ -66,11 +67,13 @@ export class SteamLoginService {
     cancellation.throwIfCancelled();
     // 重新认证页面允许密码保险箱填写账号；必须阻止误选其他账户后覆盖当前 Token 的会话。
     if (expectedSteamId.length > 0 && session.steamId.toString() !== expectedSteamId) {
-      throw new Error('密码保险箱填写的账户与当前 Steam Token 不一致');
+      throw new AppError('steam_error_account_mismatch',
+        'The account supplied by Password Vault does not match the current Steam token');
     }
     const confirmation = SteamLoginService.preferredConfirmation(session);
     if (!confirmation) {
-      throw new Error('Steam 没有返回本应用支持的登录确认方式');
+      throw new AppError('steam_error_confirmation_unavailable',
+        'Steam did not return a supported sign-in confirmation method');
     }
     switch (confirmation.type) {
       case SteamGuardType.NONE:
@@ -83,20 +86,22 @@ export class SteamLoginService {
         await this.submitGuardCode(session, SteamGuardType.DEVICE_CODE, guardCode);
         return this.pollUntilComplete(session, cancellation);
       case SteamGuardType.EMAIL_CODE:
-        throw new Error('本次登录需要邮箱验证码，请从“添加 Steam Guard”流程重新登录');
+        throw new AppError('steam_error_email_code_add_flow',
+          'This sign-in requires an email code; use the Add Steam Guard flow');
       default:
-        throw new Error(`暂不支持 Steam 登录确认方式 ${confirmation.type}`);
+        throw new AppError('steam_error_confirmation_unsupported',
+          `Unsupported Steam sign-in confirmation method ${confirmation.type}`, [confirmation.type]);
     }
   }
 
   /** 获取临时 RSA 公钥、加密密码并创建凭据登录会话。 */
   async beginSession(account: string, password: string, guardData: string = ''): Promise<SteamAuthSession> {
     if (!account.trim() || !password) {
-      throw new Error('请输入 Steam 账户名和密码');
+      throw new AppError('steam_error_credentials_required', 'Steam account name and password are required');
     }
     const publicKey = await this.getRsaPublicKey(account.trim());
     if (!publicKey.modulus || !publicKey.exponent || !publicKey.timestamp) {
-      throw new Error('Steam 未返回完整 RSA 公钥');
+      throw new AppError('steam_error_rsa_key_incomplete', 'Steam returned an incomplete RSA public key');
     }
     const encryptedPassword = this.encryptPassword(publicKey, password);
     const beginBytes = await SteamWebApiClient.protobuf('Authentication', 'BeginAuthSessionViaCredentials',
@@ -104,7 +109,8 @@ export class SteamLoginService {
     const session = SteamProtocol.decodeBeginSession(beginBytes);
     if (session.clientId.toString() === '0' || session.steamId.toString() === '0' ||
       session.requestId.length === 0) {
-      throw new Error(session.extendedErrorMessage || 'Steam 未返回有效登录会话');
+      throw new AppError('steam_error_session_invalid',
+        session.extendedErrorMessage || 'Steam did not return a valid sign-in session');
     }
     return session;
   }
@@ -116,7 +122,7 @@ export class SteamLoginService {
     const root = await SteamWebApiClient.getJson('获取 RSA 公钥', url);
     const value: Object | undefined = root['response'];
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      throw new Error('Steam 未返回 RSA 公钥响应');
+      throw new AppError('steam_error_rsa_response_missing', 'Steam did not return an RSA public key response');
     }
     const response = value as Record<string, Object>;
     return {
@@ -129,13 +135,14 @@ export class SteamLoginService {
   /** 向已有登录会话提交邮箱码或 Steam Guard 五位码。 */
   async submitGuardCode(session: SteamAuthSession, codeType: SteamGuardType, code: string): Promise<void> {
     if (!code.trim()) {
-      throw new Error('请输入 Steam 验证码');
+      throw new AppError('steam_error_code_required', 'A Steam verification code is required');
     }
     const response = await SteamWebApiClient.protobuf('Authentication', 'UpdateAuthSessionWithSteamGuardCode',
       SteamProtocol.encodeGuardCode(session, codeType, code.trim()), '', ['1', 'OK', '29']);
     const agreementUrl = SteamProtocol.decodeGuardCodeResponse(response);
     if (agreementUrl.length > 0) {
-      throw new Error('Steam 要求先同意最新用户协议，请在 Steam 官方客户端中完成后重试');
+      throw new AppError('steam_error_agreement_required',
+        'Steam requires the latest subscriber agreement to be accepted first');
     }
   }
 
@@ -161,7 +168,7 @@ export class SteamLoginService {
         await this.delay(Math.min(intervalMs, remaining));
       }
     }
-    throw new Error('等待 Steam 登录确认超时，请重新发起登录');
+    throw new AppError('steam_error_login_timeout', 'Timed out waiting for Steam sign-in confirmation');
   }
 
   /** 轮询一次会话状态；尚未签发令牌时返回 null。 */
@@ -173,7 +180,8 @@ export class SteamLoginService {
       session.clientId = result.newClientId;
     }
     if (result.tokens.agreementSessionUrl.length > 0 && result.tokens.refreshToken.length === 0) {
-      throw new Error('Steam 要求先同意最新用户协议，请在 Steam 官方客户端中完成后重试');
+      throw new AppError('steam_error_agreement_required',
+        'Steam requires the latest subscriber agreement to be accepted first');
     }
     return result.tokens.refreshToken.length > 0 ? result.tokens : null;
   }
@@ -199,7 +207,8 @@ export class SteamLoginService {
       return new util.Base64Helper().encodeToStringSync(encrypted.data, util.Type.BASIC);
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`加密 Steam 登录密码失败：${detail.message ?? 'RSA 公钥无效'}`);
+      throw new AppError('steam_error_password_encryption',
+        `Failed to encrypt Steam sign-in password: ${detail.message ?? 'invalid RSA public key'}`);
     }
   }
 

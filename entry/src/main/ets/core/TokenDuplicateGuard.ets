@@ -1,5 +1,6 @@
 import { StoredToken, TokenAlgorithm } from '../domain/Token';
 import { Base32 } from './Base32';
+import { AppError } from './AppError';
 
 /**
  * UUID 表示本地记录身份；配置重复检查则比较用户实际导入的 OTP 参数。
@@ -20,7 +21,9 @@ export class TokenDuplicateGuard {
   /** 在所有新增和恢复入口提交前阻止重复配置进入仓库。 */
   static assertCanAdd(tokens: StoredToken[], candidate: StoredToken): void {
     if (tokens.some((token: StoredToken) => TokenDuplicateGuard.isSameConfiguration(token, candidate))) {
-      throw new Error(`Token 已存在：${candidate.issuer} · ${candidate.account}`);
+      throw new AppError('error_token_duplicate',
+        `Token already exists: ${candidate.issuer} · ${candidate.account}`,
+        [candidate.issuer, candidate.account]);
     }
   }
 }
