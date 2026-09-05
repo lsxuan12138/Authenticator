@@ -14,6 +14,7 @@ import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamProfile, SteamProfileService } from '../services/SteamProfileService';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
+import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 
 /** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
 @Builder
@@ -219,6 +220,8 @@ export struct SteamManagementPage {
       };
       const updated = this.tokenWithSteam(token, steam);
       const next = this.tokens.map((item: StoredToken): StoredToken => item.id === token.id ? updated : item);
+      // 完整重新认证成功后主动请求保存；不需要重新添加或迁移验证器即可建立密码保险箱记录。
+      PasswordAutoFillService.requestSave(this.getUIContext(), 'Steam reauthentication');
       this.steamLoginPassword = '';
       if (await this.persistRemoteSession(next, session.accessToken)) {
         this.showToast('Steam 会话已重新认证并更新', 2200);
@@ -597,6 +600,16 @@ export struct SteamManagementPage {
               .onChange((value: string) => this.steamId = value)
             TextInput({ placeholder: 'Device ID', text: this.steamDeviceId })
               .onChange((value: string) => this.steamDeviceId = value)
+            Text('Revocation Code').fontSize(13).fontColor($r('app.color.text_tertiary')).width('100%')
+            TextInput({
+              placeholder: 'Not configured',
+              text: this.currentToken()?.steam?.revocationCode ?? ''
+            })
+              // Steam 下发的撤销码只能通过登录/迁移或 maFile 导入更新，高级修复仅供核对。
+              .enabled(false)
+              .enableAutoFill(false)
+              .fontColor($r('app.color.text_secondary'))
+              .opacity(1)
             Row({ space: 10 }) {
               Button('取消').layoutWeight(1)
                 .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
@@ -619,7 +632,7 @@ export struct SteamManagementPage {
             Text(`兼容登录数据（Guard Data）：${this.configuredStatus(
               this.currentToken()?.steam?.guardData ?? '')}`)
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`撤销码：${this.configuredStatus(this.currentToken()?.steam?.revocationCode ?? '')}`)
+            Text(`Revocation Code：${this.configuredStatus(this.currentToken()?.steam?.revocationCode ?? '')}`)
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
             Button('高级修复').width('100%')
               .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.warning'))

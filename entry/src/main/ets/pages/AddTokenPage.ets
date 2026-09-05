@@ -14,6 +14,7 @@ import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamVerificationStep } from '../components/SteamVerificationStep';
+import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -201,6 +202,8 @@ export struct AddTokenPage {
       const service = new SteamLoginService();
       const session = await service.beginSession(this.steamAddAccount.trim(), this.steamAddPassword);
       cancellation.throwIfCancelled();
+      // Steam 已接受账号密码；当前输入框尚在组件树中，主动触发保存以适配后续验证码分步页面。
+      PasswordAutoFillService.requestSave(this.getUIContext(), 'Steam add login');
       this.steamAddPassword = '';
       this.steamAddSession = session;
       const confirmation = this.supportedSteamConfirmation(session);
