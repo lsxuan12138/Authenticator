@@ -53,8 +53,10 @@ export class SteamWebApiClient {
         readTimeout: SteamWebApiClient.TIMEOUT
       });
       const eResult = SteamWebApiClient.eResult(response.header);
-      SteamWebApiClient.validate(service, method, response.responseCode, eResult, acceptedResults, true);
-      return new Uint8Array(response.result as ArrayBuffer);
+      const bytes = new Uint8Array(response.result as ArrayBuffer);
+      SteamWebApiClient.validate(service, method, response.responseCode, eResult, acceptedResults, true,
+        bytes.length);
+      return bytes;
     } catch (error) {
       throw SteamWebApiClient.requestError(`${service}.${method}`, error as Object);
     } finally {
@@ -88,8 +90,10 @@ export class SteamWebApiClient {
         readTimeout: SteamWebApiClient.TIMEOUT
       });
       const eResult = SteamWebApiClient.eResult(response.header);
-      SteamWebApiClient.validate(service, method, response.responseCode, eResult, acceptedResults, true);
-      return new Uint8Array(response.result as ArrayBuffer);
+      const bytes = new Uint8Array(response.result as ArrayBuffer);
+      SteamWebApiClient.validate(service, method, response.responseCode, eResult, acceptedResults, true,
+        bytes.length);
+      return bytes;
     } catch (error) {
       throw SteamWebApiClient.requestError(`${service}.${method}`, error as Object);
     } finally {
@@ -172,9 +176,10 @@ export class SteamWebApiClient {
 
   /** 同时验证 HTTP 和 Steam EResult，错误中保留原始协议码。 */
   private static validate(service: string, method: string, responseCode: number, eResult: string,
-    acceptedResults: string[], requireEResult: boolean): void {
+    acceptedResults: string[], requireEResult: boolean, protobufBytes: number = -1): void {
+    const size = protobufBytes >= 0 ? `, ProtobufBytes=${protobufBytes}` : '';
     DiagnosticLogService.info('SteamWebApi',
-      `${service}.${method} response: HTTP=${responseCode}, EResult=${eResult || 'missing'}`);
+      `${service}.${method} response: HTTP=${responseCode}, EResult=${eResult || 'missing'}${size}`);
     if (responseCode < 200 || responseCode >= 300) {
       throw new Error(`Steam ${method} 请求失败（HTTP ${responseCode}）`);
     }

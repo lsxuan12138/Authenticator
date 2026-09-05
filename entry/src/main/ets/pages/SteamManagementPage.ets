@@ -45,6 +45,7 @@ export struct SteamManagementPage {
   @State private steamAccessToken: string = '';
   @State private steamDeviceId: string = '';
   @State private steamJsonText: string = '';
+  @State private steamLoginAccount: string = '';
   @State private steamLoginPassword: string = '';
   @State private steamSessionLoading: boolean = false;
   @State private steamSessionStatus: string = '';
@@ -91,6 +92,7 @@ export struct SteamManagementPage {
     this.steamId = metadata?.steamId ?? '';
     this.steamAccessToken = metadata?.accessToken ?? '';
     this.steamDeviceId = metadata?.deviceId ?? '';
+    this.steamLoginAccount = metadata?.accountName || this.currentToken()?.account || '';
   }
 
   /** 显示 Steam 管理操作结果，Toast 失败时写诊断日志。 */
@@ -177,7 +179,7 @@ export struct SteamManagementPage {
   /** 使用密码和当前五位码重新认证；已有 Guard Data 时仅作为兼容字段一并提交。 */
   private async reauthenticateSteam(): Promise<void> {
     const token = this.currentToken();
-    if (!token || !this.steamLoginPassword) {
+    if (!token || !this.steamLoginAccount.trim() || !this.steamLoginPassword) {
       return;
     }
     this.steamSessionLoading = true;
@@ -187,9 +189,9 @@ export struct SteamManagementPage {
     this.steamLoginCancellation = cancellation;
     try {
       const code = OtpEngine.generate(token).value;
-      const loginAccount = token.steam?.accountName || token.account;
       const session = await new SteamLoginService().refreshSession(
-        loginAccount, this.steamLoginPassword, code, token.steam?.guardData ?? '', cancellation,
+        this.steamLoginAccount.trim(), this.steamLoginPassword, code, token.steam?.guardData ?? '', cancellation,
+        token.steam?.steamId ?? '',
         (type: number): void => {
           if (type === SteamGuardType.DEVICE_CONFIRMATION) {
             this.steamSessionStatus = '请在已登录的 Steam 手机应用中批准登录，应用会自动继续';
@@ -487,10 +489,15 @@ export struct SteamManagementPage {
           Text('重新认证').fontSize(17).fontWeight(FontWeight.Bold).width('100%')
           Text('密码只用于本次登录，不会保存；Steam Guard 验证码由当前 Token 自动提交。如果 Steam 返回可选的 Guard Data，应用会加密保存以兼容后续登录。')
             .fontSize(13).fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
+          TextInput({ placeholder: 'Steam 账户名', text: this.steamLoginAccount })
+            .type(InputType.USER_NAME).contentType(ContentType.USER_NAME).enableAutoFill(true)
+            .onChange((value: string) => this.steamLoginAccount = value.trim())
           TextInput({ placeholder: 'Steam 账户密码', text: this.steamLoginPassword }).type(InputType.Password)
+            .contentType(ContentType.PASSWORD).enableAutoFill(true)
             .onChange((value: string) => this.steamLoginPassword = value)
           Button(this.steamSessionLoading ? '正在登录…' : '重新登录并更新会话')
-            .width('100%').enabled(!this.steamSessionLoading && this.steamLoginPassword.length > 0)
+            .width('100%').enabled(!this.steamSessionLoading && this.steamLoginAccount.trim().length > 0 &&
+              this.steamLoginPassword.length > 0)
             .backgroundColor($r('app.color.brand_strong')).onClick(() => this.reauthenticateSteam())
           if (this.steamSessionLoading) {
             Button('取消登录').width('100%')

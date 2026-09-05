@@ -8,6 +8,7 @@ import {
 import { SteamSessionService } from './SteamSessionService';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamWebApiClient } from './SteamWebApiClient';
+import { DiagnosticLogService } from './DiagnosticLogService';
 
 export interface SteamAuthenticatorEnrollment {
   sharedSecret: Uint8Array;
@@ -123,6 +124,11 @@ export class SteamAuthenticatorService {
     const accessToken = await this.accessToken(steamId, refreshToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticatorViaChallengeStart',
       SteamProtocol.encodeBeginTransfer(), accessToken);
+    if (bytes.length === 0) {
+      // x-eresult 已由统一网络层校验；记录此兼容路径，便于从用户导出的日志确认实际响应形态。
+      DiagnosticLogService.info('SteamTransfer',
+        'Challenge start returned an empty protobuf body; accepted because EResult indicates success');
+    }
     if (!SteamProtocol.decodeBeginTransfer(bytes)) {
       throw new Error('Steam 未允许转移当前验证器');
     }

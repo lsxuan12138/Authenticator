@@ -469,6 +469,11 @@ export class SteamProtocol {
   /** 解码 Steam 是否接受转移开始请求。 */
   static decodeBeginTransfer(data: Uint8Array): boolean {
     try {
+      // 该接口在部分 Steam 节点只通过 x-eresult=1 表示成功，响应体可能是合法的空 protobuf。
+      // 空消息不能按生成类中 success 的默认 false 处理，否则 UI 会停留在转移确认步骤并诱发重复请求。
+      if (data.length === 0) {
+        return true;
+      }
       return CTwoFactor_RemoveAuthenticatorViaChallengeStart_Response.decode(data).success;
     } catch (error) {
       throw SteamProtocol.decodeError('验证器转移响应', error as Object);

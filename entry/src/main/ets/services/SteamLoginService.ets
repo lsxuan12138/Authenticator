@@ -60,9 +60,14 @@ export class SteamLoginService {
   /** 使用当前五位码重新建立持久会话；仅在已有 Guard Data 时附带该兼容字段。 */
   async refreshSession(account: string, password: string, guardCode: string, guardData: string,
     cancellation: SteamLoginCancellation,
+    expectedSteamId: string = '',
     onWaiting: (type: number) => void = (_type: number): void => {}): Promise<SteamSessionTokens> {
     const session = await this.beginSession(account, password, guardData);
     cancellation.throwIfCancelled();
+    // 重新认证页面允许密码保险箱填写账号；必须阻止误选其他账户后覆盖当前 Token 的会话。
+    if (expectedSteamId.length > 0 && session.steamId.toString() !== expectedSteamId) {
+      throw new Error('密码保险箱填写的账户与当前 Steam Token 不一致');
+    }
     const confirmation = SteamLoginService.preferredConfirmation(session);
     if (!confirmation) {
       throw new Error('Steam 没有返回本应用支持的登录确认方式');

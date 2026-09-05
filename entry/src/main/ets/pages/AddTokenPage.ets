@@ -334,9 +334,12 @@ export struct AddTokenPage {
         this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken);
       this.steamAddActivationCode = '';
       this.steamAddStep = 4;
-      this.steamAddStatus = 'Steam 已向账户绑定的手机号发送验证码，请输入短信验证码完成转移';
+      this.steamAddStatus =
+        'Steam 已受理迁移请求。恢复通知邮件不是验证码，请等待账户绑定手机号收到的短信验证码，再完成转移。';
     } catch (error) {
-      this.steamAddStatus = (error as Error).message;
+      const message = (error as Error).message;
+      DiagnosticLogService.warn('SteamTransfer', `Transfer challenge start failed: ${message}`);
+      this.steamAddStatus = message;
     } finally {
       this.steamAddBusy = false;
     }
@@ -354,11 +357,13 @@ export struct AddTokenPage {
     this.steamAddBusy = true;
     this.steamAddStatus = '正在转移 Steam Guard…';
     try {
-      const enrollment = await new SteamAuthenticatorService().completeTransfer(
+      const service = new SteamAuthenticatorService();
+      const enrollment = await service.completeTransfer(
         this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken,
         this.steamAddActivationCode.trim());
-      // 转移前已为本次安装生成 android:<UUID>；继续沿用该值，避免多个账户共享固定 Device ID。
-      await this.saveSteamEnrollment(enrollment, 'Steam Guard 已转移并添加');
+      // 迁移协议没有上传或返回 Device ID；以迁移后的服务端状态为准，查询失败时才退回本地 UUID。
+      const deviceId = await this.transferredDeviceId(service);
+      await this.saveSteamEnrollment(enrollment, 'Steam Guard 已转移并添加', deviceId);
     } catch (error) {
       this.steamAddStatus = (error as Error).message;
     } finally {
@@ -366,8 +371,35 @@ export struct AddTokenPage {
     }
   }
 
+  /**
+   * 查询迁移后 Steam 实际登记的 Device ID。
+   * QueryStatus 不是迁移是否成功的判据，因此异常只写日志，并安全退回流程开始时生成的本地 UUID。
+   */
+  private async transferredDeviceId(service: SteamAuthenticatorService): Promise<string> {
+    if (!this.steamAddSession || !this.steamAddTokens) {
+      return this.steamAddDeviceId;
+    }
+    try {
+      const status = await service.queryAuthenticatorStatus(
+        this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken);
+      const serverDeviceId = status.deviceIdentifier.trim();
+      if (serverDeviceId.length > 0) {
+        DiagnosticLogService.info('SteamTransfer', 'Using Device ID returned by post-transfer QueryStatus');
+        return serverDeviceId;
+      }
+      DiagnosticLogService.warn('SteamTransfer',
+        'Post-transfer QueryStatus returned an empty Device ID; using the locally generated fallback');
+    } catch (error) {
+      // 密钥已经由转移接口下发，不能因为辅助状态查询失败而把远端成功显示为迁移失败。
+      DiagnosticLogService.warn('SteamTransfer',
+        `Post-transfer Device ID lookup failed; using local fallback: ${(error as Error).message}`);
+    }
+    return this.steamAddDeviceId;
+  }
+
   /** 将已激活/转移的密钥与会话元信息组装为 Token，再走统一去重提交。 */
-  private async saveSteamEnrollment(enrollment: SteamAuthenticatorEnrollment, message: string): Promise<void> {
+  private async saveSteamEnrollment(enrollment: SteamAuthenticatorEnrollment, message: string,
+    deviceId: string = this.steamAddDeviceId): Promise<void> {
     if (!this.steamAddSession || !this.steamAddTokens) {
       return;
     }
@@ -388,7 +420,7 @@ export struct AddTokenPage {
         steamId: this.steamAddSession.steamId.toString(),
         accountName: accountName,
         identitySecret: base64.encodeToStringSync(enrollment.identitySecret, util.Type.BASIC),
-        deviceId: this.steamAddDeviceId,
+        deviceId: deviceId,
         accessToken: this.steamAddTokens.accessToken,
         refreshToken: this.steamAddTokens.refreshToken,
         guardData: this.steamAddTokens.guardData,
@@ -668,8 +700,14 @@ export struct AddTokenPage {
           }
           if (this.steamAddStep === 0) {
             TextInput({ placeholder: 'Steam 账户名', text: this.steamAddAccount })
+              // USER_NAME + Password 必须同时存在，密码保险箱才能把这组输入框识别为登录表单。
+              .type(InputType.USER_NAME)
+              .contentType(ContentType.USER_NAME)
+              .enableAutoFill(true)
               .onChange((value: string) => this.steamAddAccount = value.trim())
             TextInput({ placeholder: 'Steam 密码', text: this.steamAddPassword }).type(InputType.Password)
+              .contentType(ContentType.PASSWORD)
+              .enableAutoFill(true)
               .onChange((value: string) => this.steamAddPassword = value)
             Button(this.steamAddBusy ? '正在登录…' : '登录 Steam')
               .width('100%')
@@ -738,6 +776,18 @@ export struct AddTokenPage {
               .backgroundColor($r('app.color.danger'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.beginSteamTransfer())
+            Button('已有短信验证码，直接继续')
+              .width('100%')
+              .height(42)
+              .backgroundColor($r('app.color.surface_control'))
+              .fontColor($r('app.color.text_secondary'))
+              .enabled(!this.steamAddBusy)
+              .onClick(() => {
+                // 允许应用重启后继续服务端已开始的迁移，避免重复发送恢复请求并触发限流。
+                this.steamAddActivationCode = '';
+                this.steamAddStep = 4;
+                this.steamAddStatus = '请输入此前收到的 Steam 迁移短信验证码';
+              })
             Button('取消并重新登录')
               .width('100%')
               .height(42)
