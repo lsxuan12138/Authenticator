@@ -1,7 +1,7 @@
 import { BusinessError } from '@kit.BasicServicesKit';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { util } from '@kit.ArkTS';
-import { SteamSessionService } from './SteamSessionService';
+import { SteamSessionService, SteamTokenLifetime } from './SteamSessionService';
 import { SteamHttpHeaders, SteamWebApiClient } from './SteamWebApiClient';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamProtocol, SteamQrSessionInfoData } from './SteamProtocol';
@@ -54,9 +54,9 @@ export interface SteamPendingLoginResult {
 
 /** Steam 移动确认和扫码登录服务；会话与 HTTP 均复用统一底层。 */
 export class SteamGuardService {
-  /** 为页面生成人类可读的 Access Token 有效期说明。 */
-  static tokenStatus(token: string): string {
-    return SteamSessionService.tokenStatus(token);
+  /** 返回令牌有效期的结构化数据，避免服务层固定使用某一种界面语言。 */
+  static tokenLifetime(token: string): SteamTokenLifetime {
+    return SteamSessionService.tokenLifetime(token);
   }
 
   /** 显式更新会话时允许 Steam 一并轮换 Refresh Token。 */

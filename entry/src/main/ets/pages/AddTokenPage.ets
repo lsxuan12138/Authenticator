@@ -15,6 +15,7 @@ import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamVerificationStep } from '../components/SteamVerificationStep';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
+import { Localization } from '../core/Localization';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -78,6 +79,12 @@ export struct AddTokenPage {
       DiagnosticLogService.error('AddToken', `Failed to show toast: ${detail.message ?? message}`);
     }
   }
+
+  /** 为登录状态、校验错误等必须保存为 string 的内容读取当前语言资源。 */
+  private localized(resource: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.text(context, resource, args);
+  }
   /** 清空所有普通和 Steam 添加表单，供成功提交后复用。 */
   private resetForm(): void {
     this.issuer = '';
@@ -109,12 +116,12 @@ export struct AddTokenPage {
       const normalized = Base32.normalize(this.secret);
       Base32.decode(normalized);
       if (this.issuer.trim().length === 0 || this.account.trim().length === 0) {
-        throw new Error('请填写服务名称和账户');
+        throw new Error(this.localized($r('app.string.error_issuer_account_required')));
       }
       const isSteam = this.issuer.trim().toLowerCase() === 'steam';
       const parsedPeriod = Number.parseInt(this.periodValue);
       if (!isSteam && (Number.isNaN(parsedPeriod) || parsedPeriod < 1 || parsedPeriod > 300)) {
-        throw new Error('刷新周期必须是 1 到 300 秒之间的整数');
+        throw new Error(this.localized($r('app.string.error_period')));
       }
       const token: StoredToken = {
         id: OtpUriParser.createId(),
@@ -165,7 +172,7 @@ export struct AddTokenPage {
   /** 响应用户取消按钮，在下一个安全检查点停止登录。 */
   private cancelSteamLogin(): void {
     this.steamLoginCancellation?.cancel();
-    this.steamAddStatus = '正在取消 Steam 登录…';
+    this.steamAddStatus = this.localized($r('app.string.steam_login_canceling'));
   }
 
   /** 从服务端允许列表中选择当前 UI 能处理的第一种验证方式。 */
@@ -177,26 +184,26 @@ export struct AddTokenPage {
   private steamConfirmationPrompt(): string {
     switch (this.steamAddConfirmationType) {
       case SteamGuardType.EMAIL_CODE:
-        return '请输入 Steam 发送到邮箱的验证码';
+        return this.localized($r('app.string.steam_prompt_email'));
       case SteamGuardType.DEVICE_CODE:
-        return '请输入当前 Steam Guard 生成的五位验证码';
+        return this.localized($r('app.string.steam_prompt_device_code'));
       case SteamGuardType.DEVICE_CONFIRMATION:
-        return '请先在当前 Steam 手机应用中批准登录，然后返回继续';
+        return this.localized($r('app.string.steam_prompt_device_confirmation'));
       case SteamGuardType.EMAIL_CONFIRMATION:
-        return '请先点击 Steam 邮件中的确认链接，然后返回继续';
+        return this.localized($r('app.string.steam_prompt_email_confirmation'));
       default:
-        return '完成 Steam 要求的身份验证后继续';
+        return this.localized($r('app.string.steam_prompt_other'));
     }
   }
 
   /** 使用账号密码创建 Steam 会话，并进入代码输入或自动轮询步骤。 */
   private async startSteamAddLogin(): Promise<void> {
     if (!this.steamAddAccount.trim() || !this.steamAddPassword) {
-      this.steamAddStatus = '请输入 Steam 账户名和密码';
+      this.steamAddStatus = this.localized($r('app.string.steam_enter_credentials'));
       return;
     }
     this.steamAddBusy = true;
-    this.steamAddStatus = '正在创建 Steam 登录会话…';
+    this.steamAddStatus = this.localized($r('app.string.steam_creating_session'));
     const cancellation = this.newSteamLoginCancellation();
     try {
       const service = new SteamLoginService();
@@ -238,7 +245,7 @@ export struct AddTokenPage {
       return;
     }
     this.steamAddBusy = true;
-    this.steamAddStatus = '正在完成 Steam 登录…';
+    this.steamAddStatus = this.localized($r('app.string.steam_finishing_login'));
     const cancellation = this.steamLoginCancellation ?? this.newSteamLoginCancellation();
     try {
       const service = new SteamLoginService();
@@ -261,7 +268,7 @@ export struct AddTokenPage {
   private async startSteamAuthenticator(session: SteamAuthSession, tokens: SteamSessionTokens): Promise<void> {
     this.steamAddTokens = tokens;
     this.steamAddDeviceId = `android:${util.generateRandomUUID()}`;
-    this.steamAddStatus = '登录成功，正在请求添加 Steam Guard…';
+    this.steamAddStatus = this.localized($r('app.string.steam_requesting_guard'));
     let enrollment: SteamAuthenticatorEnrollment;
     try {
       enrollment = await new SteamAuthenticatorService().addAuthenticator(
@@ -269,7 +276,7 @@ export struct AddTokenPage {
     } catch (error) {
       if ((error as Error).message === 'STEAM_GUARD_ALREADY_EXISTS') {
         this.steamAddStep = 3;
-        this.steamAddStatus = '该账户已经绑定移动 Steam Guard。继续转移会使原验证器失效，并通过短信验证身份。';
+        this.steamAddStatus = this.localized($r('app.string.steam_existing_guard_status'));
         return;
       }
       throw new Error((error as Error).message);
@@ -277,7 +284,8 @@ export struct AddTokenPage {
     this.steamAddEnrollment = enrollment;
     this.steamAddTimeOffset = enrollment.serverTime > 0 ? enrollment.serverTime * 1000 - Date.now() : 0;
     this.steamAddStep = 2;
-    const channel = enrollment.confirmType === 1 ? '短信' : enrollment.confirmType === 3 ? '邮件' : 'Steam';
+    const channel = enrollment.confirmType === 1 ? this.localized($r('app.string.steam_channel_sms')) :
+      enrollment.confirmType === 3 ? this.localized($r('app.string.steam_channel_email')) : 'Steam';
     const hint = enrollment.phoneNumberHint ? `（${enrollment.phoneNumberHint}）` : '';
     this.steamAddStatus = `请输入通过${channel}收到的激活码${hint}`;
   }
@@ -288,11 +296,11 @@ export struct AddTokenPage {
       return;
     }
     if (!this.steamAddActivationCode.trim()) {
-      this.steamAddStatus = '请输入 Steam Guard 激活码';
+      this.steamAddStatus = this.localized($r('app.string.steam_enter_activation'));
       return;
     }
     this.steamAddBusy = true;
-    this.steamAddStatus = '正在激活 Steam Guard…';
+    this.steamAddStatus = this.localized($r('app.string.steam_activating_guard'));
     try {
       const enrollment = this.steamAddEnrollment;
       const now = Date.now() + this.steamAddTimeOffset;
@@ -317,7 +325,7 @@ export struct AddTokenPage {
       if (!finalized.success) {
         throw new Error(`Steam Guard 激活失败（status ${finalized.status}）`);
       }
-      await this.saveSteamEnrollment(enrollment, 'Steam Guard 已添加');
+      await this.saveSteamEnrollment(enrollment, this.localized($r('app.string.steam_guard_added')));
     } catch (error) {
       this.steamAddStatus = (error as Error).message;
     } finally {
@@ -331,14 +339,13 @@ export struct AddTokenPage {
       return;
     }
     this.steamAddBusy = true;
-    this.steamAddStatus = '正在请求转移现有 Steam Guard…';
+    this.steamAddStatus = this.localized($r('app.string.steam_requesting_transfer'));
     try {
       await new SteamAuthenticatorService().beginTransfer(
         this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken);
       this.steamAddActivationCode = '';
       this.steamAddStep = 4;
-      this.steamAddStatus =
-        'Steam 已受理迁移请求。恢复通知邮件不是验证码，请等待账户绑定手机号收到的短信验证码，再完成转移。';
+      this.steamAddStatus = this.localized($r('app.string.steam_transfer_started'));
     } catch (error) {
       const message = (error as Error).message;
       DiagnosticLogService.warn('SteamTransfer', `Transfer challenge start failed: ${message}`);
@@ -354,11 +361,11 @@ export struct AddTokenPage {
       return;
     }
     if (!this.steamAddActivationCode.trim()) {
-      this.steamAddStatus = '请输入短信验证码';
+      this.steamAddStatus = this.localized($r('app.string.steam_enter_sms'));
       return;
     }
     this.steamAddBusy = true;
-    this.steamAddStatus = '正在转移 Steam Guard…';
+    this.steamAddStatus = this.localized($r('app.string.steam_transferring_guard'));
     try {
       const service = new SteamAuthenticatorService();
       const enrollment = await service.completeTransfer(
@@ -366,7 +373,7 @@ export struct AddTokenPage {
         this.steamAddActivationCode.trim());
       // 迁移协议没有上传或返回 Device ID；以迁移后的服务端状态为准，查询失败时才退回本地 UUID。
       const deviceId = await this.transferredDeviceId(service);
-      await this.saveSteamEnrollment(enrollment, 'Steam Guard 已转移并添加', deviceId);
+      await this.saveSteamEnrollment(enrollment, this.localized($r('app.string.steam_guard_transferred')), deviceId);
     } catch (error) {
       this.steamAddStatus = (error as Error).message;
     } finally {
@@ -499,7 +506,8 @@ export struct AddTokenPage {
       if (detail.code === 1000500002) {
         return;
       }
-      this.showToast(`扫码失败（${detail.code ?? 'unknown'}）：${detail.message ?? error}`, 3000);
+      this.showToast(this.localized($r('app.string.error_scan_failed'),
+        `${detail.code ?? 'unknown'}`, detail.message ?? `${error}`), 3000);
     }
   }
 
@@ -514,14 +522,14 @@ export struct AddTokenPage {
             SymbolGlyph($r('sys.symbol.qrcode')).fontSize(38).fontColor(['#4668E8'])
           }.margin({ top: 10, bottom: 4 })
 
-          Text('扫描身份验证二维码').fontSize(20).fontWeight(FontWeight.Bold)
-          Text('扫描网站展示的身份验证二维码，也可以从相册选择二维码图片。')
+          Text($r('app.string.add_scan_title')).fontSize(20).fontWeight(FontWeight.Bold)
+          Text($r('app.string.add_scan_description'))
             .fontSize(14).fontColor($r('app.color.text_muted')).lineHeight(21).textAlign(TextAlign.Center)
-          Button('打开相机或相册').width('100%').height(50).backgroundColor('#4668E8')
+          Button($r('app.string.add_scan_open')).width('100%').height(50).backgroundColor('#4668E8')
             .onClick(() => this.scanToken())
         }.width('100%').alignItems(HorizontalAlign.Center)
 
-        Text('支持标准 TOTP 与 Steam Guard 二维码。扫描内容异常时会保留到 URI 页供你检查。')
+        Text($r('app.string.add_scan_hint'))
           .fontSize(12).fontColor($r('app.color.text_faint')).lineHeight(18).textAlign(TextAlign.Center)
       }
       .width('100%')
@@ -542,12 +550,12 @@ export struct AddTokenPage {
     Scroll() {
       Column({ space: 14 }) {
         Column({ space: 12 }) {
-          Text('粘贴 OTP URI').fontSize(19).fontWeight(FontWeight.Bold).width('100%')
-          Text('可粘贴 otpauth:// 链接；会自动清理常见的转义、引号和说明文字。')
+          Text($r('app.string.add_uri_title')).fontSize(19).fontWeight(FontWeight.Bold).width('100%')
+          Text($r('app.string.add_uri_description'))
             .fontSize(13).fontColor($r('app.color.text_muted')).lineHeight(19).width('100%')
-          TextArea({ placeholder: 'otpauth://totp/服务:账户?secret=...', text: this.uriValue }).height(150)
+          TextArea({ placeholder: $r('app.string.add_uri_placeholder'), text: this.uriValue }).height(150)
             .onChange((value: string) => this.uriValue = value)
-          Button('解析并添加')
+          Button($r('app.string.add_uri_parse'))
             .width('100%')
             .height(48)
             .backgroundColor($r('app.color.text_secondary'))
@@ -581,17 +589,19 @@ export struct AddTokenPage {
     Scroll() {
       Column({ space: 14 }) {
         Column({ space: 12 }) {
-          Text('手动添加').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          TextInput({ placeholder: '服务名称，例如 GitHub', text: this.issuer })
+          Text($r('app.string.add_manual_title')).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          TextInput({ placeholder: $r('app.string.add_issuer_placeholder'), text: this.issuer })
             .onChange((value: string) => this.issuer = value)
-          TextInput({ placeholder: '账户名称', text: this.account }).onChange((value: string) => this.account = value)
-          TextInput({ placeholder: 'Base32 密钥', text: this.secret }).onChange((value: string) => this.secret = value)
+          TextInput({ placeholder: $r('app.string.add_account_placeholder'), text: this.account })
+            .onChange((value: string) => this.account = value)
+          TextInput({ placeholder: $r('app.string.detail_secret_placeholder'), text: this.secret })
+            .onChange((value: string) => this.secret = value)
           if (this.issuer.trim().toLowerCase() === 'steam') {
-            Text('Issuer 为 Steam，将自动使用五位 Steam Guard 验证码和 30 秒周期。')
+            Text($r('app.string.add_steam_detected'))
               .fontSize(12).fontColor('#4668E8').lineHeight(18).width('100%')
           } else {
             Column({ space: 8 }) {
-              Text('摘要算法').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Text($r('app.string.detail_algorithm')).fontSize(15).fontWeight(FontWeight.Medium).width('100%')
               Row({ space: 8 }) {
                 Button('SHA-1').layoutWeight(1)
                   .backgroundColor(this.algorithm === TokenAlgorithm.SHA1 ? '#4668E8' :
@@ -615,14 +625,14 @@ export struct AddTokenPage {
             }.width('100%')
 
             Column({ space: 8 }) {
-              Text('验证码位数').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Text($r('app.string.add_digits')).fontSize(15).fontWeight(FontWeight.Medium).width('100%')
               Row({ space: 10 }) {
-                Button('6 位')
+                Button($r('app.string.detail_digits_6'))
                   .layoutWeight(1)
                   .backgroundColor(this.digits === 6 ? '#4668E8' : $r('app.color.surface_control'))
                   .fontColor(this.digits === 6 ? Color.White : $r('app.color.text_secondary'))
                   .onClick(() => this.digits = 6)
-                Button('8 位')
+                Button($r('app.string.detail_digits_8'))
                   .layoutWeight(1)
                   .backgroundColor(this.digits === 8 ? '#4668E8' : $r('app.color.surface_control'))
                   .fontColor(this.digits === 8 ? Color.White : $r('app.color.text_secondary'))
@@ -631,26 +641,28 @@ export struct AddTokenPage {
             }.width('100%')
 
             Column({ space: 6 }) {
-              Text('刷新周期（秒）').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Text($r('app.string.add_period')).fontSize(15).fontWeight(FontWeight.Medium).width('100%')
               Row({ space: 8 }) {
-                Button('30 秒').layoutWeight(1)
+                Button($r('app.string.detail_seconds_30')).layoutWeight(1)
                   .backgroundColor(this.periodValue === '30' ? '#4668E8' : $r('app.color.surface_control'))
                   .fontColor(this.periodValue === '30' ? Color.White : $r('app.color.text_secondary'))
                   .onClick(() => this.periodValue = '30')
-                Button('60 秒').layoutWeight(1)
+                Button($r('app.string.detail_seconds_60')).layoutWeight(1)
                   .backgroundColor(this.periodValue === '60' ? '#4668E8' : $r('app.color.surface_control'))
                   .fontColor(this.periodValue === '60' ? Color.White : $r('app.color.text_secondary'))
                   .onClick(() => this.periodValue = '60')
               }.width('100%')
-              TextInput({ placeholder: '通常为 30', text: this.periodValue }).type(InputType.Number)
+              TextInput({ placeholder: $r('app.string.add_period_usual'), text: this.periodValue })
+                .type(InputType.Number)
                 .onChange((value: string) => this.periodValue = value)
-              Text('允许 1–300 秒；应与服务端提供的 period 保持一致。')
+              Text($r('app.string.add_period_hint'))
                 .fontSize(12)
                 .fontColor($r('app.color.text_muted'))
                 .width('100%')
             }.width('100%')
           }
-          Button('保存账户').width('100%').backgroundColor('#4668E8').onClick(() => this.addManual())
+          Button($r('app.string.add_save')).width('100%').backgroundColor('#4668E8')
+            .onClick(() => this.addManual())
         }.width('100%')
 
         if (this.errorMessage.length > 0) {
@@ -680,10 +692,10 @@ export struct AddTokenPage {
     Scroll() {
       Column({ space: 14 }) {
         Column({ space: 12 }) {
-          Text('登录并添加 Steam Guard').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          Text('该流程会为 Steam 账户创建新的移动验证器，并在验证成功后自动保存密钥和会话元信息。')
+          Text($r('app.string.add_steam_title')).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          Text($r('app.string.add_steam_description'))
             .fontSize(13).fontColor($r('app.color.text_muted')).lineHeight(19).width('100%')
-          Text('如果账户已经绑定移动 Steam Guard，Steam 可能要求先转移验证器；此操作不会读取服务器上已有的密钥。')
+          Text($r('app.string.add_steam_existing_hint'))
             .fontSize(12)
             .fontColor($r('app.color.warning'))
             .lineHeight(18)
@@ -702,17 +714,18 @@ export struct AddTokenPage {
               .width('100%')
           }
           if (this.steamAddStep === 0) {
-            TextInput({ placeholder: 'Steam 账户名', text: this.steamAddAccount })
+            TextInput({ placeholder: $r('app.string.steam_account_placeholder'), text: this.steamAddAccount })
               // USER_NAME + Password 必须同时存在，密码保险箱才能把这组输入框识别为登录表单。
               .type(InputType.USER_NAME)
               .contentType(ContentType.USER_NAME)
               .enableAutoFill(true)
               .onChange((value: string) => this.steamAddAccount = value.trim())
-            TextInput({ placeholder: 'Steam 密码', text: this.steamAddPassword }).type(InputType.Password)
+            TextInput({ placeholder: $r('app.string.add_steam_password'), text: this.steamAddPassword })
+              .type(InputType.Password)
               .contentType(ContentType.PASSWORD)
               .enableAutoFill(true)
               .onChange((value: string) => this.steamAddPassword = value)
-            Button(this.steamAddBusy ? '正在登录…' : '登录 Steam')
+            Button(this.steamAddBusy ? $r('app.string.steam_logging_in') : $r('app.string.add_steam_login'))
               .width('100%')
               .height(48)
               .backgroundColor($r('app.color.brand_strong'))
@@ -722,7 +735,7 @@ export struct AddTokenPage {
             SteamVerificationStep({
               statusMessage: this.steamAddStatus,
               prompt: this.steamConfirmationPrompt(),
-              placeholder: 'Steam 验证码',
+              placeholder: $r('app.string.steam_code_placeholder'),
               code: this.steamAddCode,
               showCodeInput: this.steamAddConfirmationType === SteamGuardType.EMAIL_CODE ||
                 this.steamAddConfirmationType === SteamGuardType.DEVICE_CODE,
@@ -730,21 +743,22 @@ export struct AddTokenPage {
                 this.steamAddCode = value;
               }
             })
-            Button(this.steamAddBusy ? '正在验证…' : '我已完成验证，继续')
+            Button(this.steamAddBusy ? $r('app.string.add_steam_verifying') :
+              $r('app.string.add_steam_continue'))
               .width('100%')
               .height(48)
               .backgroundColor($r('app.color.brand_strong'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.completeSteamAddLogin())
             if (this.steamAddBusy) {
-              Button('取消等待')
+              Button($r('app.string.add_steam_cancel_wait'))
                 .width('100%')
                 .height(42)
                 .backgroundColor($r('app.color.surface_control'))
                 .fontColor($r('app.color.text_secondary'))
                 .onClick(() => this.cancelSteamLogin())
             } else {
-              Button('重新登录')
+              Button($r('app.string.add_steam_login_again'))
                 .width('100%')
                 .height(42)
                 .backgroundColor($r('app.color.surface_control'))
@@ -754,32 +768,34 @@ export struct AddTokenPage {
           } else if (this.steamAddStep === 2) {
             SteamVerificationStep({
               statusMessage: this.steamAddStatus,
-              prompt: 'Steam 登录已经完成，最后需要验证新增的移动验证器。',
-              placeholder: '短信或邮件激活码',
+              prompt: $r('app.string.add_steam_activation_prompt'),
+              placeholder: $r('app.string.add_steam_activation_code'),
               code: this.steamAddActivationCode,
               onCodeChange: (value: string): void => {
                 this.steamAddActivationCode = value;
               }
             })
-            Button(this.steamAddBusy ? '正在激活…' : '激活并保存 Steam Guard')
+            Button(this.steamAddBusy ? $r('app.string.add_steam_activating') :
+              $r('app.string.add_steam_activate'))
               .width('100%')
               .height(48)
               .backgroundColor($r('app.color.success'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.finalizeSteamAuthenticator())
           } else if (this.steamAddStep === 3) {
-            Text('账户已有 Steam Guard').fontSize(16).fontWeight(FontWeight.Bold).fontColor($r('app.color.danger'))
+            Text($r('app.string.add_steam_exists')).fontSize(16).fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.danger'))
               .width('100%')
-            Text(
-              '继续操作会生成一套新的密钥，原手机或验证器中的 Steam Guard 将失效。请确认你能够接收账户绑定手机号的短信。')
+            Text($r('app.string.add_steam_transfer_warning'))
               .fontSize(13).fontColor($r('app.color.text_secondary')).lineHeight(20).width('100%')
-            Button(this.steamAddBusy ? '正在请求…' : '我了解风险，转移验证器')
+            Button(this.steamAddBusy ? $r('app.string.add_steam_requesting') :
+              $r('app.string.add_steam_transfer'))
               .width('100%')
               .height(48)
               .backgroundColor($r('app.color.danger'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.beginSteamTransfer())
-            Button('已有短信验证码，直接继续')
+            Button($r('app.string.add_steam_have_sms'))
               .width('100%')
               .height(42)
               .backgroundColor($r('app.color.surface_control'))
@@ -789,9 +805,9 @@ export struct AddTokenPage {
                 // 允许应用重启后继续服务端已开始的迁移，避免重复发送恢复请求并触发限流。
                 this.steamAddActivationCode = '';
                 this.steamAddStep = 4;
-                this.steamAddStatus = '请输入此前收到的 Steam 迁移短信验证码';
+                this.steamAddStatus = this.localized($r('app.string.steam_enter_previous_sms'));
               })
-            Button('取消并重新登录')
+            Button($r('app.string.add_steam_cancel_relogin'))
               .width('100%')
               .height(42)
               .backgroundColor($r('app.color.surface_control'))
@@ -799,17 +815,18 @@ export struct AddTokenPage {
               .enabled(!this.steamAddBusy)
               .onClick(() => this.resetSteamAddFlow())
           } else {
-            Text('输入短信验证码完成转移').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
-            TextInput({ placeholder: '短信验证码', text: this.steamAddActivationCode })
+            Text($r('app.string.add_steam_sms_title')).fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+            TextInput({ placeholder: $r('app.string.add_steam_sms_code'), text: this.steamAddActivationCode })
               .onChange((value: string) => this.steamAddActivationCode = value.trim())
-            Button(this.steamAddBusy ? '正在转移…' : '完成转移并保存')
+            Button(this.steamAddBusy ? $r('app.string.add_steam_transferring') :
+              $r('app.string.add_steam_finish_transfer'))
               .width('100%')
               .height(48)
               .backgroundColor($r('app.color.danger'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.completeSteamTransfer())
           }
-          Text('密码仅用于本次 RSA 加密登录，不会写入 Token、备份或本地存储。')
+          Text($r('app.string.add_password_note'))
             .fontSize(11).fontColor($r('app.color.text_faint')).lineHeight(17).width('100%')
         }.width('100%')
       }
@@ -842,8 +859,8 @@ export struct AddTokenPage {
             this.onClose();
           })
         Column({ space: 3 }) {
-          Text('添加账户').fontSize(26).fontWeight(FontWeight.Bold)
-          Text('选择最适合你的添加方式').fontSize(13).fontColor($r('app.color.text_tertiary'))
+          Text($r('app.string.add_title')).fontSize(26).fontWeight(FontWeight.Bold)
+          Text($r('app.string.add_subtitle')).fontSize(13).fontColor($r('app.color.text_tertiary'))
         }.alignItems(HorizontalAlign.Start)
       }
       .width('100%')
@@ -857,7 +874,7 @@ export struct AddTokenPage {
       Tabs({ barPosition: BarPosition.Start, index: this.addTabIndex }) {
         TabContent() {
           this.scanAddTab()
-        }.tabBar('扫码').align(Alignment.TopStart)
+        }.tabBar($r('app.string.add_tab_scan')).align(Alignment.TopStart)
 
         TabContent() {
           this.uriAddTab()
@@ -865,7 +882,7 @@ export struct AddTokenPage {
 
         TabContent() {
           this.manualAddTab()
-        }.tabBar('手动').align(Alignment.TopStart)
+        }.tabBar($r('app.string.add_tab_manual')).align(Alignment.TopStart)
 
         TabContent() {
           this.steamAddTab()
@@ -878,12 +895,12 @@ export struct AddTokenPage {
       .divider({ strokeWidth: 1, color: $r('app.color.divider') })
       .layoutWeight(1)
       .width('100%')
-      .backgroundColor($r('app.color.surface'))
+      .backgroundColor($r('app.color.page_background'))
       .onChange((index: number) => {
         this.addTabIndex = index;
         this.errorMessage = '';
       })
-    }.height('100%').width('100%').backgroundColor($r('app.color.surface'))
+    }.height('100%').width('100%').backgroundColor($r('app.color.page_background'))
   }
 
 }

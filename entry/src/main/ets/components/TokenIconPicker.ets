@@ -84,7 +84,7 @@ export struct TokenIconPicker {
         .border({ width: this.selectedPath === path ? 2 : 0, color: '#4668E8' })
 
         if (automatic) {
-          Text('自动').fontSize(11).fontColor($r('app.color.text_tertiary'))
+          Text($r('app.string.icon_picker_auto')).fontSize(11).fontColor($r('app.color.text_tertiary'))
         }
       }.width('100%').height(76).justifyContent(FlexAlign.Center)
       .onClick(() => this.selectedPath = path)
@@ -93,7 +93,7 @@ export struct TokenIconPicker {
 
   @Builder
   /** 为图标列表分组生成统一的标题样式。 */
-  private sectionHeader(title: string) {
+  private sectionHeader(title: ResourceStr) {
     Text(title)
       .fontSize(14)
       .fontWeight(FontWeight.Medium)
@@ -117,11 +117,12 @@ export struct TokenIconPicker {
           .backgroundColor($r('app.color.surface_muted'))
           .onClick(() => this.onClose())
         Column({ space: 3 }) {
-          Text('选择图标').fontSize(26).fontWeight(FontWeight.Bold)
+          Text($r('app.string.icon_picker_title')).fontSize(26).fontWeight(FontWeight.Bold)
           Text(this.issuer).fontSize(13).fontColor($r('app.color.text_tertiary')).maxLines(1)
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
-        Button('完成').backgroundColor('#4668E8').onClick(() => this.onConfirm(this.selectedPath))
+        Button($r('app.string.common_done')).backgroundColor('#4668E8')
+          .onClick(() => this.onConfirm(this.selectedPath))
       }
       .width('100%')
       .padding({
@@ -132,12 +133,12 @@ export struct TokenIconPicker {
       })
 
       List({ space: 6 }) {
-        ListItemGroup({ header: this.sectionHeader('显示方式') }) {
+        ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_display')) }) {
           this.iconCell('', true)
         }
 
         if (this.suggestions.length > 0) {
-          ListItemGroup({ header: this.sectionHeader('推荐') }) {
+          ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_recommended')) }) {
             ForEach(this.suggestions, (path: string) => {
               this.iconCell(path)
             }, (path: string) => `suggested_${path}`)
@@ -159,6 +160,6 @@ export struct TokenIconPicker {
       .lanes({ minLength: 74, maxLength: 74 })
       .cachedCount(10)
       .scrollBar(BarState.Auto)
-    }.width('100%').height('100%').backgroundColor($r('app.color.surface'))
+    }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
   }
 }

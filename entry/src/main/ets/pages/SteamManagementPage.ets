@@ -15,6 +15,8 @@ import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamProfile, SteamProfileService } from '../services/SteamProfileService';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
+import { SteamTokenLifetime, SteamTokenLifetimeState } from '../services/SteamSessionService';
+import { Localization } from '../core/Localization';
 
 /** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
 @Builder
@@ -71,7 +73,7 @@ export struct SteamManagementPage {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       this.steamProfile = await new SteamProfileService().load(context, metadata.steamId,
         metadata.accessToken, metadata.refreshToken, forceRefresh);
-      if (forceRefresh) this.showToast('Steam 账户资料已更新', 1600);
+      if (forceRefresh) this.showToast(this.localized($r('app.string.steam_profile_updated')), 1600);
     } catch (error) {
       DiagnosticLogService.warn('SteamManagement', `Profile load failed: ${(error as Error).message}`);
       if (forceRefresh) this.showToast((error as Error).message, 2800);
@@ -135,7 +137,7 @@ export struct SteamManagementPage {
     } catch (error) {
       DiagnosticLogService.error('SteamManagement',
         `Steam session changed remotely but local save failed: ${(error as Error).message}`);
-      this.showToast('Steam 会话已更新，但本地保存失败；请勿退出应用并重试更新', 4500);
+      this.showToast(this.localized($r('app.string.steam_session_save_failed')), 4500);
       return false;
     }
   }
@@ -144,7 +146,7 @@ export struct SteamManagementPage {
   private async refreshSteamSession(): Promise<void> {
     const token = this.currentToken();
     if (!token?.steam?.steamId || !token.steam.refreshToken) {
-      this.showToast('更新 Access Token 需要 Steam ID 和 Refresh Token', 2600);
+      this.showToast(this.localized($r('app.string.steam_refresh_requires_tokens')), 2600);
       return;
     }
     this.steamSessionLoading = true;
@@ -168,7 +170,7 @@ export struct SteamManagementPage {
       const updated = this.tokenWithSteam(token, steam);
       const next = this.tokens.map((item: StoredToken): StoredToken => item.id === token.id ? updated : item);
       if (await this.persistRemoteSession(next, refreshed.accessToken)) {
-        this.showToast('Steam Access Token 已更新', 1800);
+        this.showToast(this.localized($r('app.string.steam_access_updated')), 1800);
       }
     } catch (error) {
       this.showToast((error as Error).message, 3200);
@@ -184,7 +186,7 @@ export struct SteamManagementPage {
       return;
     }
     this.steamSessionLoading = true;
-    this.steamSessionStatus = '正在创建 Steam 登录会话…';
+    this.steamSessionStatus = this.localized($r('app.string.steam_creating_session'));
     this.steamLoginCancellation?.cancel();
     const cancellation = new SteamLoginCancellation();
     this.steamLoginCancellation = cancellation;
@@ -195,13 +197,13 @@ export struct SteamManagementPage {
         token.steam?.steamId ?? '',
         (type: number): void => {
           if (type === SteamGuardType.DEVICE_CONFIRMATION) {
-            this.steamSessionStatus = '请在已登录的 Steam 手机应用中批准登录，应用会自动继续';
+            this.steamSessionStatus = this.localized($r('app.string.steam_approve_in_app'));
           } else if (type === SteamGuardType.EMAIL_CONFIRMATION) {
-            this.steamSessionStatus = '请点击 Steam 邮件中的确认链接，应用会自动继续';
+            this.steamSessionStatus = this.localized($r('app.string.steam_confirm_by_email'));
           }
         });
       if (!token.steam) {
-        throw new Error('Steam 元信息尚未初始化');
+        throw new Error(this.localized($r('app.string.steam_metadata_uninitialized')));
       }
       const steam: SteamGuardMetadata = {
         steamId: token.steam.steamId,
@@ -224,10 +226,10 @@ export struct SteamManagementPage {
       PasswordAutoFillService.requestSave(this.getUIContext(), 'Steam reauthentication');
       this.steamLoginPassword = '';
       if (await this.persistRemoteSession(next, session.accessToken)) {
-        this.showToast('Steam 会话已重新认证并更新', 2200);
-        this.steamSessionStatus = '会话已更新';
+        this.showToast(this.localized($r('app.string.steam_session_reauthenticated')), 2200);
+        this.steamSessionStatus = this.localized($r('app.string.steam_session_updated'));
       } else {
-        this.steamSessionStatus = '会话已更新，但尚未安全保存';
+        this.steamSessionStatus = this.localized($r('app.string.steam_session_not_saved'));
       }
     } catch (error) {
       this.steamSessionStatus = (error as Error).message;
@@ -240,13 +242,13 @@ export struct SteamManagementPage {
   /** 响应取消按钮，在下一个轮询安全点终止重新认证。 */
   private cancelSteamLogin(): void {
     this.steamLoginCancellation?.cancel();
-    this.steamSessionStatus = '正在取消 Steam 登录…';
+    this.steamSessionStatus = this.localized($r('app.string.steam_login_canceling'));
   }
 
   /** 将 Steam 返回的 Unix 秒时间转换为本地可读文本。 */
   private formatStatusTime(seconds: number): string {
     if (seconds <= 0) {
-      return '未提供';
+      return this.localized($r('app.string.common_not_provided'));
     }
     try {
       return new Date(seconds * 1000).toLocaleString();
@@ -258,26 +260,26 @@ export struct SteamManagementPage {
   /** 把验证器最近使用类型转换为界面标签，同时保留未知值的兜底。 */
   private usageTypeLabel(type: number): string {
     if (type === 2) {
-      return '移动确认';
+      return this.localized($r('app.string.steam_mobile_confirmation'));
     }
     if (type === 3) {
-      return '登录验证';
+      return this.localized($r('app.string.steam_login_verification'));
     }
-    return '其他操作';
+    return this.localized($r('app.string.steam_other_operation'));
   }
 
   /** 从 Steam 服务端查询验证器状态和最近使用记录。 */
   private async queryAuthenticatorStatus(): Promise<void> {
     const metadata = this.currentToken()?.steam;
     if (!metadata?.steamId || !metadata.refreshToken) {
-      this.showToast('查询状态需要 Steam ID 和 Refresh Token', 2500);
+      this.showToast(this.localized($r('app.string.steam_query_requires_tokens')), 2500);
       return;
     }
     this.steamAuthenticatorLoading = true;
     try {
       this.steamAuthenticatorStatus = await new SteamAuthenticatorService().queryAuthenticatorStatus(
         metadata.steamId, metadata.refreshToken);
-      this.showToast('验证器状态已更新', 1600);
+      this.showToast(this.localized($r('app.string.steam_status_updated')), 1600);
     } catch (error) {
       this.showToast((error as Error).message, 3500);
     } finally {
@@ -290,18 +292,18 @@ export struct SteamManagementPage {
     const token = this.currentToken();
     const metadata = token?.steam;
     if (!token || !metadata?.steamId || !metadata.refreshToken || !metadata.revocationCode) {
-      this.showToast('撤销需要 Steam ID、Refresh Token 和撤销码', 2800);
+      this.showToast(this.localized($r('app.string.steam_revoke_requires_data')), 2800);
       return;
     }
     try {
       const result = await this.getUIContext().getPromptAction().showDialog({
-        title: '撤销 Steam 验证器？',
-        message: `这会从 Steam 账户“${metadata.accountName || token.account}”移除移动验证器，` +
-          '当前验证码和确认功能会立即失效。成功后，本地对应 Token 也会删除。此操作无法撤销。',
+        title: this.localized($r('app.string.steam_revoke_dialog_title')),
+        message: this.localized($r('app.string.steam_revoke_dialog_message'),
+          metadata.accountName || token.account),
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '取消', color: $r('app.color.text_tertiary') },
-          { text: '撤销并删除', color: $r('app.color.danger_strong') }
+          { text: this.localized($r('app.string.common_cancel')), color: $r('app.color.text_tertiary') },
+          { text: this.localized($r('app.string.steam_revoke_and_delete')), color: $r('app.color.danger_strong') }
         ]
       });
       if (result.index !== 1) {
@@ -316,13 +318,13 @@ export struct SteamManagementPage {
         this.tokens = next;
         const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
         await SteamLocalDataCleaner.clean(context, token);
-        this.showToast('Steam 验证器已撤销，本地 Token 已删除', 2600);
+        this.showToast(this.localized($r('app.string.steam_revoked')), 2600);
       } catch (saveError) {
         // 远端撤销不可回滚；明确告诉用户仅本地清理失败，避免误以为 Steam 操作未执行。
         this.tokens = next;
         DiagnosticLogService.error('SteamManagement',
           `Authenticator revoked but local token deletion failed: ${(saveError as Error).message}`);
-        this.showToast('Steam 验证器已撤销，但本地 Token 删除失败；重启后请手动删除失效条目', 5000);
+        this.showToast(this.localized($r('app.string.steam_revoked_delete_failed')), 5000);
       }
       this.onTokenRemoved();
     } catch (error) {
@@ -342,11 +344,11 @@ export struct SteamManagementPage {
     const normalizedSteamId = this.steamId.trim();
     const normalizedDeviceId = this.steamDeviceId.trim();
     if (normalizedSteamId.length > 0 && !/^\d{16,20}$/.test(normalizedSteamId)) {
-      this.showToast('Steam ID 应为 16 到 20 位数字', 2600);
+      this.showToast(this.localized($r('app.string.steam_invalid_id')), 2600);
       return;
     }
     if (normalizedDeviceId.length > 0 && !/^[A-Za-z0-9._:-]{4,128}$/.test(normalizedDeviceId)) {
-      this.showToast('Device ID 格式无效', 2600);
+      this.showToast(this.localized($r('app.string.steam_invalid_device_id')), 2600);
       return;
     }
     // 高级修复只允许更正标识字段。令牌与密钥保留原值，防止普通表单绕过登录/导入流程。
@@ -370,11 +372,12 @@ export struct SteamManagementPage {
       await this.onTokensChanged(next);
       this.tokens = next;
       this.metadataRepairMode = false;
-      this.showToast('Steam 元信息已保存', 1800);
+      this.showToast(this.localized($r('app.string.steam_metadata_saved')), 1800);
     } catch (error) {
       DiagnosticLogService.error('SteamManagement',
         `Failed to save repaired metadata: ${(error as Error).message}`);
-      this.showToast(`保存 Steam 元信息失败：${(error as Error).message}`, 3200);
+      this.showToast(this.localized($r('app.string.steam_metadata_save_failed'),
+        (error as Error).message), 3200);
     }
   }
 
@@ -382,13 +385,12 @@ export struct SteamManagementPage {
   private async enterMetadataRepair(): Promise<void> {
     try {
       const result = await this.getUIContext().getPromptAction().showDialog({
-        title: '进入高级修复？',
-        message: '错误的 Steam ID 或 Device ID 会导致确认、扫码登录和会话请求失败。' +
-          '令牌与密钥不会在此处开放编辑，请优先通过重新登录或 maFile / JSON 导入修复。',
+        title: this.localized($r('app.string.steam_repair_dialog_title')),
+        message: this.localized($r('app.string.steam_repair_dialog_message')),
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '取消', color: $r('app.color.text_tertiary') },
-          { text: '继续修复', color: $r('app.color.warning') }
+          { text: this.localized($r('app.string.common_cancel')), color: $r('app.color.text_tertiary') },
+          { text: this.localized($r('app.string.steam_continue_repair')), color: $r('app.color.warning') }
         ]
       });
       if (result.index === 1) {
@@ -408,7 +410,41 @@ export struct SteamManagementPage {
 
   /** 将敏感字段转换为不泄露内容的“已配置/未配置”状态。 */
   private configuredStatus(value: string): string {
-    return value.length > 0 ? '已配置' : '未配置';
+    return this.localized(value.length > 0 ? $r('app.string.common_configured') :
+      $r('app.string.common_not_configured'));
+  }
+
+  /** 读取当前系统语言对应的字符串资源，供 Toast、状态字段等非声明式文本使用。 */
+  private localized(resource: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.text(context, resource, args);
+  }
+
+  /** 把有效期距离压缩为适合手机界面的天、小时或分钟。 */
+  private lifetimeDistance(milliseconds: number): string {
+    const minutes = Math.max(1, Math.floor(milliseconds / 60000));
+    if (minutes >= 2880) {
+      return this.localized($r('app.string.steam_duration_days'), Math.floor(minutes / 1440));
+    }
+    if (minutes >= 120) {
+      return this.localized($r('app.string.steam_duration_hours'), Math.floor(minutes / 60));
+    }
+    return this.localized($r('app.string.steam_duration_minutes'), minutes);
+  }
+
+  /** 以同一结构显示未过期和已过期令牌：状态、相对时长以及绝对到期时间。 */
+  private tokenLifetimeStatus(token: string): string {
+    const lifetime: SteamTokenLifetime = SteamGuardService.tokenLifetime(token);
+    if (lifetime.state === SteamTokenLifetimeState.NOT_CONFIGURED) {
+      return this.localized($r('app.string.common_not_configured'));
+    }
+    if (lifetime.state === SteamTokenLifetimeState.UNKNOWN) {
+      return this.localized($r('app.string.steam_lifetime_unknown'));
+    }
+    const distance = this.lifetimeDistance(lifetime.distanceMillis);
+    const expires = new Date(lifetime.expiresAt).toLocaleString();
+    return this.localized(lifetime.state === SteamTokenLifetimeState.VALID ?
+      $r('app.string.steam_lifetime_valid') : $r('app.string.steam_lifetime_expired'), distance, expires);
   }
 
   /** 解析 maFile/JSON，并用完整导入结果替换当前 Steam 元信息。 */
@@ -441,7 +477,7 @@ export struct SteamManagementPage {
       this.steamJsonText = '';
       this.metadataRepairMode = false;
       this.loadMetadata();
-      this.showToast('Steam 数据已导入并绑定', 2000);
+      this.showToast(this.localized($r('app.string.steam_data_imported')), 2000);
     } catch (error) {
       this.showToast((error as Error).message, 3200);
     }
@@ -466,22 +502,22 @@ export struct SteamManagementPage {
     Scroll() {
       Column({ space: 14 }) {
         Column({ space: 8 }) {
-          Text('Steam 会话').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          Text('Refresh Token 决定登录会话可维持多久；Access Token 过期时通常可以直接更新。')
+          Text($r('app.string.steam_session_title')).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          Text($r('app.string.steam_session_description'))
             .fontSize(13).fontColor($r('app.color.text_secondary')).lineHeight(20).width('100%')
           Divider().color($r('app.color.steam_divider'))
-          Text('会话有效期').fontSize(14).fontWeight(FontWeight.Medium).width('100%')
-          Text(SteamGuardService.tokenStatus(this.currentRefreshToken()))
+          Text($r('app.string.steam_session_lifetime')).fontSize(14).fontWeight(FontWeight.Medium).width('100%')
+          Text(this.tokenLifetimeStatus(this.currentRefreshToken()))
             .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-          Text('Access Token 有效期').fontSize(14).fontWeight(FontWeight.Medium).width('100%')
-          Text(SteamGuardService.tokenStatus(this.steamAccessToken))
+          Text($r('app.string.steam_access_lifetime')).fontSize(14).fontWeight(FontWeight.Medium).width('100%')
+          Text(this.tokenLifetimeStatus(this.steamAccessToken))
             .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-          Text('兼容登录数据（Guard Data）').fontSize(14).fontWeight(FontWeight.Medium).width('100%')
+          Text($r('app.string.steam_guard_data')).fontSize(14).fontWeight(FontWeight.Medium).width('100%')
           Text(this.configuredStatus(this.currentToken()?.steam?.guardData ?? ''))
             .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-          Text('MobileApp 登录通常不会下发该字段，未配置是正常状态，不影响验证码、确认或会话更新。')
+          Text($r('app.string.steam_guard_data_note'))
             .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
-          Button(this.steamSessionLoading ? '正在更新…' : '更新 Access Token')
+          Button(this.steamSessionLoading ? $r('app.string.steam_updating') : $r('app.string.steam_update_access'))
             .width('100%').enabled(!this.steamSessionLoading && this.currentRefreshToken().length > 0)
             .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
             .onClick(() => this.refreshSteamSession())
@@ -489,21 +525,22 @@ export struct SteamManagementPage {
           .backgroundColor($r('app.color.surface')).borderRadius(18)
 
         Column({ space: 9 }) {
-          Text('重新认证').fontSize(17).fontWeight(FontWeight.Bold).width('100%')
-          Text('密码只用于本次登录，不会保存；Steam Guard 验证码由当前 Token 自动提交。如果 Steam 返回可选的 Guard Data，应用会加密保存以兼容后续登录。')
+          Text($r('app.string.steam_reauthenticate')).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
+          Text($r('app.string.steam_reauthenticate_note'))
             .fontSize(13).fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
-          TextInput({ placeholder: 'Steam 账户名', text: this.steamLoginAccount })
+          TextInput({ placeholder: $r('app.string.steam_account_placeholder'), text: this.steamLoginAccount })
             .type(InputType.USER_NAME).contentType(ContentType.USER_NAME).enableAutoFill(true)
             .onChange((value: string) => this.steamLoginAccount = value.trim())
-          TextInput({ placeholder: 'Steam 账户密码', text: this.steamLoginPassword }).type(InputType.Password)
+          TextInput({ placeholder: $r('app.string.steam_password_placeholder'), text: this.steamLoginPassword })
+            .type(InputType.Password)
             .contentType(ContentType.PASSWORD).enableAutoFill(true)
             .onChange((value: string) => this.steamLoginPassword = value)
-          Button(this.steamSessionLoading ? '正在登录…' : '重新登录并更新会话')
+          Button(this.steamSessionLoading ? $r('app.string.steam_logging_in') : $r('app.string.steam_relogin'))
             .width('100%').enabled(!this.steamSessionLoading && this.steamLoginAccount.trim().length > 0 &&
               this.steamLoginPassword.length > 0)
             .backgroundColor($r('app.color.brand_strong')).onClick(() => this.reauthenticateSteam())
           if (this.steamSessionLoading) {
-            Button('取消登录').width('100%')
+            Button($r('app.string.steam_cancel_login')).width('100%')
               .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
               .onClick(() => this.cancelSteamLogin())
           }
@@ -526,8 +563,8 @@ export struct SteamManagementPage {
         Column({ space: 10 }) {
           Row() {
             Column({ space: 3 }) {
-              Text('服务端状态').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-              Text('这些字段由 Steam QueryStatus 接口直接返回。')
+              Text($r('app.string.steam_server_status')).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+              Text($r('app.string.steam_server_status_note'))
                 .fontSize(13).fontColor($r('app.color.text_tertiary')).width('100%')
             }.alignItems(HorizontalAlign.Start).layoutWeight(1)
             if (this.steamAuthenticatorLoading) {
@@ -536,32 +573,38 @@ export struct SteamManagementPage {
           }.width('100%')
 
           if (this.steamAuthenticatorStatus === null) {
-            Text('尚未查询').fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
+            Text($r('app.string.steam_not_queried')).fontSize(14)
+              .fontColor($r('app.color.text_secondary')).width('100%')
           } else {
             Column({ space: 7 }) {
-              Text(`服务端状态值：${this.steamAuthenticatorStatus.state}`)
+              Text($r('app.string.steam_server_state_value', this.steamAuthenticatorStatus.state))
                 .fontSize(14).fontWeight(FontWeight.Medium).width('100%')
-              Text(`Device ID：${this.steamAuthenticatorStatus.deviceIdentifier || '未提供'}`)
+              Text($r('app.string.steam_device_id_value',
+                this.steamAuthenticatorStatus.deviceIdentifier || this.localized($r('app.string.common_not_provided'))))
                 .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-              Text(`创建时间：${this.formatStatusTime(this.steamAuthenticatorStatus.timeCreated)}`)
+              Text($r('app.string.steam_created_value',
+                this.formatStatusTime(this.steamAuthenticatorStatus.timeCreated)))
                 .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
               if (this.steamAuthenticatorStatus.usages.length > 0) {
-                Text(`最近使用：${this.formatStatusTime(this.steamAuthenticatorStatus.usages[0].time)} · ` +
-                  `${this.usageTypeLabel(this.steamAuthenticatorStatus.usages[0].usageType)}`)
+                Text($r('app.string.steam_recent_usage_value',
+                  this.formatStatusTime(this.steamAuthenticatorStatus.usages[0].time),
+                  this.usageTypeLabel(this.steamAuthenticatorStatus.usages[0].usageType)))
                   .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
               }
               if (this.steamAuthenticatorStatus.timeTransferred > 0) {
-                Text(`最近转移：${this.formatStatusTime(this.steamAuthenticatorStatus.timeTransferred)}`)
+                Text($r('app.string.steam_recent_transfer_value',
+                  this.formatStatusTime(this.steamAuthenticatorStatus.timeTransferred)))
                   .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
               }
-              Text(`方案 / 版本：${this.steamAuthenticatorStatus.steamguardScheme} / ` +
-                `${this.steamAuthenticatorStatus.version}`)
+              Text($r('app.string.steam_scheme_version_value',
+                this.steamAuthenticatorStatus.steamguardScheme, this.steamAuthenticatorStatus.version))
                 .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-              Text(`撤销尝试剩余：${this.steamAuthenticatorStatus.revocationAttemptsRemaining}`)
+              Text($r('app.string.steam_revocation_attempts_value',
+                this.steamAuthenticatorStatus.revocationAttemptsRemaining))
                 .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
             }.width('100%').padding(12).backgroundColor($r('app.color.surface_muted')).borderRadius(12)
           }
-          Button('查询最新状态').width('100%')
+          Button($r('app.string.steam_query_status')).width('100%')
             .enabled(!this.steamAuthenticatorLoading && this.currentRefreshToken().length > 0)
             .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
             .onClick(() => this.queryAuthenticatorStatus())
@@ -569,11 +612,11 @@ export struct SteamManagementPage {
           .backgroundColor($r('app.color.surface')).borderRadius(18)
 
         Column({ space: 8 }) {
-          Text('危险操作').fontSize(17).fontWeight(FontWeight.Bold)
+          Text($r('app.string.steam_danger')).fontSize(17).fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.danger_strong')).width('100%')
-          Text('撤销会从 Steam 账户移除移动验证器，并使本地验证码与确认功能失效。')
+          Text($r('app.string.steam_revoke_note'))
             .fontSize(13).fontColor($r('app.color.text_secondary')).lineHeight(20).width('100%')
-          Button('撤销 Steam 验证器').width('100%')
+          Button($r('app.string.steam_revoke')).width('100%')
             .enabled(!this.steamAuthenticatorLoading &&
               (this.currentToken()?.steam?.revocationCode?.length ?? 0) > 0)
             .backgroundColor($r('app.color.danger_surface')).fontColor($r('app.color.danger_strong'))
@@ -591,10 +634,11 @@ export struct SteamManagementPage {
     Scroll() {
       Column({ space: 14 }) {
         Column({ space: 10 }) {
-          Text(this.metadataRepairMode ? '高级修复' : '数据状态')
+          Text(this.metadataRepairMode ? $r('app.string.steam_advanced_repair') :
+            $r('app.string.steam_data_status'))
             .fontSize(18).fontWeight(FontWeight.Bold).width('100%')
           if (this.metadataRepairMode) {
-            Text('这里只允许修复可识别字段。Access Token、Refresh Token 和密钥请通过重新登录或导入更新。')
+            Text($r('app.string.steam_repair_note'))
               .fontSize(13).fontColor($r('app.color.warning')).lineHeight(20).width('100%')
             TextInput({ placeholder: 'Steam ID', text: this.steamId })
               .onChange((value: string) => this.steamId = value)
@@ -611,30 +655,37 @@ export struct SteamManagementPage {
               .fontColor($r('app.color.text_secondary'))
               .opacity(1)
             Row({ space: 10 }) {
-              Button('取消').layoutWeight(1)
+              Button($r('app.string.common_cancel')).layoutWeight(1)
                 .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
                 .onClick(() => this.cancelMetadataRepair())
-              Button('保存修复').layoutWeight(1).backgroundColor($r('app.color.brand_strong'))
+              Button($r('app.string.steam_save_repair')).layoutWeight(1)
+                .backgroundColor($r('app.color.brand_strong'))
                 .onClick(() => this.saveMetadata())
             }.width('100%')
           } else {
-            Text(`Steam ID：${this.steamId || '未配置'}`)
+            Text($r('app.string.steam_id_value',
+              this.steamId || this.localized($r('app.string.common_not_configured'))))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`Device ID：${this.steamDeviceId || '未配置'}`)
+            Text($r('app.string.steam_device_id_value',
+              this.steamDeviceId || this.localized($r('app.string.common_not_configured'))))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
             Divider().color($r('app.color.steam_divider'))
-            Text(`Access Token：${this.configuredStatus(this.currentToken()?.steam?.accessToken ?? '')}`)
+            Text($r('app.string.steam_access_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.accessToken ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`Refresh Token：${this.configuredStatus(this.currentToken()?.steam?.refreshToken ?? '')}`)
+            Text($r('app.string.steam_refresh_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.refreshToken ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`Identity Secret：${this.configuredStatus(this.currentToken()?.steam?.identitySecret ?? '')}`)
+            Text($r('app.string.steam_identity_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.identitySecret ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`兼容登录数据（Guard Data）：${this.configuredStatus(
-              this.currentToken()?.steam?.guardData ?? '')}`)
+            Text($r('app.string.steam_guard_data_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.guardData ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text(`Revocation Code：${this.configuredStatus(this.currentToken()?.steam?.revocationCode ?? '')}`)
+            Text($r('app.string.steam_revocation_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.revocationCode ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Button('高级修复').width('100%')
+            Button($r('app.string.steam_advanced_repair')).width('100%')
               .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.warning'))
               .onClick(() => this.enterMetadataRepair())
           }
@@ -642,14 +693,15 @@ export struct SteamManagementPage {
           .backgroundColor($r('app.color.surface')).borderRadius(18)
 
         Column({ space: 10 }) {
-          Text('maFile / JSON 导入').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          TextArea({ placeholder: '粘贴 maFile 或 JSON 文本', text: this.steamJsonText }).height(130)
+          Text($r('app.string.steam_import_title')).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          TextArea({ placeholder: $r('app.string.steam_import_placeholder'), text: this.steamJsonText }).height(130)
             .onChange((value: string) => this.steamJsonText = value)
           Row({ space: 10 }) {
-            Button('选择文件').layoutWeight(1)
+            Button($r('app.string.steam_choose_file')).layoutWeight(1)
               .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
               .onClick(() => this.pickSteamFile())
-            Button('导入文本').layoutWeight(1).backgroundColor($r('app.color.brand_strong'))
+            Button($r('app.string.steam_import_text')).layoutWeight(1)
+              .backgroundColor($r('app.color.brand_strong'))
               .enabled(this.steamJsonText.trim().length > 0)
               .onClick(() => this.importSteamText(this.steamJsonText))
           }.width('100%')
@@ -674,7 +726,7 @@ export struct SteamManagementPage {
             .objectFit(ImageFit.Cover).draggable(false)
         }
         Column({ space: 3 }) {
-          Text('Steam 管理').fontSize(26).fontWeight(FontWeight.Bold)
+          Text($r('app.string.steam_manage_title')).fontSize(26).fontWeight(FontWeight.Bold)
           Text(this.steamProfile?.displayName || this.currentToken()?.steam?.accountName ||
             this.currentToken()?.account || 'Steam Token')
             .fontSize(13).fontColor($r('app.color.text_tertiary'))
@@ -687,20 +739,21 @@ export struct SteamManagementPage {
               .fontColor([$r('app.color.text_secondary')])
           }
         }.type(ButtonType.Circle).width(38).height(38).enabled(!this.steamProfileLoading)
-          .backgroundColor($r('app.color.surface_muted')).accessibilityText('刷新 Steam 账户资料')
+          .backgroundColor($r('app.color.surface_muted'))
+          .accessibilityText($r('app.string.steam_manage_refresh_profile'))
           .onClick(() => this.loadSteamProfile(true))
       }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
 
       Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
         TabContent() {
           this.sessionTab()
-        }.tabBar('会话').align(Alignment.TopStart)
+        }.tabBar($r('app.string.steam_tab_session')).align(Alignment.TopStart)
         TabContent() {
           this.authenticatorTab()
-        }.tabBar('验证器').align(Alignment.TopStart)
+        }.tabBar($r('app.string.steam_tab_authenticator')).align(Alignment.TopStart)
         TabContent() {
           this.dataTab()
-        }.tabBar('数据').align(Alignment.TopStart)
+        }.tabBar($r('app.string.steam_tab_data')).align(Alignment.TopStart)
       }
         .barMode(BarMode.Fixed)
         .barHeight(48)
@@ -711,6 +764,6 @@ export struct SteamManagementPage {
         .align(Alignment.TopStart)
     }.width('100%').height('100%').alignItems(HorizontalAlign.Start)
       .justifyContent(FlexAlign.Start).align(Alignment.TopStart)
-      .backgroundColor($r('app.color.surface_subtle'))
+      .backgroundColor($r('app.color.page_background'))
   }
 }

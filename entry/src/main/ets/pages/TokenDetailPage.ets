@@ -9,6 +9,7 @@ import { IconPack, IconPackService } from '../services/IconPackService';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamConfirmationHistoryRepository } from '../services/SteamConfirmationHistoryRepository';
+import { Localization } from '../core/Localization';
 
 /** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
 @Builder
@@ -98,17 +99,23 @@ export struct TokenDetailPage {
     }
   }
 
+  /** 读取摘要、对话框和 Toast 使用的当前语言文本。 */
+  private localized(resource: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.text(context, resource, args);
+  }
+
   /** 汇总 Steam 联网字段完整度，提示确认和扫码功能是否可用。 */
   private steamMetadataSummary(): string {
     const metadata = this.currentToken()?.steam;
     if (!metadata) {
-      return '尚未配置 Steam 联网信息';
+      return this.localized($r('app.string.detail_steam_none'));
     }
     const fields: boolean[] = [metadata.steamId.length > 0, metadata.identitySecret.length > 0,
       metadata.deviceId.length > 0, metadata.refreshToken.length > 0];
     const complete = fields.filter((value: boolean) => value).length;
-    return complete === fields.length ? '联网信息完整，可使用确认和扫码登录' :
-      `联网信息 ${complete}/${fields.length}，进入管理页继续配置`;
+    return complete === fields.length ? this.localized($r('app.string.detail_steam_complete')) :
+      this.localized($r('app.string.detail_steam_partial'), complete, fields.length);
   }
 
   /** 校验基础字段、不可变地替换目标 Token，并持久化编辑结果。 */
@@ -122,10 +129,10 @@ export struct TokenDetailPage {
       Base32.decode(normalizedSecret);
       const parsedPeriod = Number.parseInt(this.periodValue);
       if (!this.issuer.trim() || !this.account.trim()) {
-        throw new Error('Issuer 和账户不能为空');
+        throw new Error(this.localized($r('app.string.error_detail_required')));
       }
       if (Number.isNaN(parsedPeriod) || parsedPeriod < 1 || parsedPeriod > 300) {
-        throw new Error('刷新周期必须是 1 到 300 秒之间的整数');
+        throw new Error(this.localized($r('app.string.error_period')));
       }
       const isSteam = this.issuer.trim().toLowerCase() === 'steam';
       const normalizedIssuer = this.issuer.trim();
@@ -183,7 +190,7 @@ export struct TokenDetailPage {
   private async scanSteamQrLogin(): Promise<void> {
     const token = this.currentToken();
     if (!token?.steam?.steamId || (!token.steam.accessToken && !token.steam.refreshToken) || !token.secret) {
-      this.showToast('请先在 Steam 管理页配置完整会话信息', 2400);
+      this.showToast(this.localized($r('app.string.detail_session_required')), 2400);
       return;
     }
     try {
@@ -198,7 +205,7 @@ export struct TokenDetailPage {
         challenge = challenge.substring(1, challenge.length - 1).trim();
       }
       if (!SteamGuardService.isQrLoginChallenge(challenge)) {
-        throw new Error('这不是有效的 Steam 登录二维码');
+        throw new Error(this.localized($r('app.string.detail_invalid_steam_qr')));
       }
       this.steamQrLoading = true;
       const service = new SteamGuardService();
@@ -219,12 +226,12 @@ export struct TokenDetailPage {
       }
       const message = this.qrLoginMessage(token.steam.accountName || token.account, info, detailsAvailable);
       const dialog = await this.getUIContext().getPromptAction().showDialog({
-        title: 'Steam 登录请求',
+        title: this.localized($r('app.string.detail_qr_dialog_title')),
         message: message,
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '拒绝登录', color: $r('app.color.danger_strong') },
-          { text: '批准登录', color: $r('app.color.brand_strong') }
+          { text: this.localized($r('app.string.detail_reject_login')), color: $r('app.color.danger_strong') },
+          { text: this.localized($r('app.string.detail_approve_login')), color: $r('app.color.brand_strong') }
         ]
       });
       if (dialog.index !== 0 && dialog.index !== 1) {
@@ -237,7 +244,8 @@ export struct TokenDetailPage {
       let historySaved = true;
       try {
         await new SteamConfirmationHistoryRepository().append(historyContext, [
-          SteamConfirmationHistoryRepository.create(token.id, 'login', info.deviceName || '扫码登录请求',
+          SteamConfirmationHistoryRepository.create(token.id, 'login', info.deviceName ||
+            this.localized($r('app.string.detail_qr_login_request')),
             `${info.location}${info.ip ? ` · ${info.ip}` : ''}`, 0, approve)
         ]);
       } catch (historyError) {
@@ -245,8 +253,10 @@ export struct TokenDetailPage {
         DiagnosticLogService.warn('SteamQrLogin',
           `QR response succeeded but history save failed: ${(historyError as Error).message}`);
       }
-      this.showToast(historySaved ? (approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝') :
-        `${approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝'}，但历史保存失败`, 2800);
+      const actionResult = this.localized(approve ? $r('app.string.confirm_login_approved') :
+        $r('app.string.confirm_login_rejected'));
+      this.showToast(historySaved ? actionResult :
+        `${actionResult}${this.localized($r('app.string.confirm_history_failed_suffix'))}`, 2800);
     } catch (error) {
       const detail = error as BusinessError;
       // Scan Kit 将用户主动关闭扫码页作为异常返回；这是正常取消，不应显示英文系统错误。
@@ -261,22 +271,24 @@ export struct TokenDetailPage {
 
   /** 将扫码登录请求详情整理成紧凑、可核对的安全确认文案。 */
   private qrLoginMessage(account: string, info: SteamQrLoginInfo, detailsAvailable: boolean): string {
-    const lines: string[] = [`账户：${account}`];
+    const missing = this.localized($r('app.string.detail_steam_not_provided'));
+    const lines: string[] = [this.localized($r('app.string.detail_qr_account'), account)];
     if (detailsAvailable) {
-      lines.push(`设备：${info.deviceName || 'Steam 未提供'}`);
-      lines.push(`位置：${info.location || 'Steam 未提供'}`);
-      lines.push(`IP：${info.ip || 'Steam 未提供'}`);
-      lines.push(`会话：${info.persistent ? '保持登录' : '临时登录'}`);
+      lines.push(this.localized($r('app.string.detail_qr_device'), info.deviceName || missing));
+      lines.push(this.localized($r('app.string.detail_qr_location'), info.location || missing));
+      lines.push(this.localized($r('app.string.detail_qr_ip'), info.ip || missing));
+      lines.push(this.localized(info.persistent ? $r('app.string.detail_qr_session_persistent') :
+        $r('app.string.detail_qr_session_temporary')));
       if (info.locationMismatch) {
-        lines.push('警告：请求位置与 Steam 预期位置不一致');
+        lines.push(this.localized($r('app.string.detail_qr_location_warning')));
       }
       if (info.highUsage) {
-        lines.push('警告：Steam 将此请求标记为高频登录');
+        lines.push(this.localized($r('app.string.detail_qr_frequency_warning')));
       }
     } else {
-      lines.push('未能读取来源详情，请只批准你刚刚主动扫描的登录页面。');
+      lines.push(this.localized($r('app.string.detail_qr_source_unavailable')));
     }
-    lines.push('如果设备或位置不符合预期，请拒绝。');
+    lines.push(this.localized($r('app.string.detail_qr_safety')));
     return lines.join('\n');
   }
 
@@ -291,8 +303,8 @@ export struct TokenDetailPage {
           }.type(ButtonType.Circle).width(38).height(38)
             .backgroundColor($r('app.color.surface_muted')).onClick(() => this.onClose())
           Column({ space: 3 }) {
-            Text('Token 详情').fontSize(26).fontWeight(FontWeight.Bold)
-            Text('编辑账户与验证参数').fontSize(13).fontColor($r('app.color.text_tertiary'))
+            Text($r('app.string.detail_title')).fontSize(26).fontWeight(FontWeight.Bold)
+            Text($r('app.string.detail_subtitle')).fontSize(13).fontColor($r('app.color.text_tertiary'))
           }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
           if (this.issuer.trim().toLowerCase() === 'steam') {
@@ -306,19 +318,20 @@ export struct TokenDetailPage {
                 }
               }.type(ButtonType.Circle).width(40).height(40)
                 .backgroundColor($r('app.color.steam_surface')).enabled(!this.steamQrLoading)
-                .accessibilityText('Steam 扫码登录').onClick(() => this.scanSteamQrLogin())
+                .accessibilityText($r('app.string.detail_steam_qr')).onClick(() => this.scanSteamQrLogin())
               Button() {
                 SymbolGlyph($r('sys.symbol.list_checkmask')).fontSize(22)
                   .fontColor([$r('app.color.text_secondary')])
               }.type(ButtonType.Circle).width(40).height(40)
-                .backgroundColor($r('app.color.surface_muted')).accessibilityText('Steam 确认列表')
+                .backgroundColor($r('app.color.surface_muted'))
+                .accessibilityText($r('app.string.detail_steam_confirmations'))
                 .onClick(() => this.onOpenConfirm())
             }
           }
         }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 6 })
 
         Column({ space: 12 }) {
-          Text('通用信息').fontSize(17).fontWeight(FontWeight.Bold).width('100%')
+          Text($r('app.string.detail_general')).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
           Row({ space: 12 }) {
             Stack() {
               if (this.currentIconPath().length > 0) {
@@ -330,23 +343,24 @@ export struct TokenDetailPage {
               .backgroundColor(this.currentIconPath().length > 0 ?
                 $r('app.color.icon_surface') : IconPackService.fallbackColor(this.issuer.trim()))
             Column({ space: 3 }) {
-              Text('Token 图标').fontSize(15).fontWeight(FontWeight.Medium)
-              Text(this.currentToken()?.iconManual === true ? '已手动选择' : '跟随当前图标包自动匹配')
+              Text($r('app.string.detail_icon')).fontSize(15).fontWeight(FontWeight.Medium)
+              Text(this.currentToken()?.iconManual === true ? $r('app.string.detail_icon_manual') :
+                $r('app.string.detail_icon_auto'))
                 .fontSize(12).fontColor($r('app.color.text_muted'))
             }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-            Button('选择').backgroundColor($r('app.color.surface_muted'))
+            Button($r('app.string.common_select')).backgroundColor($r('app.color.surface_muted'))
               .fontColor($r('app.color.text_secondary'))
               .onClick(() => this.onOpenIconPicker(this.issuer))
           }.width('100%').padding(12).backgroundColor($r('app.color.surface_subtle')).borderRadius(14)
           TextInput({ placeholder: 'Issuer', text: this.issuer })
             .onChange((value: string) => this.issuer = value)
-          TextInput({ placeholder: '账户', text: this.account })
+          TextInput({ placeholder: $r('app.string.detail_account_placeholder'), text: this.account })
             .onChange((value: string) => this.account = value)
-          TextInput({ placeholder: 'Base32 密钥', text: this.secret }).type(InputType.Password)
+          TextInput({ placeholder: $r('app.string.detail_secret_placeholder'), text: this.secret }).type(InputType.Password)
             .onChange((value: string) => this.secret = value)
           if (this.issuer.trim().toLowerCase() !== 'steam') {
             Column({ space: 8 }) {
-              Text('摘要算法').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Text($r('app.string.detail_algorithm')).fontSize(15).fontWeight(FontWeight.Medium).width('100%')
               Row({ space: 8 }) {
                 Button('SHA-1').layoutWeight(1)
                   .backgroundColor(this.algorithm === TokenAlgorithm.SHA1 ? '#4668E8' :
@@ -366,37 +380,40 @@ export struct TokenDetailPage {
               }.width('100%')
             }.width('100%')
             Row({ space: 10 }) {
-              Button('6 位').layoutWeight(1)
+              Button($r('app.string.detail_digits_6')).layoutWeight(1)
                 .backgroundColor(this.digits === 6 ? '#4668E8' : $r('app.color.surface_control'))
                 .fontColor(this.digits === 6 ? Color.White : $r('app.color.text_secondary'))
                 .onClick(() => this.digits = 6)
-              Button('8 位').layoutWeight(1)
+              Button($r('app.string.detail_digits_8')).layoutWeight(1)
                 .backgroundColor(this.digits === 8 ? '#4668E8' : $r('app.color.surface_control'))
                 .fontColor(this.digits === 8 ? Color.White : $r('app.color.text_secondary'))
                 .onClick(() => this.digits = 8)
             }.width('100%')
             Row({ space: 8 }) {
-              Button('30 秒').layoutWeight(1)
+              Button($r('app.string.detail_seconds_30')).layoutWeight(1)
                 .backgroundColor(this.periodValue === '30' ? '#4668E8' : $r('app.color.surface_control'))
                 .fontColor(this.periodValue === '30' ? Color.White : $r('app.color.text_secondary'))
                 .onClick(() => this.periodValue = '30')
-              Button('60 秒').layoutWeight(1)
+              Button($r('app.string.detail_seconds_60')).layoutWeight(1)
                 .backgroundColor(this.periodValue === '60' ? '#4668E8' : $r('app.color.surface_control'))
                 .fontColor(this.periodValue === '60' ? Color.White : $r('app.color.text_secondary'))
                 .onClick(() => this.periodValue = '60')
             }.width('100%')
-            TextInput({ placeholder: '刷新周期（秒）', text: this.periodValue }).type(InputType.Number)
+            TextInput({ placeholder: $r('app.string.detail_period_placeholder'), text: this.periodValue })
+              .type(InputType.Number)
               .onChange((value: string) => this.periodValue = value)
           }
         }.padding(18).margin({ left: 16, right: 16 })
           .backgroundColor($r('app.color.surface')).borderRadius(18)
+          .border({ width: 1, color: $r('app.color.border') })
 
         if (this.issuer.trim().toLowerCase() === 'steam') {
           Column({ space: 10 }) {
             Row() {
               Column({ space: 4 }) {
-                Text('Steam 账户').fontSize(17).fontWeight(FontWeight.Bold).width('100%')
-                Text(this.currentToken()?.steam?.accountName || this.account || '未命名账户')
+                Text($r('app.string.detail_steam_account')).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
+                Text(this.currentToken()?.steam?.accountName || this.account ||
+                  $r('app.string.detail_unnamed_account'))
                   .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
               }.alignItems(HorizontalAlign.Start).layoutWeight(1)
               SymbolGlyph($r('sys.symbol.chevron_right')).fontSize(20)
@@ -408,16 +425,17 @@ export struct TokenDetailPage {
             .backgroundColor($r('app.color.steam_surface')).borderRadius(18)
             .border({ width: 1, color: $r('app.color.steam_divider') })
             .onClick(() => this.onOpenSteamManagement())
-            .accessibilityText('管理 Steam 信息')
+            .accessibilityText($r('app.string.detail_manage_steam'))
         }
 
         if (this.errorMessage.length > 0) {
           Text(this.errorMessage).fontSize(13).fontColor($r('app.color.danger_strong'))
             .margin({ left: 18, right: 18 }).width('100%')
         }
-        Button('保存修改').margin({ left: 16, right: 16 }).width('calc(100% - 32vp)')
+        Button($r('app.string.detail_save')).margin({ left: 16, right: 16 }).width('calc(100% - 32vp)')
           .backgroundColor('#4668E8').onClick(() => this.saveTokenDetail())
       }.width('100%').padding({ bottom: 24 }).justifyContent(FlexAlign.Start)
     }.width('100%').height('100%').align(Alignment.TopStart)
+      .backgroundColor($r('app.color.page_background'))
   }
 }

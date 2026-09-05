@@ -7,8 +7,8 @@
 @Component
 export struct SteamVerificationStep {
   @Prop statusMessage: string = '';
-  @Prop prompt: string = '';
-  @Prop placeholder: string = '验证码';
+  @Prop prompt: ResourceStr = '';
+  @Prop placeholder: ResourceStr = $r('app.string.steam_code_placeholder');
   @Prop code: string = '';
   @Prop showCodeInput: boolean = true;
   onCodeChange: (value: string) => void = (_value: string): void => {};

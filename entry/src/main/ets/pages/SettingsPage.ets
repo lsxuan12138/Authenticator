@@ -7,6 +7,7 @@ import { DiagnosticLogService, DiagnosticLogStats } from '../services/Diagnostic
 import { AppSettingsService } from '../services/AppSettingsService';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { Localization } from '../core/Localization';
 
 /** 系统路由表入口；设置结果通过 AppStorage 自动同步回首页。 */
 @Builder
@@ -58,11 +59,19 @@ export struct SettingsPage {
     }
   }
 
+  /** 读取命令式对话框和 Toast 使用的当前语言文本。 */
+  private localized(resource: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.text(context, resource, args);
+  }
+
   /** 根据活动键解析当前图标包名称，默认模式返回明确标签。 */
   private currentIconPackName(): string {
-    if (this.activeIconPackKey === IconPackService.noPackKey()) return '默认字母图标';
+    if (this.activeIconPackKey === IconPackService.noPackKey()) {
+      return this.localized($r('app.string.settings_default_icons'));
+    }
     return this.iconPacks.find((pack: IconPack) => IconPackService.packKey(pack) === this.activeIconPackKey)?.name ??
-      '默认字母图标';
+      this.localized($r('app.string.settings_default_icons'));
   }
 
   /** 保存活动图标包并通知首页重新计算自动图标。 */
@@ -84,7 +93,9 @@ export struct SettingsPage {
       const count = await IconPackService.chooseAndImport(context);
       this.iconPacks = await IconPackService.list(context);
       this.onIconPacksChanged(this.iconPacks);
-      if (count > 0) this.showToast(`已安装 ${count} 个图标包`, 2000);
+      if (count > 0) {
+        this.showToast(this.localized($r('app.string.settings_icon_packs_installed'), count), 2000);
+      }
     } catch (error) {
       this.showToast((error as Error).message, 3000);
     }
@@ -115,7 +126,7 @@ export struct SettingsPage {
       await IconPackService.remove(context, pack);
       this.iconPacks = await IconPackService.list(context);
       this.onIconPacksChanged(this.iconPacks);
-      this.showToast('图标包已删除', 1800);
+      this.showToast(this.localized($r('app.string.settings_icon_deleted')), 1800);
     } catch (error) {
       this.showToast((error as Error).message, 3000);
     }
@@ -148,7 +159,7 @@ export struct SettingsPage {
   /** 校验两次密码后创建并保存应用加密备份。 */
   private async exportEncryptedBackup(): Promise<void> {
     if (this.backupPassword !== this.backupConfirmPassword) {
-      this.showToast('两次输入的备份密码不一致', 2200);
+      this.showToast(this.localized($r('app.string.settings_password_mismatch')), 2200);
       return;
     }
     this.backupBusy = true;
@@ -160,7 +171,7 @@ export struct SettingsPage {
       const count = this.tokens.length;
       this.resetBackupPanel();
       DiagnosticLogService.info('Backup', `Encrypted backup exported, count=${count}`);
-      this.showToast(`已导出 ${count} 个 Token`, 2200);
+      this.showToast(this.localized($r('app.string.settings_tokens_exported'), count), 2200);
     } catch (error) {
       this.backupBusy = false;
       DiagnosticLogService.error('Backup', `Export failed: ${(error as Error).message}`);
@@ -184,7 +195,8 @@ export struct SettingsPage {
       this.resetBackupPanel();
       DiagnosticLogService.info('Backup',
         `Encrypted backup restored, added=${result.added}, updated=${result.updated}, skipped=${result.skipped}`);
-      this.showToast(`恢复完成：新增 ${result.added}，更新 ${result.updated}，跳过重复 ${result.skipped}`, 3000);
+      this.showToast(this.localized($r('app.string.settings_restore_complete'),
+        result.added, result.updated, result.skipped), 3000);
     } catch (error) {
       this.backupBusy = false;
       DiagnosticLogService.error('Backup', `Restore failed: ${(error as Error).message}`);
@@ -215,7 +227,8 @@ export struct SettingsPage {
       await AppSettingsService.applyToCurrentWindow(context, enabled);
       await AppSettingsService.setScreenshotProtection(context, enabled);
       DiagnosticLogService.info('Privacy', `Screenshot protection changed, enabled=${enabled}`);
-      this.showToast(enabled ? '截屏保护已开启' : '截屏保护已关闭', 1800);
+      this.showToast(this.localized(enabled ? $r('app.string.settings_screenshot_on') :
+        $r('app.string.settings_screenshot_off')), 1800);
     } catch (error) {
       this.screenshotProtectionEnabled = previous;
       DiagnosticLogService.error('Privacy', `Failed to change screenshot protection: ${(error as Error).message}`);
@@ -249,19 +262,20 @@ export struct SettingsPage {
     this.diagnosticLogBusy = true;
     try {
       const dialog = await this.getUIContext().getPromptAction().showDialog({
-        title: '导出诊断日志',
-        message: '日志包含应用操作、错误信息和网络状态。敏感凭据会自动脱敏，分享前仍建议检查文件内容。',
+        title: this.localized($r('app.string.settings_export_logs_title')),
+        message: this.localized($r('app.string.settings_export_logs_message')),
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '取消', color: $r('app.color.text_tertiary') },
-          { text: '选择导出位置', color: $r('app.color.brand_strong') }
+          { text: this.localized($r('app.string.common_cancel')), color: $r('app.color.text_tertiary') },
+          { text: this.localized($r('app.string.settings_choose_export_location')),
+            color: $r('app.color.brand_strong') }
         ]
       });
       if (dialog.index !== 1) return;
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const exported = await DiagnosticLogService.export(context);
       this.refreshDiagnosticLogStats();
-      if (exported) this.showToast('诊断日志已导出', 2000);
+      if (exported) this.showToast(this.localized($r('app.string.settings_logs_exported')), 2000);
     } catch (error) {
       DiagnosticLogService.error('Diagnostics', `Export failed: ${(error as Error).message}`);
       this.showToast((error as Error).message, 3000);
@@ -275,18 +289,18 @@ export struct SettingsPage {
     this.diagnosticLogBusy = true;
     try {
       const dialog = await this.getUIContext().getPromptAction().showDialog({
-        title: '清除诊断日志',
-        message: '这只会删除应用运行日志，不会影响 Token、图标包或备份。',
+        title: this.localized($r('app.string.settings_clear_logs_title')),
+        message: this.localized($r('app.string.settings_clear_logs_message')),
         alignment: DialogAlignment.Bottom,
         buttons: [
-          { text: '取消', color: $r('app.color.text_tertiary') },
-          { text: '清除', color: $r('app.color.danger') }
+          { text: this.localized($r('app.string.common_cancel')), color: $r('app.color.text_tertiary') },
+          { text: this.localized($r('app.string.common_clear')), color: $r('app.color.danger') }
         ]
       });
       if (dialog.index !== 1) return;
       DiagnosticLogService.clear();
       this.refreshDiagnosticLogStats();
-      this.showToast('诊断日志已清除', 1800);
+      this.showToast(this.localized($r('app.string.settings_logs_cleared')), 1800);
     } catch (error) {
       DiagnosticLogService.error('Diagnostics', `Clear failed: ${(error as Error).message}`);
       this.showToast((error as Error).message, 3000);
@@ -299,8 +313,9 @@ export struct SettingsPage {
   @Builder
   private header() {
     Column({ space: 4 }) {
-      Text('设置').fontSize(30).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary'))
-      Text('图标包、安全存储与备份').fontSize(14).fontColor($r('app.color.text_tertiary'))
+      Text($r('app.string.settings_title')).fontSize(30).fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+      Text($r('app.string.settings_subtitle')).fontSize(14).fontColor($r('app.color.text_tertiary'))
     }.alignItems(HorizontalAlign.Start).width('100%').padding({ left: 18, right: 18, top: 20, bottom: 8 })
   }
 
@@ -318,12 +333,12 @@ export struct SettingsPage {
           Text(pack.name).fontSize(15).fontWeight(FontWeight.Medium).maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (this.activeIconPackKey === IconPackService.packKey(pack)) {
-            Text('使用中').fontSize(11).fontColor($r('app.color.brand_strong'))
+            Text($r('app.string.settings_in_use')).fontSize(11).fontColor($r('app.color.brand_strong'))
               .padding({ left: 7, right: 7, top: 3, bottom: 3 })
               .backgroundColor($r('app.color.brand_surface_alt')).borderRadius(8)
           }
         }.width('100%')
-        Text(`${pack.icons.length} 个图标 · v${pack.version}`).fontSize(12)
+        Text($r('app.string.settings_icon_pack_summary', pack.icons.length, pack.version)).fontSize(12)
           .fontColor($r('app.color.text_muted'))
       }.alignItems(HorizontalAlign.Start).layoutWeight(1)
       Button() {
@@ -333,7 +348,7 @@ export struct SettingsPage {
       .height(40)
       .borderRadius(20)
       .backgroundColor($r('app.color.danger_surface'))
-      .accessibilityText(`删除图标包 ${pack.name}`)
+      .accessibilityText($r('app.string.settings_delete_icon_pack_accessibility', pack.name))
       .onClick(() => this.removeIconPack(pack))
     }
     .width('100%')
@@ -349,20 +364,22 @@ export struct SettingsPage {
     Column({ space: 14 }) {
       Row() {
         Column({ space: 3 }) {
-          Text('当前图标风格').fontSize(13).fontColor($r('app.color.text_muted'))
+          Text($r('app.string.settings_icon_style')).fontSize(13).fontColor($r('app.color.text_muted'))
           Text(this.currentIconPackName()).fontSize(17).fontWeight(FontWeight.Medium)
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        Button(this.iconPackManagementExpanded ? '收起' : '管理')
+        Button(this.iconPackManagementExpanded ? $r('app.string.common_collapse') : $r('app.string.common_manage'))
           .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
           .onClick(() => this.iconPackManagementExpanded = !this.iconPackManagementExpanded)
       }.width('100%')
-      Text('自动匹配只使用当前图标包；长按首页图标可以手动选择任意已安装图标。')
+      Text($r('app.string.settings_icon_hint'))
         .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
       if (this.iconPackManagementExpanded) {
         Divider().color($r('app.color.divider'))
         Row() {
-          Text(`图标包 · ${this.iconPacks.length} 个已安装`).fontSize(14).layoutWeight(1)
-          Button('安装 ZIP').backgroundColor('#4668E8').onClick(() => this.installIconPack())
+          Text($r('app.string.settings_installed_icon_packs', this.iconPacks.length))
+            .fontSize(14).layoutWeight(1)
+          Button($r('app.string.settings_install_zip')).backgroundColor('#4668E8')
+            .onClick(() => this.installIconPack())
         }.width('100%')
         Row({ space: 10 }) {
           Radio({ value: IconPackService.noPackKey(), group: 'active-icon-pack' })
@@ -372,14 +389,14 @@ export struct SettingsPage {
             })
           Column({ space: 2 }) {
             Row({ space: 8 }) {
-              Text('默认字母图标').fontSize(15).fontWeight(FontWeight.Medium)
+              Text($r('app.string.settings_default_icons')).fontSize(15).fontWeight(FontWeight.Medium)
               if (this.activeIconPackKey === IconPackService.noPackKey()) {
-                Text('使用中').fontSize(11).fontColor($r('app.color.brand_strong'))
+                Text($r('app.string.settings_in_use')).fontSize(11).fontColor($r('app.color.brand_strong'))
                   .padding({ left: 7, right: 7, top: 3, bottom: 3 })
                   .backgroundColor($r('app.color.brand_surface_alt')).borderRadius(8)
               }
             }.width('100%')
-            Text('没有匹配图片时始终可用').fontSize(12).fontColor($r('app.color.text_muted'))
+            Text($r('app.string.settings_default_icon_hint')).fontSize(12).fontColor($r('app.color.text_muted'))
           }.alignItems(HorizontalAlign.Start).layoutWeight(1)
         }
         .width('100%')
@@ -400,41 +417,45 @@ export struct SettingsPage {
   @Builder
   private backupCard() {
     Column({ space: 14 }) {
-      Text('加密备份').fontSize(17).fontWeight(FontWeight.Medium).width('100%')
-      Text('备份包含 OTP 密钥及 Steam 会话信息，只能使用设定的密码解密。')
+      Text($r('app.string.settings_encrypted_backup')).fontSize(17).fontWeight(FontWeight.Medium).width('100%')
+      Text($r('app.string.settings_backup_hint'))
         .fontSize(13).fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
       Row({ space: 10 }) {
-        Button('导出备份').layoutWeight(1).backgroundColor('#4668E8').onClick(() => {
+        Button($r('app.string.settings_export_backup')).layoutWeight(1).backgroundColor('#4668E8').onClick(() => {
           this.resetBackupPanel();
           this.backupMode = 1;
         })
-        Button('导入备份').layoutWeight(1).backgroundColor($r('app.color.surface_muted'))
+        Button($r('app.string.settings_import_backup')).layoutWeight(1)
+          .backgroundColor($r('app.color.surface_muted'))
           .fontColor($r('app.color.text_secondary')).onClick(() => this.chooseBackupImport())
       }.width('100%')
       if (this.backupMode === 1) {
         Divider().color($r('app.color.divider'))
-        TextInput({ placeholder: '至少 8 个字符', text: this.backupPassword })
+        TextInput({ placeholder: $r('app.string.settings_password_min'), text: this.backupPassword })
           .type(InputType.Password).onChange((value: string) => this.backupPassword = value)
-        TextInput({ placeholder: '再次输入密码', text: this.backupConfirmPassword })
+        TextInput({ placeholder: $r('app.string.settings_password_again'), text: this.backupConfirmPassword })
           .type(InputType.Password).onChange((value: string) => this.backupConfirmPassword = value)
         Row({ space: 10 }) {
-          Button('取消').layoutWeight(1).backgroundColor($r('app.color.surface_muted'))
+          Button($r('app.string.common_cancel')).layoutWeight(1).backgroundColor($r('app.color.surface_muted'))
             .fontColor($r('app.color.text_secondary')).onClick(() => this.resetBackupPanel())
-          Button(this.backupBusy ? '正在加密…' : '选择位置并导出').layoutWeight(1)
+          Button(this.backupBusy ? $r('app.string.settings_encrypting') :
+            $r('app.string.settings_choose_export')).layoutWeight(1)
             .backgroundColor($r('app.color.text_secondary')).enabled(!this.backupBusy)
             .onClick(() => this.exportEncryptedBackup())
         }.width('100%')
       } else if (this.backupMode === 2) {
         Divider().color($r('app.color.divider'))
-        Text('已选择加密备份文件').fontSize(14).fontColor($r('app.color.success')).width('100%')
-        TextInput({ placeholder: '输入备份密码', text: this.backupPassword })
+        Text($r('app.string.settings_backup_selected')).fontSize(14)
+          .fontColor($r('app.color.success')).width('100%')
+        TextInput({ placeholder: $r('app.string.settings_backup_password'), text: this.backupPassword })
           .type(InputType.Password).onChange((value: string) => this.backupPassword = value)
-        Text('相同 UUID 的 Token 会更新，不同 UUID 的 Token 会追加。')
+        Text($r('app.string.settings_restore_rule'))
           .fontSize(12).fontColor($r('app.color.text_muted')).width('100%')
         Row({ space: 10 }) {
-          Button('取消').layoutWeight(1).backgroundColor($r('app.color.surface_muted'))
+          Button($r('app.string.common_cancel')).layoutWeight(1).backgroundColor($r('app.color.surface_muted'))
             .fontColor($r('app.color.text_secondary')).onClick(() => this.resetBackupPanel())
-          Button(this.backupBusy ? '正在解密…' : '解密并恢复').layoutWeight(1)
+          Button(this.backupBusy ? $r('app.string.settings_decrypting') :
+            $r('app.string.settings_restore')).layoutWeight(1)
             .backgroundColor($r('app.color.text_secondary')).enabled(!this.backupBusy)
             .onClick(() => this.importEncryptedBackup())
         }.width('100%')
@@ -454,30 +475,33 @@ export struct SettingsPage {
         Column({ space: 10 }) {
           Row({ space: 12 }) {
             Column({ space: 4 }) {
-              Text('禁止截屏和录屏').fontSize(17).fontWeight(FontWeight.Medium).width('100%')
-              Text(this.screenshotProtectionEnabled ? '已开启' : '未开启').fontSize(13)
+              Text($r('app.string.settings_screenshot')).fontSize(17).fontWeight(FontWeight.Medium).width('100%')
+              Text(this.screenshotProtectionEnabled ? $r('app.string.settings_enabled') :
+                $r('app.string.settings_disabled')).fontSize(13)
                 .fontColor($r('app.color.text_tertiary')).width('100%')
             }.alignItems(HorizontalAlign.Start).layoutWeight(1)
             Toggle({ type: ToggleType.Switch, isOn: this.screenshotProtectionEnabled })
               .selectedColor('#4668E8').enabled(!this.screenshotProtectionBusy)
               .onChange((isOn: boolean) => this.updateScreenshotProtection(isOn))
           }.width('100%')
-          Text('开启后，系统截屏、录屏和后台任务卡片将隐藏应用内容。设置会在下次启动时自动恢复。')
+          Text($r('app.string.settings_screenshot_hint'))
             .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
           .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
           .border({ width: 1, color: $r('app.color.border') })
         Column({ space: 12 }) {
-          Text('诊断日志').fontSize(17).fontWeight(FontWeight.Medium).width('100%')
-          Text(`本机环形日志 · ${this.diagnosticLogFiles} 个文件 · ${this.diagnosticLogSize()}`)
+          Text($r('app.string.settings_logs')).fontSize(17).fontWeight(FontWeight.Medium).width('100%')
+          Text($r('app.string.settings_logs_summary', this.diagnosticLogFiles, this.diagnosticLogSize()))
             .fontSize(13).fontColor($r('app.color.text_tertiary')).width('100%')
-          Text('用于反馈 Steam、备份、图标包和持久化问题。敏感凭据会自动脱敏，最多保留约 768KB。')
+          Text($r('app.string.settings_logs_hint'))
             .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
           Row({ space: 10 }) {
-            Button(this.diagnosticLogBusy ? '处理中…' : '导出日志').layoutWeight(1)
+            Button(this.diagnosticLogBusy ? $r('app.string.common_processing') :
+              $r('app.string.settings_export_logs')).layoutWeight(1)
               .backgroundColor('#4668E8').enabled(!this.diagnosticLogBusy)
               .onClick(() => this.exportDiagnosticLogs())
-            Button('清除').layoutWeight(1).backgroundColor($r('app.color.danger_surface'))
+            Button($r('app.string.common_clear')).layoutWeight(1)
+              .backgroundColor($r('app.color.danger_surface'))
               .fontColor($r('app.color.danger')).enabled(!this.diagnosticLogBusy && this.diagnosticLogBytes > 0)
               .onClick(() => this.clearDiagnosticLogs())
           }.width('100%')
@@ -485,8 +509,9 @@ export struct SettingsPage {
           .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.surface')).borderRadius(18)
           .border({ width: 1, color: $r('app.color.border') })
         Column({ space: 6 }) {
-          Text('本机数据保护').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
-          Text('Token 数据使用系统安全主密钥和 AES-256-GCM 加密保存。应用不会启用系统自动备份。')
+          Text($r('app.string.settings_local_protection')).fontSize(15)
+            .fontWeight(FontWeight.Medium).width('100%')
+          Text($r('app.string.settings_local_protection_hint'))
             .fontSize(13).fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
           .margin({ left: 16, right: 16, bottom: 18 }).backgroundColor($r('app.color.brand_surface')).borderRadius(18)

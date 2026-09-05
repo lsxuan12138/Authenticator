@@ -1,3 +1,4 @@
+import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { TokenIconPicker } from '../components/TokenIconPicker';
 import { StoredToken } from '../domain/Token';
@@ -5,6 +6,7 @@ import { APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { IconPack } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { Localization } from '../core/Localization';
 
 /** 系统路由表入口；图标列表只在进入页面后创建，维持原有懒加载行为。 */
 @Builder
@@ -43,9 +45,10 @@ struct IconPickerPage {
 
   /** 按 UUID 保存用户选择，失败时恢复页面内对象并保持当前页面。 */
   private async applyManualIcon(path: string): Promise<void> {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     const token = this.tokens.find((item: StoredToken): boolean => item.id === this.tokenId);
     if (!token) {
-      this.showToast('对应的 Token 已不存在', 2200);
+      this.showToast(Localization.text(context, $r('app.string.error_token_missing')), 2200);
       return;
     }
     try {
@@ -59,7 +62,8 @@ struct IconPickerPage {
       this.tokens = next;
       AppRouter.pop();
     } catch (error) {
-      this.showToast(`保存图标选择失败：${(error as Error).message}`, 3000);
+      this.showToast(Localization.text(context, $r('app.string.error_icon_save_failed'),
+        [(error as Error).message]), 3000);
     }
   }
 

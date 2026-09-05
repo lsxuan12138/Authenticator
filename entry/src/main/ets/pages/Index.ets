@@ -8,6 +8,7 @@ import { IconPack, IconPackService } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_ROUTE_KEY, AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
+import { Localization } from '../core/Localization';
 
 /**
  * 应用主界面，同时协调 Token 持久化、验证码刷新、Steam 操作和图标包设置。
@@ -37,6 +38,12 @@ struct Index {
       const detail = error as BusinessError;
       DiagnosticLogService.error('UI', `Failed to show toast: ${detail.message ?? message}`);
     }
+  }
+
+  /** 读取首页命令式反馈使用的当前语言文本。 */
+  private localized(resource: Resource, ...args: Array<string | number>): string {
+    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    return Localization.text(context, resource, args);
   }
 
   private timer: number = -1;
@@ -79,7 +86,8 @@ struct Index {
     } catch (error) {
       const detail = error as BusinessError;
       DiagnosticLogService.error('UI', `Application initialization failed: ${detail.message ?? 'unknown'}`);
-      this.showToast(`应用数据初始化失败：${detail.message ?? '未知错误'}`, 3500);
+      this.showToast(this.localized($r('app.string.error_init'), detail.message ??
+        this.localized($r('app.string.error_unknown'))), 3500);
     }
   }
 
@@ -112,10 +120,11 @@ struct Index {
     try {
       await pasteboard.getSystemPasteboard().setData(
         pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, value));
-      this.showToast('验证码已复制', 1600);
+      this.showToast(this.localized($r('app.string.home_code_copied')), 1600);
     } catch (error) {
       const detail = error as BusinessError;
-      this.showToast(`复制验证码失败：${detail.message ?? '未知错误'}`, 2500);
+      this.showToast(this.localized($r('app.string.error_copy'), detail.message ??
+        this.localized($r('app.string.error_unknown'))), 2500);
     }
   }
 
@@ -129,7 +138,8 @@ struct Index {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       await SteamLocalDataCleaner.clean(context, removed);
     } catch (error) {
-      this.showToast(`删除 Token 失败：${(error as Error).message}`, 3000);
+      this.showToast(this.localized($r('app.string.error_token_delete_failed'),
+        (error as Error).message), 3000);
     }
   }
 
@@ -145,7 +155,8 @@ struct Index {
     try {
       await this.persist(next);
     } catch (error) {
-      this.showToast(`保存 Token 排序失败：${(error as Error).message}`, 3000);
+      this.showToast(this.localized($r('app.string.error_token_order_save_failed'),
+        (error as Error).message), 3000);
     }
   }
 
@@ -211,7 +222,7 @@ struct Index {
       .height('100%')
       .borderRadius(18)
       .backgroundColor('#4668E8')
-      .accessibilityText('显示 Token 二维码')
+      .accessibilityText($r('app.string.home_show_qr'))
       .onClick(() => this.openTokenQr(index))
 
       Button() {
@@ -237,11 +248,11 @@ struct Index {
         Stack() {
           QRCode(this.currentQrUri()).width(236).height(236).color(Color.Black).backgroundColor(Color.White)
         }.width(260).height(260).padding(12).backgroundColor(Color.White).borderRadius(18)
-        Text('此二维码包含完整 OTP 密钥。仅在可信设备上扫描，不要截图、分享或向他人展示。')
+        Text($r('app.string.token_qr_warning'))
           .fontSize(13).fontColor($r('app.color.warning')).lineHeight(20)
           .width('100%').textAlign(TextAlign.Center)
       }
-      Button('关闭').width('100%').backgroundColor($r('app.color.brand_strong'))
+      Button($r('app.string.common_close')).width('100%').backgroundColor($r('app.color.brand_strong'))
         .onClick(() => this.showTokenQr = false)
     }.width('100%').padding({ left: 20, right: 20, bottom: 20 }).alignItems(HorizontalAlign.Center)
   }
@@ -316,15 +327,17 @@ struct Index {
     Column() {
       Row({ space: 10 }) {
         Column({ space: 4 }) {
-          Text('验证码').fontSize(30).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary'))
-          Text(this.reorderMode ? '长按右侧手柄并上下拖动' :
-            (this.tokens.length === 0 ? '添加你的第一个双重验证账户' : `${this.tokens.length} 个账户安全保存在本机`))
+          Text($r('app.string.home_title')).fontSize(30).fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.text_primary'))
+          Text(this.reorderMode ? $r('app.string.home_reorder_hint') :
+            (this.tokens.length === 0 ? $r('app.string.home_empty_hint') :
+              $r('app.string.home_account_count', this.tokens.length)))
             .fontSize(14).fontColor($r('app.color.text_tertiary'))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
 
         // 排序模式
         if (this.reorderMode) {
-          Button('完成').backgroundColor('#4668E8').onClick(() => this.reorderMode = false)
+          Button($r('app.string.common_done')).backgroundColor('#4668E8').onClick(() => this.reorderMode = false)
         } else {
           if (this.tokens.length > 1) {
             Button() {
@@ -335,7 +348,7 @@ struct Index {
               .width(42)
               .height(42)
               .backgroundColor($r('app.color.surface_muted'))
-              .accessibilityText('排序验证码')
+              .accessibilityText($r('app.string.home_sort_codes'))
               .onClick(() => this.reorderMode = true)
           }
           Button() {
@@ -345,7 +358,7 @@ struct Index {
             .width(42)
             .height(42)
             .backgroundColor('#4668E8')
-            .accessibilityText('添加账户')
+            .accessibilityText($r('app.string.home_add_account'))
             .onClick(() => {
               this.navigate(AppRoute.ADD);
             })
@@ -362,9 +375,9 @@ struct Index {
       if (this.tokens.length === 0) {
         Column({ space: 14 }) {
           SymbolGlyph($r('sys.symbol.rays')).fontSize(42).fontColor(['#4668E8'])
-          Text('这里还没有验证码').fontSize(19).fontWeight(FontWeight.Medium)
-          Text('支持标准 TOTP 与 Steam Guard').fontSize(14).fontColor($r('app.color.text_muted'))
-          Button('添加账户').onClick(() => {
+          Text($r('app.string.home_empty_title')).fontSize(19).fontWeight(FontWeight.Medium)
+          Text($r('app.string.home_empty_description')).fontSize(14).fontColor($r('app.color.text_muted'))
+          Button($r('app.string.home_add_account')).onClick(() => {
             this.navigate(AppRoute.ADD);
           }).backgroundColor('#4668E8')
         }.layoutWeight(1).justifyContent(FlexAlign.Center).width('100%')
@@ -402,10 +415,10 @@ struct Index {
   @Builder
   private bottomBar() {
     Row() {
-      Button('验证码').layoutWeight(1).backgroundColor(Color.Transparent)
+      Button($r('app.string.home_title')).layoutWeight(1).backgroundColor(Color.Transparent)
         .fontColor(this.currentRoute === AppRoute.HOME ? '#4668E8' : $r('app.color.text_tertiary'))
         .onClick(() => this.returnHome())
-      Button('设置').layoutWeight(1).backgroundColor(Color.Transparent)
+      Button($r('app.string.home_settings')).layoutWeight(1).backgroundColor(Color.Transparent)
         .fontColor(this.currentRoute === AppRoute.SETTINGS ? '#4668E8' : $r('app.color.text_tertiary'))
         .onClick(() => {
           if (this.currentRoute !== AppRoute.SETTINGS) {
@@ -433,12 +446,12 @@ struct Index {
       if (this.currentRoute === AppRoute.HOME || this.currentRoute === AppRoute.SETTINGS) {
         this.bottomBar()
       }
-    }.width('100%').height('100%').backgroundColor($r('app.color.surface_subtle'))
+    }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
       .bindSheet(this.showTokenQr, this.tokenQrSheet(), {
         height: 500,
         preferType: SheetType.BOTTOM,
         dragBar: true,
-        title: { title: 'Token 二维码' },
+        title: { title: $r('app.string.token_qr_title') },
         onDisappear: () => this.showTokenQr = false
       })
   }

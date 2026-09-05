@@ -11,6 +11,20 @@ interface SteamCachedAccessToken {
   expiresAt: number;
 }
 
+export enum SteamTokenLifetimeState {
+  NOT_CONFIGURED = 'not_configured',
+  UNKNOWN = 'unknown',
+  VALID = 'valid',
+  EXPIRED = 'expired'
+}
+
+/** 供界面本地化展示的令牌有效期原始数据，不在服务层拼接自然语言。 */
+export interface SteamTokenLifetime {
+  state: SteamTokenLifetimeState;
+  expiresAt: number;
+  distanceMillis: number;
+}
+
 /** 管理 Steam 会话令牌的解析、短期缓存和显式轮换。 */
 export class SteamSessionService {
   private static readonly EXPIRY_MARGIN: number = 120000;
@@ -31,18 +45,22 @@ export class SteamSessionService {
     }
   }
 
-  static tokenStatus(token: string): string {
+  /** 返回有效期状态和时间差，由 UI 按当前语言统一生成文案。 */
+  static tokenLifetime(token: string): SteamTokenLifetime {
     const expiresAt = SteamSessionService.tokenExpiresAt(token);
     if (expiresAt === 0) {
-      return token.length > 0 ? '无法读取有效期' : '未配置';
+      return {
+        state: token.length > 0 ? SteamTokenLifetimeState.UNKNOWN : SteamTokenLifetimeState.NOT_CONFIGURED,
+        expiresAt: 0,
+        distanceMillis: 0
+      };
     }
     const remaining = expiresAt - Date.now();
-    if (remaining <= 0) {
-      return `已于 ${new Date(expiresAt).toLocaleString()} 过期`;
-    }
-    const hours = Math.floor(remaining / 3600000);
-    const days = Math.floor(hours / 24);
-    return `有效至 ${new Date(expiresAt).toLocaleString()}（约 ${days > 0 ? `${days} 天` : `${hours} 小时`}）`;
+    return {
+      state: remaining > 0 ? SteamTokenLifetimeState.VALID : SteamTokenLifetimeState.EXPIRED,
+      expiresAt: expiresAt,
+      distanceMillis: Math.abs(remaining)
+    };
   }
 
   /** 优先复用仍有效的现有 Access Token，仅在需要时使用 Refresh Token 换新。 */
