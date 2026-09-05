@@ -6,6 +6,8 @@ import {
   CAuthentication_DeviceDetails,
   CAuthentication_GetAuthSessionInfo_Request,
   CAuthentication_GetAuthSessionInfo_Response,
+  CAuthentication_GetAuthSessionsForAccount_Request,
+  CAuthentication_GetAuthSessionsForAccount_Response,
   CAuthentication_PollAuthSessionStatus_Request,
   CAuthentication_PollAuthSessionStatus_Response,
   CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request,
@@ -249,7 +251,7 @@ export class SteamProtocol {
       })).finish();
   }
 
-  /** 解码持久令牌、Guard Data 和可能轮换的 clientId。 */
+  /** 解码持久令牌、Steam 可选返回的 Guard Data，以及可能轮换的 clientId。 */
   static decodePollSession(data: Uint8Array): SteamAuthPollResult {
     try {
       const response = CAuthentication_PollAuthSessionStatus_Response.decode(data);
@@ -274,6 +276,22 @@ export class SteamProtocol {
       CAuthentication_GetAuthSessionInfo_Request.create({
         clientId: Long.fromString(clientId, true)
       })).finish();
+  }
+
+  /** 构造当前账户认证会话列表请求；该消息按 Steam 协议没有字段。 */
+  static encodeAuthSessionsForAccount(): Uint8Array {
+    return CAuthentication_GetAuthSessionsForAccount_Request.encode(
+      CAuthentication_GetAuthSessionsForAccount_Request.create({})).finish();
+  }
+
+  /** 解码待处理认证会话 ID，并以字符串保留 uint64 完整精度。 */
+  static decodeAuthSessionsForAccount(data: Uint8Array): string[] {
+    try {
+      const response = CAuthentication_GetAuthSessionsForAccount_Response.decode(data);
+      return response.clientIds.map((clientId: Long): string => clientId.toString());
+    } catch (error) {
+      throw SteamProtocol.decodeError('账户认证会话列表', error as Object);
+    }
   }
 
   /** 解码扫码请求的来源设备、位置、持久性和风险标记。 */

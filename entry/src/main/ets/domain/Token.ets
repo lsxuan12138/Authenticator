@@ -4,6 +4,13 @@ export enum TokenKind {
   STEAM = 'steam'
 }
 
+/** 主流 otpauth TOTP 使用的 HMAC 摘要算法。 */
+export enum TokenAlgorithm {
+  SHA1 = 'SHA1',
+  SHA256 = 'SHA256',
+  SHA512 = 'SHA512'
+}
+
 /** 本地 Token 核心字段；数组顺序同时就是首页展示顺序。 */
 export interface TokenRecord {
   id: string;
@@ -13,6 +20,7 @@ export interface TokenRecord {
   digits: number;
   period: number;
   kind: TokenKind;
+  algorithm?: TokenAlgorithm;
 
   // 仅保存用户手动选择的本机图标路径；自动匹配结果不持久化，也不进入备份。
   iconPath: string;
@@ -34,8 +42,8 @@ export interface SteamGuardMetadata {
   accessToken: string;
   refreshToken: string;
   /**
-   * Steam 登录成功后返回的设备信任凭据（Guard Data）。它不是 Device ID，也不参与验证码生成；
-   * 后续凭据登录会把它原样交还 Steam，以减少重复验证。通常为有有效期的 JWT，按会话凭据保护。
+   * Steam 凭据登录可能返回的兼容性登录数据。MobileApp 类型会话通常不会下发该字段；
+   * 它不是 Device ID、不参与验证码生成，也不能按 JWT 计算有效期。若存在则加密保存并在后续登录时原样提交。
    */
   guardData?: string;
   revocationCode: string;

@@ -126,6 +126,13 @@ message CAuthentication_GetAuthSessionInfo_Request {
   optional uint64 client_id = 1;
 }
 
+message CAuthentication_GetAuthSessionsForAccount_Request {
+}
+
+message CAuthentication_GetAuthSessionsForAccount_Response {
+  repeated uint64 client_ids = 1;
+}
+
 message CAuthentication_GetAuthSessionInfo_Response {
   optional string ip = 1;
   optional string geoloc = 2;

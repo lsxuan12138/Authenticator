@@ -1,7 +1,7 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Base32 } from './Base32';
-import { TokenCode, TokenKind, TokenRecord } from '../domain/Token';
+import { TokenAlgorithm, TokenCode, TokenKind, TokenRecord } from '../domain/Token';
 
 /**
  * TOTP/Steam Guard 验证码生成器。
@@ -16,7 +16,9 @@ export class OtpEngine {
     const seconds = Math.floor(nowMilliseconds / 1000);
     // counter 是从 Unix 时间起经过的 period 数，按 8 字节大端序参与 HMAC。
     const counter = Math.floor(seconds / period);
-    const digest = OtpEngine.hmacSha1(Base32.decode(token.secret), OtpEngine.counterBytes(counter));
+    const algorithm = token.kind === TokenKind.STEAM ? TokenAlgorithm.SHA1 :
+      (token.algorithm ?? TokenAlgorithm.SHA1);
+    const digest = OtpEngine.hmac(Base32.decode(token.secret), OtpEngine.counterBytes(counter), algorithm);
     // RFC 4226 动态截断：摘要末字节的低 4 bit 决定截取位置。
     const offset = digest[digest.length - 1] & 0x0f;
     let binary = ((digest[offset] & 0x7f) * 0x1000000) +
@@ -37,20 +39,20 @@ export class OtpEngine {
     return { value: value, remainingSeconds: period - elapsed, progress: (period - elapsed) / period };
   }
 
-  /** 执行 RFC 6238 与 Steam Guard 都要求的 HMAC-SHA1 运算。 */
-  private static hmacSha1(secret: Uint8Array, message: Uint8Array): Uint8Array {
+  /** 执行 RFC 6238 常用的 HMAC-SHA1/SHA256/SHA512 运算。 */
+  private static hmac(secret: Uint8Array, message: Uint8Array, algorithm: TokenAlgorithm): Uint8Array {
     try {
       // Crypto Architecture Kit 需要先把原始密钥字节转换为 HMAC 对称密钥对象。
       const generator = cryptoFramework.createSymKeyGenerator('HMAC');
       const key = generator.convertKeySync({ data: secret });
-      // eslint-disable-next-line @security/no-unsafe-mac -- RFC 4226/6238 与 Steam Guard 要求 HMAC-SHA1。
-      const mac = cryptoFramework.createMac('SHA1');
+      // eslint-disable-next-line @security/no-unsafe-mac -- OTP 协议明确允许用户导入的摘要算法。
+      const mac = cryptoFramework.createMac(algorithm);
       mac.initSync(key);
       mac.updateSync({ data: message });
       return mac.doFinalSync().data;
     } catch (error) {
       const detail = error as BusinessError;
-      throw new Error(`生成验证码摘要失败：${detail.message ?? '密钥格式无效'}`);
+      throw new Error(`生成 ${algorithm} 验证码摘要失败：${detail.message ?? '密钥格式无效'}`);
     }
   }
 

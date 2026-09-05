@@ -1,7 +1,7 @@
 {
   "app": {
     "bundleName": "com.lsxuan.authenticator",
-    "vendor": "example",
+    "vendor": "lsxuan",
     "versionCode": 1000000,
     "versionName": "1.0.0",
     "buildVersion": "1",

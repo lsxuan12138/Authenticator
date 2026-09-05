@@ -3204,6 +3204,415 @@ export const CAuthentication_GetAuthSessionInfo_Request = $root.CAuthentication_
     return CAuthentication_GetAuthSessionInfo_Request;
 })();
 
+export const CAuthentication_GetAuthSessionsForAccount_Request = $root.CAuthentication_GetAuthSessionsForAccount_Request = (() => {
+
+    /**
+     * Properties of a CAuthentication_GetAuthSessionsForAccount_Request.
+     * @exports ICAuthentication_GetAuthSessionsForAccount_Request
+     * @interface ICAuthentication_GetAuthSessionsForAccount_Request
+     */
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionsForAccount_Request.
+     * @exports CAuthentication_GetAuthSessionsForAccount_Request
+     * @classdesc Represents a CAuthentication_GetAuthSessionsForAccount_Request.
+     * @implements ICAuthentication_GetAuthSessionsForAccount_Request
+     * @constructor
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Request=} [properties] Properties to set
+     */
+    function CAuthentication_GetAuthSessionsForAccount_Request(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionsForAccount_Request instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Request=} [properties] Properties to set
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Request} CAuthentication_GetAuthSessionsForAccount_Request instance
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.create = function create(properties) {
+        return new CAuthentication_GetAuthSessionsForAccount_Request(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Request message. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Request.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Request} message CAuthentication_GetAuthSessionsForAccount_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Request message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Request.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Request} message CAuthentication_GetAuthSessionsForAccount_Request message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Request message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Request} CAuthentication_GetAuthSessionsForAccount_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_GetAuthSessionsForAccount_Request();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Request message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Request} CAuthentication_GetAuthSessionsForAccount_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionsForAccount_Request message.
+     * @function verify
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionsForAccount_Request message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Request} CAuthentication_GetAuthSessionsForAccount_Request
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_GetAuthSessionsForAccount_Request)
+            return object;
+        return new $root.CAuthentication_GetAuthSessionsForAccount_Request();
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionsForAccount_Request message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {CAuthentication_GetAuthSessionsForAccount_Request} message CAuthentication_GetAuthSessionsForAccount_Request
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.toObject = function toObject() {
+        return {};
+    };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionsForAccount_Request to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionsForAccount_Request
+     * @function getTypeUrl
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Request
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_GetAuthSessionsForAccount_Request.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_GetAuthSessionsForAccount_Request";
+    };
+
+    return CAuthentication_GetAuthSessionsForAccount_Request;
+})();
+
+export const CAuthentication_GetAuthSessionsForAccount_Response = $root.CAuthentication_GetAuthSessionsForAccount_Response = (() => {
+
+    /**
+     * Properties of a CAuthentication_GetAuthSessionsForAccount_Response.
+     * @exports ICAuthentication_GetAuthSessionsForAccount_Response
+     * @interface ICAuthentication_GetAuthSessionsForAccount_Response
+     * @property {Array.<Long>|null} [clientIds] CAuthentication_GetAuthSessionsForAccount_Response clientIds
+     */
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionsForAccount_Response.
+     * @exports CAuthentication_GetAuthSessionsForAccount_Response
+     * @classdesc Represents a CAuthentication_GetAuthSessionsForAccount_Response.
+     * @implements ICAuthentication_GetAuthSessionsForAccount_Response
+     * @constructor
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Response=} [properties] Properties to set
+     */
+    function CAuthentication_GetAuthSessionsForAccount_Response(properties) {
+        this.clientIds = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CAuthentication_GetAuthSessionsForAccount_Response clientIds.
+     * @member {Array.<Long>} clientIds
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @instance
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.prototype.clientIds = $util.emptyArray;
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionsForAccount_Response instance using the specified properties.
+     * @function create
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Response=} [properties] Properties to set
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Response} CAuthentication_GetAuthSessionsForAccount_Response instance
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.create = function create(properties) {
+        return new CAuthentication_GetAuthSessionsForAccount_Response(properties);
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Response message. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Response.verify|verify} messages.
+     * @function encode
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Response} message CAuthentication_GetAuthSessionsForAccount_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.clientIds != null && message.clientIds.length)
+            for (let i = 0; i < message.clientIds.length; ++i)
+                writer.uint32(/* id 1, wireType 0 =*/8).uint64(message.clientIds[i]);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Response message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Response.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {ICAuthentication_GetAuthSessionsForAccount_Response} message CAuthentication_GetAuthSessionsForAccount_Response message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Response message from the specified reader or buffer.
+     * @function decode
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Response} CAuthentication_GetAuthSessionsForAccount_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.decode = function decode(reader, length) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CAuthentication_GetAuthSessionsForAccount_Response();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            switch (tag >>> 3) {
+            case 1: {
+                    if (!(message.clientIds && message.clientIds.length))
+                        message.clientIds = [];
+                    if ((tag & 7) === 2) {
+                        let end2 = reader.uint32() + reader.pos;
+                        while (reader.pos < end2)
+                            message.clientIds.push(reader.uint64());
+                    } else
+                        message.clientIds.push(reader.uint64());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Response message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Response} CAuthentication_GetAuthSessionsForAccount_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionsForAccount_Response message.
+     * @function verify
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.clientIds != null && message.hasOwnProperty("clientIds")) {
+            if (!Array.isArray(message.clientIds))
+                return "clientIds: array expected";
+            for (let i = 0; i < message.clientIds.length; ++i)
+                if (!$util.isInteger(message.clientIds[i]) && !(message.clientIds[i] && $util.isInteger(message.clientIds[i].low) && $util.isInteger(message.clientIds[i].high)))
+                    return "clientIds: integer|Long[] expected";
+        }
+        return null;
+    };
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionsForAccount_Response message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CAuthentication_GetAuthSessionsForAccount_Response} CAuthentication_GetAuthSessionsForAccount_Response
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.fromObject = function fromObject(object) {
+        if (object instanceof $root.CAuthentication_GetAuthSessionsForAccount_Response)
+            return object;
+        let message = new $root.CAuthentication_GetAuthSessionsForAccount_Response();
+        if (object.clientIds) {
+            if (!Array.isArray(object.clientIds))
+                throw TypeError(".CAuthentication_GetAuthSessionsForAccount_Response.clientIds: array expected");
+            message.clientIds = [];
+            for (let i = 0; i < object.clientIds.length; ++i)
+                if ($util.Long)
+                    (message.clientIds[i] = $util.Long.fromValue(object.clientIds[i])).unsigned = true;
+                else if (typeof object.clientIds[i] === "string")
+                    message.clientIds[i] = parseInt(object.clientIds[i], 10);
+                else if (typeof object.clientIds[i] === "number")
+                    message.clientIds[i] = object.clientIds[i];
+                else if (typeof object.clientIds[i] === "object")
+                    message.clientIds[i] = new $util.LongBits(object.clientIds[i].low >>> 0, object.clientIds[i].high >>> 0).toNumber(true);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionsForAccount_Response message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {CAuthentication_GetAuthSessionsForAccount_Response} message CAuthentication_GetAuthSessionsForAccount_Response
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.clientIds = [];
+        if (message.clientIds && message.clientIds.length) {
+            object.clientIds = [];
+            for (let j = 0; j < message.clientIds.length; ++j)
+                if (typeof message.clientIds[j] === "number")
+                    object.clientIds[j] = options.longs === String ? String(message.clientIds[j]) : message.clientIds[j];
+                else
+                    object.clientIds[j] = options.longs === String ? $util.Long.prototype.toString.call(message.clientIds[j]) : options.longs === Number ? new $util.LongBits(message.clientIds[j].low >>> 0, message.clientIds[j].high >>> 0).toNumber(true) : message.clientIds[j];
+        }
+        return object;
+    };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionsForAccount_Response to JSON.
+     * @function toJSON
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionsForAccount_Response
+     * @function getTypeUrl
+     * @memberof CAuthentication_GetAuthSessionsForAccount_Response
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CAuthentication_GetAuthSessionsForAccount_Response.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CAuthentication_GetAuthSessionsForAccount_Response";
+    };
+
+    return CAuthentication_GetAuthSessionsForAccount_Response;
+})();
+
 export const CAuthentication_GetAuthSessionInfo_Response = $root.CAuthentication_GetAuthSessionInfo_Response = (() => {
 
     /**

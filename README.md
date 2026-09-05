@@ -8,7 +8,9 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
 
 - 标准 TOTP
   - 支持 6 位和 8 位验证码
+  - 支持常用的 HMAC-SHA1、HMAC-SHA256 和 HMAC-SHA512
   - 支持自定义刷新周期（1–300 秒）
+  - 手动添加与详情页提供常用的 30/60 秒快捷选择
   - 支持手动填写、`otpauth://` URI 和二维码添加
   - 长按验证码复制
 - Steam Guard
@@ -20,9 +22,11 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
   - 通过短信转移已有移动验证器
   - 查询 Steam 服务端记录的移动验证器状态
   - 使用撤销码移除移动验证器（成功后同步删除已失效的本地 Token）
-  - 查看并处理 Steam 待确认项目
+  - 查看并处理交易、账户操作以及服务端待登录请求
+  - 本机加密保存最近 100 条批准/拒绝操作历史
   - 扫码登录 Steam，并在操作前展示请求设备、位置、IP、会话类型和风险提示
   - 支持明确批准或拒绝扫码登录，并沿用请求方声明的会话持久性
+  - 缓存 Steam 公开昵称与头像，离线时可继续展示最近资料
 - Token 管理
   - 编辑、删除和拖拽排序
   - 可将 Token URI 显示为二维码，便于迁移到可信设备
@@ -81,9 +85,22 @@ Steam Token 详情页支持粘贴 maFile 或等价 JSON。解析器支持常见�
 - 本机沙箱中的图标路径不会导出；恢复后会根据当前设备安装的图标包重新匹配。
 - 密码至少需要 8 个字符。
 - 当前实现会将备份文件整体读入内存，因此导入文件限制为 8 MB。
-- 恢复时相同 UUID 的 Token 会更新，不同 UUID 的 Token 会追加，避免重复恢复同一备份。
+- 恢复时相同 UUID 的 Token 会原位更新；不同 UUID 但 OTP 配置相同的条目会跳过，其余条目按备份顺序追加。
 
 请妥善保管备份密码。应用不保存该密码，也无法找回或绕过它。
+
+如需在电脑端检查备份内容，可使用仓库中的 `tools/export_backup_tokens.py`。脚本与当前 v1
+备份格式使用相同的 PBKDF2-SHA256（210000 次）、AES-256-GCM、12 字节 IV、16 字节认证标签和
+AAD，并按应用当前校验规则输出所有可用 Token 的 `otpauth://` URI；元信息完整的 Steam Token
+还会附带可重新导入的 maFile 对象。
+
+```shell
+python -m pip install cryptography
+python tools/export_backup_tokens.py path/to/backup.authbackup
+```
+
+默认会安全地交互输入密码，并在备份旁生成 `*.tokens.json`。输出包含 OTP 密钥及 Steam 会话
+凭据，应按明文敏感文件保管并在使用后妥善删除；不建议通过 `-p` 参数传入密码，以免进入命令历史。
 
 ## 图标包格式
 

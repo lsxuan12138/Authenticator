@@ -32,6 +32,14 @@ export class Base32 {
         bytes.push((buffer >> bits) & 0xff);
       }
     }
+    // 无填充 Base32 只能留下至多 4 bit；更多余位表示字符数量不可能对应完整字节。
+    if (bits > 4 || bytes.length === 0) {
+      throw new Error('密钥长度不是有效的 Base32 编码');
+    }
+    // RFC 4648 要求最后不足一个字节的填充位为 0，避免同一密钥存在多种非规范编码。
+    if (bits > 0 && (buffer & ((1 << bits) - 1)) !== 0) {
+      throw new Error('密钥包含非零 Base32 填充位');
+    }
     return new Uint8Array(bytes);
   }
 

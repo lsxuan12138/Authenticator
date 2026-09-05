@@ -143,6 +143,15 @@ export interface ICAuthentication_GetAuthSessionInfo_Request {
     clientId?: Long;
 }
 
+/** Properties of a CAuthentication_GetAuthSessionsForAccount_Request. */
+export interface ICAuthentication_GetAuthSessionsForAccount_Request {
+}
+
+/** Properties of a CAuthentication_GetAuthSessionsForAccount_Response. */
+export interface ICAuthentication_GetAuthSessionsForAccount_Response {
+    clientIds?: Long[];
+}
+
 /** Properties of a CAuthentication_GetAuthSessionInfo_Response. */
 export interface ICAuthentication_GetAuthSessionInfo_Response {
     ip?: string;
@@ -1241,6 +1250,183 @@ export class CAuthentication_GetAuthSessionInfo_Request implements ICAuthenticat
 
     /**
      * Gets the default type url for CAuthentication_GetAuthSessionInfo_Request
+     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns The default type url
+     */
+    public static getTypeUrl(typeUrlPrefix?: string): string;
+}
+
+/** Represents a CAuthentication_GetAuthSessionsForAccount_Request. */
+export class CAuthentication_GetAuthSessionsForAccount_Request implements ICAuthentication_GetAuthSessionsForAccount_Request {
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionsForAccount_Request.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: ICAuthentication_GetAuthSessionsForAccount_Request);
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionsForAccount_Request instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns CAuthentication_GetAuthSessionsForAccount_Request instance
+     */
+    public static create(properties?: ICAuthentication_GetAuthSessionsForAccount_Request): CAuthentication_GetAuthSessionsForAccount_Request;
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Request message. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Request.verify|verify} messages.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Request message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: ICAuthentication_GetAuthSessionsForAccount_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Request message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Request.verify|verify} messages.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Request message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: ICAuthentication_GetAuthSessionsForAccount_Request, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Request message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns CAuthentication_GetAuthSessionsForAccount_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_GetAuthSessionsForAccount_Request;
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Request message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns CAuthentication_GetAuthSessionsForAccount_Request
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_GetAuthSessionsForAccount_Request;
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionsForAccount_Request message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionsForAccount_Request message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns CAuthentication_GetAuthSessionsForAccount_Request
+     */
+    public static fromObject(object: { [k: string]: any }): CAuthentication_GetAuthSessionsForAccount_Request;
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionsForAccount_Request message. Also converts values to other types if specified.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Request
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: CAuthentication_GetAuthSessionsForAccount_Request, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionsForAccount_Request to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionsForAccount_Request
+     * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns The default type url
+     */
+    public static getTypeUrl(typeUrlPrefix?: string): string;
+}
+
+/** Represents a CAuthentication_GetAuthSessionsForAccount_Response. */
+export class CAuthentication_GetAuthSessionsForAccount_Response implements ICAuthentication_GetAuthSessionsForAccount_Response {
+
+    /**
+     * Constructs a new CAuthentication_GetAuthSessionsForAccount_Response.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: ICAuthentication_GetAuthSessionsForAccount_Response);
+
+    /** CAuthentication_GetAuthSessionsForAccount_Response clientIds. */
+    public clientIds: Long[];
+
+    /**
+     * Creates a new CAuthentication_GetAuthSessionsForAccount_Response instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns CAuthentication_GetAuthSessionsForAccount_Response instance
+     */
+    public static create(properties?: ICAuthentication_GetAuthSessionsForAccount_Response): CAuthentication_GetAuthSessionsForAccount_Response;
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Response message. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Response.verify|verify} messages.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Response message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: ICAuthentication_GetAuthSessionsForAccount_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified CAuthentication_GetAuthSessionsForAccount_Response message, length delimited. Does not implicitly {@link CAuthentication_GetAuthSessionsForAccount_Response.verify|verify} messages.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Response message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: ICAuthentication_GetAuthSessionsForAccount_Response, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Response message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns CAuthentication_GetAuthSessionsForAccount_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): CAuthentication_GetAuthSessionsForAccount_Response;
+
+    /**
+     * Decodes a CAuthentication_GetAuthSessionsForAccount_Response message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns CAuthentication_GetAuthSessionsForAccount_Response
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): CAuthentication_GetAuthSessionsForAccount_Response;
+
+    /**
+     * Verifies a CAuthentication_GetAuthSessionsForAccount_Response message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a CAuthentication_GetAuthSessionsForAccount_Response message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns CAuthentication_GetAuthSessionsForAccount_Response
+     */
+    public static fromObject(object: { [k: string]: any }): CAuthentication_GetAuthSessionsForAccount_Response;
+
+    /**
+     * Creates a plain object from a CAuthentication_GetAuthSessionsForAccount_Response message. Also converts values to other types if specified.
+     * @param message CAuthentication_GetAuthSessionsForAccount_Response
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: CAuthentication_GetAuthSessionsForAccount_Response, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this CAuthentication_GetAuthSessionsForAccount_Response to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+
+    /**
+     * Gets the default type url for CAuthentication_GetAuthSessionsForAccount_Response
      * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
      * @returns The default type url
      */

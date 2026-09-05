@@ -93,21 +93,26 @@ export struct SettingsPage {
   /** 卸载图标包，并清理引用该目录的手动图标与活动选择。 */
   private async removeIconPack(pack: IconPack): Promise<void> {
     try {
-      await IconPackService.remove(pack);
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const nextTokens = this.tokens.map((token: StoredToken): StoredToken => {
+        if (token.iconManual === true && token.iconPath.startsWith(`file://${pack.directory}/`)) {
+          return {
+            id: token.id, issuer: token.issuer, account: token.account, secret: token.secret,
+            digits: token.digits, period: token.period, kind: token.kind, algorithm: token.algorithm,
+            iconPath: '', iconManual: false, createdAt: token.createdAt, steam: token.steam
+          };
+        }
+        return token;
+      });
+      // 先清除 Token 对包内文件的引用，再删除目录；失败时不会留下指向已删除文件的持久化路径。
+      await this.onTokensChanged(nextTokens);
+      this.tokens = nextTokens;
       if (this.activeIconPackKey === IconPackService.packKey(pack)) {
         await IconPackService.selectPack(context, IconPackService.noPackKey());
         this.activeIconPackKey = IconPackService.noPackKey();
         this.onActiveIconPackChanged(this.activeIconPackKey);
       }
-      this.tokens.forEach((token: StoredToken) => {
-        if (token.iconManual === true && token.iconPath.startsWith(`file://${pack.directory}/`)) {
-          token.iconPath = '';
-          token.iconManual = false;
-        }
-      });
-      this.tokens = [...this.tokens];
-      await this.onTokensChanged(this.tokens);
+      await IconPackService.remove(context, pack);
       this.iconPacks = await IconPackService.list(context);
       this.onIconPacksChanged(this.iconPacks);
       this.showToast('图标包已删除', 1800);
@@ -174,12 +179,12 @@ export struct SettingsPage {
         token.iconManual = false;
       });
       const result: BackupMergeResult = BackupService.merge(this.tokens, incoming);
+      await this.onTokensChanged(result.tokens);
       this.tokens = result.tokens;
-      await this.onTokensChanged(this.tokens);
       this.resetBackupPanel();
       DiagnosticLogService.info('Backup',
-        `Encrypted backup restored, added=${result.added}, updated=${result.updated}`);
-      this.showToast(`恢复完成：新增 ${result.added} 个，更新 ${result.updated} 个`, 2800);
+        `Encrypted backup restored, added=${result.added}, updated=${result.updated}, skipped=${result.skipped}`);
+      this.showToast(`恢复完成：新增 ${result.added}，更新 ${result.updated}，跳过重复 ${result.skipped}`, 3000);
     } catch (error) {
       this.backupBusy = false;
       DiagnosticLogService.error('Backup', `Restore failed: ${(error as Error).message}`);

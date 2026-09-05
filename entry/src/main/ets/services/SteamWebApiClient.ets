@@ -29,9 +29,15 @@ export class SteamWebApiClient {
   /** 调用 IAuthenticationService/ITwoFactorService 的 protobuf Web API。 */
   static async protobuf(service: string, method: string, payload: Uint8Array,
     accessToken: string = '', acceptedResults: string[] = ['1', 'OK']): Promise<Uint8Array> {
-    const encoded = new util.Base64Helper().encodeToStringSync(payload, util.Type.BASIC);
-    const suffix = accessToken.length > 0 ? `?access_token=${encodeURIComponent(accessToken)}` : '';
-    const url = `https://api.steampowered.com/I${service}Service/${method}/v1/${suffix}`;
+    // 空 protobuf 消息编码结果合法地为 0 字节；HarmonyOS Base64Helper 会拒绝空 Uint8Array，需直接使用空文本。
+    const encoded = payload.length === 0 ? '' :
+      new util.Base64Helper().encodeToStringSync(payload, util.Type.BASIC);
+    // Web API 默认返回 JSON；format 必须放在查询串中，才能稳定获得可直接解码的裸 protobuf。
+    const parameters: string[] = ['format=protobuf_raw'];
+    if (accessToken.length > 0) {
+      parameters.push(`access_token=${encodeURIComponent(accessToken)}`);
+    }
+    const url = `https://api.steampowered.com/I${service}Service/${method}/v1/?${parameters.join('&')}`;
     const request = http.createHttp();
     try {
       DiagnosticLogService.info('SteamWebApi', `${service}.${method} request`);
@@ -56,11 +62,71 @@ export class SteamWebApiClient {
     }
   }
 
+  /**
+   * 调用只接受 GET 的 protobuf Web API。
+   * GetAuthSessionsForAccount 虽然属于统一消息服务，但 Steam 当前端点会对 POST 返回 HTTP 405。
+   */
+  static async protobufGet(service: string, method: string, payload: Uint8Array,
+    accessToken: string = '', acceptedResults: string[] = ['1', 'OK']): Promise<Uint8Array> {
+    const parameters: string[] = ['format=protobuf_raw'];
+    if (accessToken.length > 0) {
+      parameters.push(`access_token=${encodeURIComponent(accessToken)}`);
+    }
+    const encoded = payload.length === 0 ? '' :
+      new util.Base64Helper().encodeToStringSync(payload, util.Type.BASIC);
+    // GET 参数必须位于 URL；空 protobuf 请求也显式保留 input_protobuf_encoded。
+    parameters.push(`input_protobuf_encoded=${encodeURIComponent(encoded)}`);
+    const url = `https://api.steampowered.com/I${service}Service/${method}/v1/?${parameters.join('&')}`;
+    const request = http.createHttp();
+    try {
+      DiagnosticLogService.info('SteamWebApi', `${service}.${method} GET request`);
+      const response = await request.request(url, {
+        method: http.RequestMethod.GET,
+        header: { 'Accept': 'application/octet-stream' },
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+        connectTimeout: SteamWebApiClient.TIMEOUT,
+        readTimeout: SteamWebApiClient.TIMEOUT
+      });
+      const eResult = SteamWebApiClient.eResult(response.header);
+      SteamWebApiClient.validate(service, method, response.responseCode, eResult, acceptedResults, true);
+      return new Uint8Array(response.result as ArrayBuffer);
+    } catch (error) {
+      throw SteamWebApiClient.requestError(`${service}.${method}`, error as Object);
+    } finally {
+      request.destroy();
+    }
+  }
+
   /** 执行返回 JSON 的 GET 请求；移动确认列表使用该入口。 */
   static async getJson(label: string, url: string,
     header: SteamHttpHeaders = {}): Promise<Record<string, Object>> {
     const response = await SteamWebApiClient.requestText(label, url, http.RequestMethod.GET, '', header);
     return SteamWebApiClient.parseJson(label, response);
+  }
+
+  /** 执行普通文本 GET；用于 Steam Community 的公开资料 XML。 */
+  static async getText(label: string, url: string, header: SteamHttpHeaders = {}): Promise<string> {
+    return (await SteamWebApiClient.requestText(label, url, http.RequestMethod.GET, '', header)).body;
+  }
+
+  /** 下载小型二进制资源；当前仅用于账户头像缓存。 */
+  static async getBytes(label: string, url: string): Promise<Uint8Array> {
+    const request = http.createHttp();
+    try {
+      const response = await request.request(url, {
+        method: http.RequestMethod.GET,
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+        connectTimeout: SteamWebApiClient.TIMEOUT,
+        readTimeout: SteamWebApiClient.TIMEOUT
+      });
+      SteamWebApiClient.validate('HTTP', label, response.responseCode,
+        SteamWebApiClient.eResult(response.header), ['1', 'OK'], false);
+      return new Uint8Array(response.result as ArrayBuffer);
+    } catch (error) {
+      throw SteamWebApiClient.requestError(label, error as Object);
+    } finally {
+      request.destroy();
+    }
   }
 
   /** 执行表单 POST 并解析 JSON；移动确认操作使用该入口。 */

@@ -3,7 +3,7 @@ import { preferences } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { StoredToken } from '../domain/Token';
 import { SecureTokenVault } from '../security/SecureTokenVault';
-import { TokenId } from '../core/TokenId';
+import { TokenValidator } from '../core/TokenValidator';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 
 /**
@@ -70,14 +70,7 @@ export class TokenRepository {
   /** 校验解密后的 JSON 结构和 UUID，阻止不兼容数据进入页面状态。 */
   private parseTokens(raw: string): StoredToken[] {
     // JSON.parse 成功并不代表根节点类型正确，仓库只接受数组。
-    const items = JSON.parse(raw) as StoredToken[];
-    if (!Array.isArray(items)) {
-      throw new Error('Token 数据格式无效');
-    }
-    if (items.some((token: StoredToken) => !token || !TokenId.isUuid(token.id))) {
-      throw new Error('Token 数据包含无效 UUID');
-    }
-    return items;
+    return TokenValidator.normalizeAll(JSON.parse(raw) as StoredToken[]);
   }
 
   /** 在写入前验证新密文能够由当前 Asset Store 主密钥正确解密。 */

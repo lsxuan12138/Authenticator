@@ -7,6 +7,7 @@ import { OtpUriParser } from '../core/OtpUriParser';
 import { IconPack, IconPackService } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_ROUTE_KEY, AppRoute, AppRouter } from '../navigation/AppRouter';
+import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 
 /**
  * 应用主界面，同时协调 Token 持久化、验证码刷新、Steam 操作和图标包设置。
@@ -91,14 +92,16 @@ struct Index {
         const detail = error as BusinessError;
         DiagnosticLogService.error('OTP',
           `Failed to generate code for issuer=${token.issuer}: ${detail.message ?? 'unknown'}`);
-        return { value: token.kind === TokenKind.STEAM ? '-----' : '------', remainingSeconds: 0, progress: 0 };
+        return { value: token.kind === TokenKind.STEAM ? '-----' : '-'.repeat(token.digits),
+          remainingSeconds: 0, progress: 0 };
       }
     });
   }
 
-  /** 把首页当前 Token 顺序和字段写入加密仓库。 */
-  private async persist(): Promise<void> {
-    await AppStore.updateTokens(this.tokens);
+  /** 先把候选 Token 快照写入加密仓库，成功后再更新页面状态。 */
+  private async persist(next: StoredToken[]): Promise<void> {
+    await AppStore.updateTokens(next);
+    this.tokens = next;
     this.refreshCodes();
   }
 
@@ -118,13 +121,14 @@ struct Index {
 
   /** 删除指定 Token、同步验证码数组并立即持久化。 */
   private async removeToken(index: number): Promise<void> {
-    const previous = this.tokens;
+    if (index < 0 || index >= this.tokens.length) return;
+    const removed = this.tokens[index];
     try {
-      this.tokens = this.tokens.filter((_item: StoredToken, itemIndex: number) => itemIndex !== index);
-      await this.persist();
+      const next = this.tokens.filter((_item: StoredToken, itemIndex: number) => itemIndex !== index);
+      await this.persist(next);
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      await SteamLocalDataCleaner.clean(context, removed);
     } catch (error) {
-      this.tokens = previous;
-      this.refreshCodes();
       this.showToast(`删除 Token 失败：${(error as Error).message}`, 3000);
     }
   }
@@ -138,13 +142,9 @@ struct Index {
     const next = [...this.tokens];
     const moved = next.splice(from, 1);
     next.splice(to, 0, moved[0]);
-    const previous = this.tokens;
     try {
-      this.tokens = next;
-      await this.persist();
+      await this.persist(next);
     } catch (error) {
-      this.tokens = previous;
-      this.refreshCodes();
       this.showToast(`保存 Token 排序失败：${(error as Error).message}`, 3000);
     }
   }

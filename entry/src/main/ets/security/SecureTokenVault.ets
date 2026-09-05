@@ -17,7 +17,7 @@ interface EncryptedTokenPayload {
  */
 export class SecureTokenVault {
   private static readonly MASTER_KEY_ALIAS: string = 'authenticator.token-master-key.v1';
-  private static readonly AAD: string = 'authenticator.tokens.v2';
+  private static readonly DEFAULT_AAD: string = 'authenticator.tokens.v2';
   private static readonly KEY_SIZE: number = 32;
   private static readonly IV_SIZE: number = 12;
   private static readonly TAG_SIZE: number = 16;
@@ -26,7 +26,7 @@ export class SecureTokenVault {
   private readonly base64: util.Base64Helper = new util.Base64Helper();
 
   /** 使用 Asset Store 中的主密钥和随机 IV 将 Token JSON 加密为版本化载荷。 */
-  async encrypt(plaintext: string): Promise<string> {
+  async encrypt(plaintext: string, aad: string = SecureTokenVault.DEFAULT_AAD): Promise<string> {
     try {
       const keyBytes = await this.loadOrCreateMasterKey();
       const iv = cryptoFramework.createRandom().generateRandomSync(SecureTokenVault.IV_SIZE).data;
@@ -35,7 +35,7 @@ export class SecureTokenVault {
       // AAD 不加密，但会参与认证；版本或用途不匹配时解密必然失败。
       const params: cryptoFramework.GcmParamsSpec = {
         iv: { data: iv },
-        aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
+        aad: { data: this.encoder.encodeInto(aad) },
         authTag: { data: new Uint8Array(SecureTokenVault.TAG_SIZE) },
         algName: 'GcmParamsSpec'
       };
@@ -57,7 +57,7 @@ export class SecureTokenVault {
   }
 
   /** 验证 AES-GCM 标签并解密持久化载荷，认证失败时不返回任何明文。 */
-  async decrypt(serialized: string): Promise<string> {
+  async decrypt(serialized: string, aad: string = SecureTokenVault.DEFAULT_AAD): Promise<string> {
     try {
       const payload = JSON.parse(serialized) as EncryptedTokenPayload;
       this.validatePayload(payload);
@@ -65,7 +65,7 @@ export class SecureTokenVault {
       const key = cryptoFramework.createSymKeyGenerator('AES256').convertKeySync({ data: keyBytes });
       const params: cryptoFramework.GcmParamsSpec = {
         iv: { data: this.base64.decodeSync(payload.iv, util.Type.BASIC) },
-        aad: { data: this.encoder.encodeInto(SecureTokenVault.AAD) },
+        aad: { data: this.encoder.encodeInto(aad) },
         authTag: { data: this.base64.decodeSync(payload.authTag, util.Type.BASIC) },
         algName: 'GcmParamsSpec'
       };

@@ -9,15 +9,23 @@ import binascii
 import getpass
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 
 BACKUP_FORMAT = "harmony-authenticator-backup"
 BACKUP_AAD = b"harmony-authenticator-backup.v1"
+BACKUP_VERSION = 1
+MAX_BACKUP_SIZE = 8 * 1024 * 1024
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+SUPPORTED_ALGORITHMS = {"SHA1", "SHA256", "SHA512"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +66,15 @@ def decode_base64(value: Any, field: str) -> bytes:
         raise ValueError(f"备份字段 {field} 不是有效的 Base64") from error
 
 
+def validate_mafile_base64(value: str, field: str) -> None:
+    """按 SteamImportService.requireBase64 的兼容范围校验 maFile Base64。"""
+    padding_index = value.find("=")
+    invalid_padding = padding_index >= 0 and len(value) % 4 != 0
+    if (not re.fullmatch(r"[A-Za-z0-9+/]+={0,2}", value) or
+            len(value) % 4 == 1 or invalid_padding):
+        raise ValueError(f"{field} 不是有效的 Base64 数据")
+
+
 def remove_optional_pkcs7(data: bytes) -> bytes:
     """移除 HarmonyOS AES256|GCM|PKCS7 可能保留的可选填充。"""
     if not data:
@@ -77,13 +94,17 @@ def decrypt_backup(envelope: dict[str, Any], password: str) -> dict[str, Any]:
             "解密备份需要 cryptography，请先运行：pip install cryptography"
         ) from error
 
-    if envelope.get("format") != BACKUP_FORMAT or envelope.get("version") != 1:
+    if envelope.get("format") != BACKUP_FORMAT or envelope.get("version") != BACKUP_VERSION:
         raise ValueError("这不是受支持的 Authenticator 加密备份")
     if not password:
         raise ValueError("备份密码不能为空")
 
-    iterations = envelope.get("iterations")
-    if not isinstance(iterations, int) or not 10_000 <= iterations <= 1_000_000:
+    iterations_value = envelope.get("iterations")
+    if (isinstance(iterations_value, bool) or not isinstance(iterations_value, (int, float)) or
+            not math.isfinite(iterations_value) or int(iterations_value) != iterations_value):
+        raise ValueError("备份中的 PBKDF2 迭代次数无效")
+    iterations = int(iterations_value)
+    if not 10_000 <= iterations <= 1_000_000:
         raise ValueError("备份中的 PBKDF2 迭代次数无效")
 
     salt = decode_base64(envelope.get("salt"), "salt")
@@ -107,12 +128,17 @@ def decrypt_backup(envelope: dict[str, Any], password: str) -> dict[str, Any]:
         raise ValueError("备份已解密，但内容不是有效的 UTF-8 JSON") from error
     if not isinstance(content, dict):
         raise ValueError("解密后的备份根节点必须是对象")
+    if content.get("version") != BACKUP_VERSION:
+        raise ValueError("备份内容版本不受支持")
     return content
 
 
 def load_encrypted_backup(path: Path, password: str) -> dict[str, Any]:
     """以 UTF-8 读取加密备份外壳并交给统一解密流程。"""
     try:
+        size = path.stat().st_size
+        if size <= 0 or size > MAX_BACKUP_SIZE:
+            raise ValueError("输入备份应小于 8 MB 且不能为空")
         envelope = json.loads(path.read_text(encoding="utf-8-sig"))
     except OSError as error:
         raise ValueError(f"无法读取输入文件：{error}") from error
@@ -128,17 +154,90 @@ def string_value(value: Any) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
+def encode_uri_component(value: str) -> str:
+    """生成与 ArkTS encodeURIComponent 相同的 UTF-8 百分号编码。"""
+    return quote(value, safe="-_.!~*'()")
+
+
 def normalized_secret(value: Any) -> str:
-    """规范化并校验 Token 的 Base32 OTP 密钥。"""
+    """按应用 Base32.decode 的规则规范化并校验 OTP 密钥。"""
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Token 缺少 OTP 密钥")
-    secret = re.sub(r"[\s=-]", "", value).upper()
-    padding = "=" * ((8 - len(secret) % 8) % 8)
-    try:
-        base64.b32decode(secret + padding, casefold=True)
-    except (binascii.Error, ValueError) as error:
-        raise ValueError("Token 的 Base32 密钥无效") from error
+    # 与 Base32.normalize 一致：只移除空格、连字符和填充符，不接受其他空白字符。
+    secret = value.upper().replace(" ", "").replace("-", "").replace("=", "")
+    if not re.fullmatch(r"[A-Z2-7]+", secret):
+        raise ValueError("Token 的 Base32 密钥包含无效字符")
+    remainder_bits = (len(secret) * 5) % 8
+    decoded_size = (len(secret) * 5) // 8
+    if remainder_bits > 4 or decoded_size == 0:
+        raise ValueError("Token 密钥长度不是有效的 Base32 编码")
+    if remainder_bits:
+        last_value = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567".index(secret[-1])
+        if last_value & ((1 << remainder_bits) - 1):
+            raise ValueError("Token 密钥包含非零 Base32 填充位")
     return secret
+
+
+def json_integer(value: Any, field: str) -> int:
+    """读取 ArkTS Number.isInteger 对应的 JSON 整数，并拒绝 Python 的 bool。"""
+    if (isinstance(value, bool) or not isinstance(value, (int, float)) or
+            not math.isfinite(value) or not float(value).is_integer()):
+        raise ValueError(f"Token 的 {field} 无效")
+    return int(value)
+
+
+def normalize_token(token: dict[str, Any]) -> dict[str, Any]:
+    """镜像当前 TokenValidator 的关键规则，返回供导出的规范化副本。"""
+    raw_id = token.get("id")
+    token_id = raw_id if isinstance(raw_id, str) else ""
+    if not UUID_PATTERN.fullmatch(token_id):
+        raise ValueError("Token UUID 无效")
+    issuer = string_value(token.get("issuer"))
+    account = string_value(token.get("account"))
+    if not issuer or not account:
+        raise ValueError("Token 的服务名称或账户无效")
+    secret = normalized_secret(token.get("secret"))
+    kind = token.get("kind")
+    if kind not in {"totp", "steam"}:
+        raise ValueError("Token 类型无效")
+    digits = json_integer(token.get("digits"), "验证码位数")
+    if (kind == "steam" and digits != 5) or (kind == "totp" and digits not in {6, 8}):
+        raise ValueError("Token 验证码位数无效")
+    period = json_integer(token.get("period"), "刷新周期")
+    if not 1 <= period <= 300:
+        raise ValueError("Token 刷新周期无效")
+    algorithm_value = token.get("algorithm")
+    algorithm = "SHA1" if algorithm_value is None else string_value(algorithm_value)
+    if algorithm not in SUPPORTED_ALGORITHMS:
+        raise ValueError("Token 摘要算法无效")
+    created_at = token.get("createdAt")
+    if (isinstance(created_at, bool) or not isinstance(created_at, (int, float)) or
+            not math.isfinite(created_at) or created_at <= 0):
+        raise ValueError("Token 创建时间无效")
+    steam = token.get("steam")
+    if kind == "totp" and steam is not None:
+        raise ValueError("普通 TOTP 不应包含 Steam 元信息")
+    normalized = dict(token)
+    normalized.update({
+        "id": token_id.lower(),
+        "issuer": issuer,
+        "account": account,
+        "secret": secret,
+        "kind": kind,
+        "digits": 5 if kind == "steam" else digits,
+        "period": 30 if kind == "steam" else period,
+        "algorithm": "SHA1" if kind == "steam" else algorithm,
+    })
+    if kind == "steam" and steam is not None:
+        if not isinstance(steam, dict):
+            raise ValueError("Steam 元信息格式无效")
+        required = (
+            "steamId", "accountName", "identitySecret", "deviceId",
+            "accessToken", "refreshToken", "revocationCode",
+        )
+        if any(not isinstance(steam.get(field), str) for field in required):
+            raise ValueError("Steam 元信息格式无效")
+    return normalized
 
 
 def build_otpauth_uri(token: dict[str, Any]) -> str:
@@ -146,23 +245,28 @@ def build_otpauth_uri(token: dict[str, Any]) -> str:
     issuer = string_value(token.get("issuer"))
     account = string_value(token.get("account"))
     secret = normalized_secret(token.get("secret"))
-    is_steam = string_value(token.get("kind")).lower() == "steam" or issuer.lower() == "steam"
+    is_steam = token.get("kind") == "steam"
 
     label = f"{issuer}:{account}" if issuer else account
-    digits = 5 if is_steam else token.get("digits", 6)
-    period = token.get("period", 30)
-    if not isinstance(digits, int) or digits <= 0:
-        digits = 6
-    if not isinstance(period, int) or period <= 0:
-        period = 30
+    digits = 5 if is_steam else token["digits"]
+    period = 30 if is_steam else token["period"]
+
+    algorithm = "SHA1" if is_steam else string_value(
+        token.get("algorithm") or "SHA1"
+    ).upper()
+    if algorithm not in SUPPORTED_ALGORITHMS:
+        raise ValueError(f"不支持的 OTP 摘要算法：{algorithm}")
 
     query: list[tuple[str, str]] = [("secret", secret)]
     if issuer:
         query.append(("issuer", issuer))
     query.extend(
-        [("algorithm", "SHA1"), ("digits", str(digits)), ("period", str(period))]
+        [("algorithm", algorithm), ("digits", str(digits)), ("period", str(period))]
     )
-    return f"otpauth://totp/{quote(label, safe='')}?{urlencode(query, quote_via=quote)}"
+    encoded_query = "&".join(
+        f"{encode_uri_component(key)}={encode_uri_component(value)}" for key, value in query
+    )
+    return f"otpauth://totp/{encode_uri_component(label)}?{encoded_query}"
 
 
 def shared_secret_to_base64(secret: Any) -> str:
@@ -175,16 +279,30 @@ def shared_secret_to_base64(secret: Any) -> str:
 
 def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
     """为元信息完整的 Steam Token 生成 maFile 对象，普通 Token 返回 None。"""
+    if token.get("kind") != "steam":
+        return None
     steam = token.get("steam")
     if not isinstance(steam, dict) or not steam:
         return None
 
     steam_id_text = string_value(steam.get("steamId"))
-    if not steam_id_text.isdigit():
+    if not re.fullmatch(r"\d{16,20}", steam_id_text):
         return None
     account_name = string_value(steam.get("accountName")) or string_value(
         token.get("account")
     )
+
+    identity_secret = string_value(steam.get("identitySecret"))
+    device_id = string_value(steam.get("deviceId"))
+    access_token = string_value(steam.get("accessToken"))
+    refresh_token = string_value(steam.get("refreshToken"))
+    if not identity_secret or not device_id or (not access_token and not refresh_token):
+        return None
+    # SteamImportService 会严格校验这些二进制字段；不要输出无法重新导入的 maFile。
+    validate_mafile_base64(identity_secret, "identity_secret")
+    secret1 = string_value(steam.get("secret1"))
+    if secret1:
+        validate_mafile_base64(secret1, "secret_1")
 
     return {
         "account_name": account_name,
@@ -193,14 +311,14 @@ def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
         "revocation_code": string_value(steam.get("revocationCode")),
         "shared_secret": shared_secret_to_base64(token.get("secret")),
         "token_gid": string_value(steam.get("tokenGid")),
-        "identity_secret": string_value(steam.get("identitySecret")),
+        "identity_secret": identity_secret,
         "uri": string_value(steam.get("uri")) or build_otpauth_uri(token),
-        "device_id": string_value(steam.get("deviceId")),
+        "device_id": device_id,
         "guard_data": string_value(steam.get("guardData")),
-        "secret_1": string_value(steam.get("secret1")),
+        "secret_1": secret1,
         "tokens": {
-            "access_token": string_value(steam.get("accessToken")),
-            "refresh_token": string_value(steam.get("refreshToken")),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
         },
     }
 
@@ -208,21 +326,31 @@ def build_mafile(token: dict[str, Any]) -> dict[str, Any] | None:
 def export_tokens(content: dict[str, Any]) -> tuple[dict[str, Any], int]:
     """导出所有 Token URI，并为符合条件的 Steam Token 附加 maFile 数据。"""
     source_tokens = content.get("tokens")
-    if not isinstance(source_tokens, list):
+    if content.get("version") != BACKUP_VERSION or not isinstance(source_tokens, list):
         raise ValueError("解密内容缺少 tokens 数组")
 
     exported: list[dict[str, Any]] = []
     skipped = 0
+    ids: set[str] = set()
     for index, token in enumerate(source_tokens, start=1):
         if not isinstance(token, dict):
             print(f"跳过第 {index} 个 Token：数据格式无效", file=sys.stderr)
             skipped += 1
             continue
         try:
-            item: dict[str, Any] = {"uri": build_otpauth_uri(token)}
-            mafile = build_mafile(token)
-            if mafile is not None:
-                item["mafile"] = mafile
+            normalized = normalize_token(token)
+            token_id = normalized["id"]
+            if token_id in ids:
+                raise ValueError("Token 数据包含重复 UUID")
+            ids.add(token_id)
+            item: dict[str, Any] = {"uri": build_otpauth_uri(normalized)}
+            try:
+                mafile = build_mafile(normalized)
+                if mafile is not None:
+                    item["mafile"] = mafile
+            except ValueError as error:
+                # 元信息损坏不应阻止导出仍然有效的验证码 URI。
+                print(f"第 {index} 个 Token 的 maFile 未导出：{error}", file=sys.stderr)
             exported.append(item)
         except ValueError as error:
             print(f"跳过第 {index} 个 Token：{error}", file=sys.stderr)

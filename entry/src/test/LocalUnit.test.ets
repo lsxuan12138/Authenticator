@@ -1,33 +1,80 @@
-import { describe, beforeAll, beforeEach, afterEach, afterAll, it, expect } from '@ohos/hypium';
+import { describe, expect, it } from '@ohos/hypium';
+import { Base32 } from '../main/ets/core/Base32';
+import { TokenDuplicateGuard } from '../main/ets/core/TokenDuplicateGuard';
+import { StoredToken, TokenAlgorithm, TokenKind } from '../main/ets/domain/Token';
+import { BackupMergeResult, BackupService } from '../main/ets/services/BackupService';
 
-export default function localUnitTest() {
-  describe('localUnitTest', () => {
-    // Defines a test suite. Two parameters are supported: test suite name and test suite function.
-    beforeAll(() => {
-      // Presets an action, which is performed only once before all test cases of the test suite start.
-      // This API supports only one parameter: preset action function.
+/** 构造不依赖系统能力的固定 Token，供纯逻辑单元测试复用。 */
+function createToken(id: string, account: string = 'alice', secret: string = 'JBSWY3DPEHPK3PXP'): StoredToken {
+  return {
+    id: id,
+    issuer: 'Example',
+    account: account,
+    secret: secret,
+    digits: 6,
+    period: 30,
+    kind: TokenKind.TOTP,
+    algorithm: TokenAlgorithm.SHA1,
+    iconPath: '',
+    iconManual: false,
+    createdAt: 1700000000000
+  };
+}
+
+/** 验证不需要 HarmonyOS 原生运行时的编码、去重和备份合并规则。 */
+export default function localUnitTest(): void {
+  describe('CoreLogic', (): void => {
+    it('decodes canonical unpadded Base32', 0, (): void => {
+      const bytes = Base32.decode('MY');
+      expect(bytes.length).assertEqual(1);
+      expect(bytes[0]).assertEqual(102);
     });
-    beforeEach(() => {
-      // Presets an action, which is performed before each unit test case starts.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: preset action function.
+
+    it('rejects incomplete or non-canonical Base32', 0, (): void => {
+      let shortRejected = false;
+      let paddingRejected = false;
+      try { Base32.decode('A'); } catch (_error) { shortRejected = true; }
+      try { Base32.decode('MZ'); } catch (_error) { paddingRejected = true; }
+      expect(shortRejected).assertTrue();
+      expect(paddingRejected).assertTrue();
     });
-    afterEach(() => {
-      // Presets a clear action, which is performed after each unit test case ends.
-      // The number of execution times is the same as the number of test cases defined by **it**.
-      // This API supports only one parameter: clear action function.
+
+    it('compares OTP configuration independently from UUID', 0, (): void => {
+      const left = createToken('11111111-1111-4111-8111-111111111111');
+      const right = createToken('22222222-2222-4222-8222-222222222222');
+      expect(TokenDuplicateGuard.isSameConfiguration(left, right)).assertTrue();
     });
-    afterAll(() => {
-      // Presets a clear action, which is performed after all test cases of the test suite end.
-      // This API supports only one parameter: clear action function.
+
+    it('skips same OTP configuration with a different backup UUID', 0, (): void => {
+      const current = createToken('11111111-1111-4111-8111-111111111111');
+      const duplicate = createToken('22222222-2222-4222-8222-222222222222');
+      const result: BackupMergeResult = BackupService.merge([current], [duplicate]);
+      expect(result.tokens.length).assertEqual(1);
+      expect(result.added).assertEqual(0);
+      expect(result.updated).assertEqual(0);
+      expect(result.skipped).assertEqual(1);
     });
-    it('assertContain', 0, () => {
-      // Defines a test case. This API supports three parameters: test case name, filter parameter, and test case function.
-      let a = 'abc';
-      let b = 'b';
-      // Defines a variety of assertion methods, which are used to declare expected boolean conditions.
-      expect(a).assertContain(b);
-      expect(a).assertEqual(a);
+
+    it('updates matching UUID in place during backup restore', 0, (): void => {
+      const id = '11111111-1111-4111-8111-111111111111';
+      const result: BackupMergeResult = BackupService.merge([createToken(id)], [createToken(id, 'bob')]);
+      expect(result.tokens.length).assertEqual(1);
+      expect(result.tokens[0].account).assertEqual('bob');
+      expect(result.updated).assertEqual(1);
+      expect(result.skipped).assertEqual(0);
+    });
+
+    it('does not update a UUID into another existing OTP configuration', 0, (): void => {
+      const firstId = '11111111-1111-4111-8111-111111111111';
+      const secondId = '22222222-2222-4222-8222-222222222222';
+      const first = createToken(firstId, 'alice');
+      const second = createToken(secondId, 'bob', 'GEZDGNBVGY3TQOJQ');
+      const conflictingUpdate = createToken(secondId, 'alice');
+      const result: BackupMergeResult = BackupService.merge([first, second], [conflictingUpdate]);
+      expect(result.tokens.length).assertEqual(2);
+      expect(result.tokens[1].account).assertEqual('bob');
+      expect(result.updated).assertEqual(0);
+      expect(result.skipped).assertEqual(1);
     });
   });
 }

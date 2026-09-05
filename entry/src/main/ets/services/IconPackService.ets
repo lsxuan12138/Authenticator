@@ -19,6 +19,18 @@ export interface IconPack {
   icons: IconDefinition[];
 }
 
+interface IconPackBudget {
+  files: number;
+  bytes: number;
+}
+
+interface IconPackManifest {
+  uuid?: string;
+  name?: string;
+  version?: number;
+  icons?: IconDefinition[];
+}
+
 /**
  * Aegis 图标包的安装、发现和匹配服务。
  * 自动匹配只读取当前选中的图标包；Token 的 iconPath 仅作为用户手动覆盖。
@@ -28,6 +40,11 @@ export class IconPackService {
   private static readonly NO_PACK_KEY: string = 'no-pack';
   private static readonly SETTINGS_STORE: string = 'icon_settings_v1';
   private static readonly ACTIVE_PACK_KEY: string = 'active_pack';
+  private static readonly MAX_ARCHIVE_SIZE: number = 64 * 1024 * 1024;
+  private static readonly MAX_EXTRACTED_SIZE: number = 256 * 1024 * 1024;
+  private static readonly MAX_FILE_SIZE: number = 8 * 1024 * 1024;
+  private static readonly MAX_FILE_COUNT: number = 20000;
+  private static readonly MAX_MANIFEST_SIZE: number = 4 * 1024 * 1024;
 
   /** 返回“不使用任何图标包”的稳定选择键。 */
   static noPackKey(): string {
@@ -58,7 +75,8 @@ export class IconPackService {
       for (const icon of active.icons) {
         const matched = (icon.issuer ?? []).some((candidate: string) => {
           const value = IconPackService.normalize(candidate);
-          return normalized.includes(value) || value.includes(normalized);
+          return normalized.length > 0 && value.length > 0 &&
+            (normalized.includes(value) || value.includes(normalized));
         });
         if (matched) {
           return `file://${active.directory}/${icon.filename}`;
@@ -77,7 +95,8 @@ export class IconPackService {
       for (const icon of pack.icons) {
         const matched = (icon.issuer ?? []).some((candidate: string) => {
           const value = IconPackService.normalize(candidate);
-          return normalized.includes(value) || value.includes(normalized);
+          return normalized.length > 0 && value.length > 0 &&
+            (normalized.includes(value) || value.includes(normalized));
         });
         if (matched) {
           paths.push(`file://${pack.directory}/${icon.filename}`);
@@ -157,7 +176,11 @@ export class IconPackService {
   }
 
   /** 删除指定已安装图标包的沙箱目录。 */
-  static async remove(pack: IconPack): Promise<void> {
+  static async remove(context: common.UIAbilityContext, pack: IconPack): Promise<void> {
+    const root = IconPackService.ensureRoot(context);
+    if (!pack.directory.startsWith(`${root}/`) || pack.directory.includes('..')) {
+      throw new Error('拒绝删除图标包安装目录之外的路径');
+    }
     DiagnosticLogService.info('IconPack', `Removing icon pack directory: ${pack.directory}`);
     IconPackService.removeDirectory(pack.directory);
   }
@@ -196,9 +219,19 @@ export class IconPackService {
     try {
       fs.mkdirSync(staging);
       const file = fs.openSync(uri, fs.OpenMode.READ_ONLY);
-      const source = file.path;
-      fs.closeSync(file.fd);
+      let source = '';
+      let archiveSize = 0;
+      try {
+        source = file.path;
+        archiveSize = fs.statSync(file.fd).size;
+      } finally {
+        fs.closeSync(file.fd);
+      }
+      if (archiveSize <= 0 || archiveSize > IconPackService.MAX_ARCHIVE_SIZE) {
+        throw new Error('图标包为空或压缩文件超过 64MB');
+      }
       await zlib.decompressFile(source, staging);
+      IconPackService.validateExtractedDirectory(staging);
       const pack = IconPackService.readPack(staging, `pack_${suffix}`);
       if (pack.icons.length === 0) {
         throw new Error('图标包缺少有效的 pack.json 或图片');
@@ -225,16 +258,22 @@ export class IconPackService {
     if (!IconPackService.isAccessible(manifest)) {
       throw new Error('图标包缺少 pack.json');
     }
-    const parsed = JSON.parse(IconPackService.readText(manifest)) as Record<string, Object>;
-    const icons = (parsed['icons'] ?? []) as IconDefinition[];
-    // manifest 只能引用包目录内的现有文件，阻止“../”等路径穿越。
-    const safeIcons = icons.filter((icon: IconDefinition): boolean =>
-      IconPackService.isSafeRelativePath(icon.filename) &&
+    const parsed = JSON.parse(IconPackService.readText(manifest)) as IconPackManifest;
+    const source = parsed.icons;
+    if (!Array.isArray(source)) {
+      throw new Error('pack.json 的 icons 必须是数组');
+    }
+    // manifest 只能引用包目录内的现有文件，issuer 也必须是字符串数组，避免坏清单延迟到首页才崩溃。
+    const safeIcons = source.filter((icon: IconDefinition): boolean =>
+      icon !== null && typeof icon === 'object' && IconPackService.isSafeRelativePath(icon.filename) &&
+      (icon.issuer === undefined || Array.isArray(icon.issuer) &&
+        icon.issuer.every((issuer: string): boolean => typeof issuer === 'string')) &&
       IconPackService.isAccessible(`${directory}/${icon.filename}`));
+    const version = typeof parsed.version === 'number' && Number.isFinite(parsed.version) ? parsed.version : 0;
     return {
-      id: `${parsed['uuid'] ?? fallbackId}`,
-      name: `${parsed['name'] ?? fallbackId}`,
-      version: Number(parsed['version'] ?? 0),
+      id: typeof parsed.uuid === 'string' && parsed.uuid.trim().length > 0 ? parsed.uuid : fallbackId,
+      name: typeof parsed.name === 'string' && parsed.name.trim().length > 0 ? parsed.name : fallbackId,
+      version: version,
       directory: directory,
       icons: safeIcons
     };
@@ -270,8 +309,39 @@ export class IconPackService {
 
   /** 拒绝绝对路径和目录穿越，确保清单只能引用包内文件。 */
   private static isSafeRelativePath(value: string): boolean {
-    return value.length > 0 && !value.startsWith('/') && !value.startsWith('\\') &&
+    return typeof value === 'string' && value.length > 0 && !value.startsWith('/') && !value.startsWith('\\') &&
       !value.includes('..') && !value.includes(':');
+  }
+
+  /** 解压后限制文件数、单文件和总大小，避免异常图标包长期占满应用沙箱。 */
+  private static validateExtractedDirectory(directory: string): void {
+    const budget: IconPackBudget = { files: 0, bytes: 0 };
+    IconPackService.inspectDirectory(directory, budget);
+  }
+
+  /** 递归累加解压目录预算，达到任一上限时立即终止安装并由调用方清理临时目录。 */
+  private static inspectDirectory(directory: string, budget: IconPackBudget): void {
+    try {
+      for (const name of fs.listFileSync(directory)) {
+        const path = `${directory}/${name}`;
+        const stat = fs.statSync(path);
+        if (stat.isDirectory()) {
+          IconPackService.inspectDirectory(path, budget);
+          continue;
+        }
+        budget.files++;
+        budget.bytes += stat.size;
+        if (stat.size > IconPackService.MAX_FILE_SIZE) {
+          throw new Error(`图标包中存在超过 8MB 的单个文件：${name}`);
+        }
+        if (budget.files > IconPackService.MAX_FILE_COUNT || budget.bytes > IconPackService.MAX_EXTRACTED_SIZE) {
+          throw new Error('图标包解压后超过 20000 个文件或 256MB');
+        }
+      }
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`检查图标包解压内容失败：${detail.message ?? '未知错误'}`);
+    }
   }
 
   /** 在已确认的包目录内递归删除文件，用于卸载和失败回滚。 */
@@ -306,6 +376,9 @@ export class IconPackService {
     try {
       file = fs.openSync(path, fs.OpenMode.READ_ONLY);
       const size = fs.statSync(file.fd).size;
+      if (size <= 0 || size > IconPackService.MAX_MANIFEST_SIZE) {
+        throw new Error('pack.json 为空或超过 4MB');
+      }
       const data = new ArrayBuffer(size);
       const count = fs.readSync(file.fd, data);
       content = new util.TextDecoder().decodeToString(new Uint8Array(data.slice(0, count)));

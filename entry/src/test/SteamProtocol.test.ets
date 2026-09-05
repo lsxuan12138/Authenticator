@@ -1,7 +1,9 @@
 import { describe, expect, it } from '@ohos/hypium';
+import Long from 'long';
 import {
   CAuthentication_BeginAuthSessionViaCredentials_Request,
   CAuthentication_GetAuthSessionInfo_Request,
+  CAuthentication_GetAuthSessionsForAccount_Response,
   CAuthentication_UpdateAuthSessionWithMobileConfirmation_Request,
   CTwoFactor_AddAuthenticator_Request,
   CTwoFactor_Time_Request,
@@ -68,6 +70,15 @@ export default function steamProtocolTest(): void {
       expect(request.signature.length).assertEqual(4);
       expect(request.confirm).assertFalse();
       expect(request.persistence).assertEqual(ESessionPersistence.k_ESessionPersistence_Persistent);
+    });
+
+    it('decodes account auth session IDs without losing uint64 precision', 0, (): void => {
+      const bytes = CAuthentication_GetAuthSessionsForAccount_Response.encode(
+        CAuthentication_GetAuthSessionsForAccount_Response.create({
+          clientIds: [Long.fromString('18446744073709551615', true)]
+        })).finish();
+
+      expect(SteamProtocol.decodeAuthSessionsForAccount(bytes)[0]).assertEqual('18446744073709551615');
     });
 
     it('imports numeric Steam IDs without precision loss', 0, (): void => {

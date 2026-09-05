@@ -3,8 +3,9 @@ import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { StoredToken, TokenKind } from '../domain/Token';
-import { TokenId } from '../core/TokenId';
+import { StoredToken } from '../domain/Token';
+import { TokenDuplicateGuard } from '../core/TokenDuplicateGuard';
+import { TokenValidator } from '../core/TokenValidator';
 
 interface BackupContent {
   version: number;
@@ -26,6 +27,7 @@ export interface BackupMergeResult {
   tokens: StoredToken[];
   added: number;
   updated: number;
+  skipped: number;
 }
 
 /**
@@ -65,6 +67,7 @@ export class BackupService {
           digits: token.digits,
           period: token.period,
           kind: token.kind,
+          algorithm: token.algorithm,
           iconPath: '',
           iconManual: false,
           createdAt: token.createdAt
@@ -107,7 +110,11 @@ export class BackupService {
         authTag: base64.encodeToStringSync(authTag, util.Type.BASIC),
         ciphertext: base64.encodeToStringSync(encrypted, util.Type.BASIC)
       };
-      return JSON.stringify(backup);
+      const serialized = JSON.stringify(backup);
+      if (new util.TextEncoder().encodeInto(serialized).length > BackupService.MAX_FILE_SIZE) {
+        throw new Error('备份内容超过 8MB，无法生成可由当前版本恢复的文件');
+      }
+      return serialized;
     } catch (error) {
       const detail = error as BusinessError;
       throw new Error(`创建加密备份失败：${detail.message ?? '未知错误'}`);
@@ -167,18 +174,30 @@ export class BackupService {
     });
     let added = 0;
     let updated = 0;
+    let skipped = 0;
     incoming.forEach((token: StoredToken) => {
       const existing = positions.get(token.id);
       if (existing === undefined) {
+        if (merged.some((currentToken: StoredToken): boolean =>
+          TokenDuplicateGuard.isSameConfiguration(currentToken, token))) {
+          skipped++;
+          return;
+        }
         positions.set(token.id, merged.length);
         merged.push(token);
         added++;
       } else {
+        // 同 UUID 的记录通常表示更新，但不能让它覆盖成另一条现有记录的验证码配置。
+        if (merged.some((currentToken: StoredToken, index: number): boolean =>
+          index !== existing && TokenDuplicateGuard.isSameConfiguration(currentToken, token))) {
+          skipped++;
+          return;
+        }
         merged[existing] = token;
         updated++;
       }
     });
-    return { tokens: merged, added: added, updated: updated };
+    return { tokens: merged, added: added, updated: updated, skipped: skipped };
   }
 
   /** 调用系统文件选择器保存加密备份；用户取消时返回 false。 */
@@ -299,23 +318,10 @@ export class BackupService {
     if (!content || content.version !== 1 || !Array.isArray(content.tokens)) {
       throw new Error('备份内容格式无效');
     }
-    const ids: Set<string> = new Set();
-    content.tokens.forEach((token: StoredToken) => {
-      if (!token || typeof token.id !== 'string' || typeof token.issuer !== 'string' ||
-        typeof token.account !== 'string' ||
-        typeof token.secret !== 'string' || (token.kind !== TokenKind.TOTP && token.kind !== TokenKind.STEAM) ||
-        !Number.isInteger(token.period) || token.period < 1 || token.period > 300) {
-        throw new Error('备份中包含无效的 Token 数据');
-      }
-      if (!TokenId.isUuid(token.id)) {
-        throw new Error('备份中包含无效的 Token UUID');
-      }
-      token.id = token.id.toLowerCase();
-      if (ids.has(token.id)) {
-        throw new Error('备份中包含重复的 Token UUID');
-      }
-      ids.add(token.id);
-    });
-    return content.tokens;
+    try {
+      return TokenValidator.normalizeAll(content.tokens);
+    } catch (error) {
+      throw new Error(`备份中包含无效的 Token 数据：${(error as Error).message}`);
+    }
   }
 }

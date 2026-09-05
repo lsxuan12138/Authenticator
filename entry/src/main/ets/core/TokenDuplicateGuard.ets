@@ -1,4 +1,4 @@
-import { StoredToken } from '../domain/Token';
+import { StoredToken, TokenAlgorithm } from '../domain/Token';
 import { Base32 } from './Base32';
 
 /**
@@ -13,6 +13,7 @@ export class TokenDuplicateGuard {
       left.account.trim() === right.account.trim() &&
       Base32.normalize(left.secret) === Base32.normalize(right.secret) &&
       left.digits === right.digits &&
+      (left.algorithm ?? TokenAlgorithm.SHA1) === (right.algorithm ?? TokenAlgorithm.SHA1) &&
       left.period === right.period;
   }
 

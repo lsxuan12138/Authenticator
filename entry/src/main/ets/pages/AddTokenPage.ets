@@ -2,7 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
-import { StoredToken, TokenKind } from '../domain/Token';
+import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { TokenDuplicateGuard } from '../core/TokenDuplicateGuard';
 import { OtpUriParser } from '../core/OtpUriParser';
@@ -13,6 +13,7 @@ import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessio
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { SteamVerificationStep } from '../components/SteamVerificationStep';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -37,6 +38,7 @@ export struct AddTokenPage {
   @State private secret: string = '';
   @State private uriValue: string = '';
   @State private digits: number = 6;
+  @State private algorithm: TokenAlgorithm = TokenAlgorithm.SHA1;
   @State private periodValue: string = '30';
   @State private addTabIndex: number = 0;
   @State private errorMessage: string = '';
@@ -82,6 +84,7 @@ export struct AddTokenPage {
     this.secret = '';
     this.uriValue = '';
     this.digits = 6;
+    this.algorithm = TokenAlgorithm.SHA1;
     this.periodValue = '30';
     this.errorMessage = '';
     this.resetSteamAddFlow();
@@ -92,8 +95,9 @@ export struct AddTokenPage {
     TokenDuplicateGuard.assertCanAdd(this.tokens, token);
     token.iconPath = '';
     token.iconManual = false;
-    this.tokens = [...this.tokens, token];
-    await this.onTokensChanged(this.tokens);
+    const next = [...this.tokens, token];
+    await this.onTokensChanged(next);
+    this.tokens = next;
     this.resetForm();
     this.onClose();
   }
@@ -119,6 +123,7 @@ export struct AddTokenPage {
         digits: isSteam ? 5 : this.digits,
         period: isSteam ? 30 : parsedPeriod,
         kind: isSteam ? TokenKind.STEAM : TokenKind.TOTP,
+        algorithm: isSteam ? TokenAlgorithm.SHA1 : this.algorithm,
         iconPath: '',
         iconManual: false,
         createdAt: Date.now()
@@ -470,7 +475,7 @@ export struct AddTokenPage {
       Column({ space: 18 }) {
         Column({ space: 12 }) {
           Stack() {
-            Circle().width(76).height(76).fill($r('app.color.empty_icon_surface'))
+            Row().width(76).height(76).borderRadius(38).backgroundColor($r('app.color.empty_icon_surface'))
             SymbolGlyph($r('sys.symbol.qrcode')).fontSize(38).fontColor(['#4668E8'])
           }.margin({ top: 10, bottom: 4 })
 
@@ -551,6 +556,30 @@ export struct AddTokenPage {
               .fontSize(12).fontColor('#4668E8').lineHeight(18).width('100%')
           } else {
             Column({ space: 8 }) {
+              Text('摘要算法').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Row({ space: 8 }) {
+                Button('SHA-1').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA1 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA1 ? Color.White :
+                    $r('app.color.text_secondary'))
+                  .onClick(() => this.algorithm = TokenAlgorithm.SHA1)
+                Button('SHA-256').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA256 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA256 ? Color.White :
+                    $r('app.color.text_secondary'))
+                  .onClick(() => this.algorithm = TokenAlgorithm.SHA256)
+                Button('SHA-512').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA512 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA512 ? Color.White :
+                    $r('app.color.text_secondary'))
+                  .onClick(() => this.algorithm = TokenAlgorithm.SHA512)
+              }.width('100%')
+            }.width('100%')
+
+            Column({ space: 8 }) {
               Text('验证码位数').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
               Row({ space: 10 }) {
                 Button('6 位')
@@ -568,6 +597,16 @@ export struct AddTokenPage {
 
             Column({ space: 6 }) {
               Text('刷新周期（秒）').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Row({ space: 8 }) {
+                Button('30 秒').layoutWeight(1)
+                  .backgroundColor(this.periodValue === '30' ? '#4668E8' : $r('app.color.surface_control'))
+                  .fontColor(this.periodValue === '30' ? Color.White : $r('app.color.text_secondary'))
+                  .onClick(() => this.periodValue = '30')
+                Button('60 秒').layoutWeight(1)
+                  .backgroundColor(this.periodValue === '60' ? '#4668E8' : $r('app.color.surface_control'))
+                  .fontColor(this.periodValue === '60' ? Color.White : $r('app.color.text_secondary'))
+                  .onClick(() => this.periodValue = '60')
+              }.width('100%')
               TextInput({ placeholder: '通常为 30', text: this.periodValue }).type(InputType.Number)
                 .onChange((value: string) => this.periodValue = value)
               Text('允许 1–300 秒；应与服务端提供的 period 保持一致。')
@@ -617,6 +656,16 @@ export struct AddTokenPage {
             .backgroundColor($r('app.color.warning_surface'))
             .borderRadius(12)
             .width('100%')
+          if (this.steamAddStatus.length > 0 && this.steamAddStep !== 1 && this.steamAddStep !== 2) {
+            Text(this.steamAddStatus)
+              .fontSize(13)
+              .fontColor($r('app.color.text_secondary'))
+              .lineHeight(19)
+              .padding(12)
+              .backgroundColor($r('app.color.status_surface'))
+              .borderRadius(12)
+              .width('100%')
+          }
           if (this.steamAddStep === 0) {
             TextInput({ placeholder: 'Steam 账户名', text: this.steamAddAccount })
               .onChange((value: string) => this.steamAddAccount = value.trim())
@@ -629,17 +678,17 @@ export struct AddTokenPage {
               .enabled(!this.steamAddBusy)
               .onClick(() => this.startSteamAddLogin())
           } else if (this.steamAddStep === 1) {
-            Text(this.steamConfirmationPrompt())
-              .fontSize(14)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(20)
-              .width('100%')
-            if (this.steamAddConfirmationType === SteamGuardType.EMAIL_CODE ||
-              this.steamAddConfirmationType === SteamGuardType.DEVICE_CODE) {
-              TextInput({ placeholder: 'Steam 验证码', text: this.steamAddCode })
-                .onChange((value: string) => this.steamAddCode = value.trim())
-            }
+            SteamVerificationStep({
+              statusMessage: this.steamAddStatus,
+              prompt: this.steamConfirmationPrompt(),
+              placeholder: 'Steam 验证码',
+              code: this.steamAddCode,
+              showCodeInput: this.steamAddConfirmationType === SteamGuardType.EMAIL_CODE ||
+                this.steamAddConfirmationType === SteamGuardType.DEVICE_CODE,
+              onCodeChange: (value: string): void => {
+                this.steamAddCode = value;
+              }
+            })
             Button(this.steamAddBusy ? '正在验证…' : '我已完成验证，继续')
               .width('100%')
               .height(48)
@@ -662,14 +711,15 @@ export struct AddTokenPage {
                 .onClick(() => this.resetSteamAddFlow())
             }
           } else if (this.steamAddStep === 2) {
-            Text('Steam 登录已经完成，最后需要验证新增的移动验证器。')
-              .fontSize(14)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(20)
-              .width('100%')
-            TextInput({ placeholder: '短信或邮件激活码', text: this.steamAddActivationCode })
-              .onChange((value: string) => this.steamAddActivationCode = value.trim())
+            SteamVerificationStep({
+              statusMessage: this.steamAddStatus,
+              prompt: 'Steam 登录已经完成，最后需要验证新增的移动验证器。',
+              placeholder: '短信或邮件激活码',
+              code: this.steamAddActivationCode,
+              onCodeChange: (value: string): void => {
+                this.steamAddActivationCode = value;
+              }
+            })
             Button(this.steamAddBusy ? '正在激活…' : '激活并保存 Steam Guard')
               .width('100%')
               .height(48)
@@ -705,16 +755,6 @@ export struct AddTokenPage {
               .backgroundColor($r('app.color.danger'))
               .enabled(!this.steamAddBusy)
               .onClick(() => this.completeSteamTransfer())
-          }
-          if (this.steamAddStatus.length > 0) {
-            Text(this.steamAddStatus)
-              .fontSize(13)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(19)
-              .padding(12)
-              .backgroundColor($r('app.color.status_surface'))
-              .borderRadius(12)
-              .width('100%')
           }
           Text('密码仅用于本次 RSA 加密登录，不会写入 Token、备份或本地存储。')
             .fontSize(11).fontColor($r('app.color.text_faint')).lineHeight(17).width('100%')

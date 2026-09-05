@@ -1,10 +1,7 @@
 {
   "name": "entry",
   "version": "1.0.0",
-  "description": "Please describe the basic information.",
-  "main": "",
-  "author": "",
-  "license": "",
+  "description": "Authenticator entry module.",
   "dependencies": {
     "@ohos/protobufjs": "2.1.0",
     "long": "^5.2.1"

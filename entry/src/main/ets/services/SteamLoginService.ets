@@ -57,7 +57,7 @@ export class SteamLoginService {
     return undefined;
   }
 
-  /** 使用当前 Token 的五位码和 Guard Data 重新建立持久会话。 */
+  /** 使用当前五位码重新建立持久会话；仅在已有 Guard Data 时附带该兼容字段。 */
   async refreshSession(account: string, password: string, guardCode: string, guardData: string,
     cancellation: SteamLoginCancellation,
     onWaiting: (type: number) => void = (_type: number): void => {}): Promise<SteamSessionTokens> {

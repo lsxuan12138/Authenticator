@@ -1,13 +1,14 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
-import { SteamGuardMetadata, StoredToken, TokenKind } from '../domain/Token';
+import { SteamGuardMetadata, StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { SteamGuardService, SteamQrLoginInfo } from '../services/SteamGuardService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { IconPack, IconPackService } from '../services/IconPackService';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { SteamConfirmationHistoryRepository } from '../services/SteamConfirmationHistoryRepository';
 
 /** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
 @Builder
@@ -43,6 +44,7 @@ export struct TokenDetailPage {
   @State private account: string = '';
   @State private secret: string = '';
   @State private digits: number = 6;
+  @State private algorithm: TokenAlgorithm = TokenAlgorithm.SHA1;
   @State private periodValue: string = '30';
   @State private errorMessage: string = '';
   @State private steamQrLoading: boolean = false;
@@ -60,6 +62,7 @@ export struct TokenDetailPage {
     this.account = token.account;
     this.secret = token.secret;
     this.digits = token.digits === 8 ? 8 : 6;
+    this.algorithm = token.algorithm ?? TokenAlgorithm.SHA1;
     this.periodValue = `${token.period}`;
   }
 
@@ -158,6 +161,7 @@ export struct TokenDetailPage {
         account: normalizedAccount,
         secret: normalizedSecret,
         kind: isSteam ? TokenKind.STEAM : TokenKind.TOTP,
+        algorithm: isSteam ? TokenAlgorithm.SHA1 : this.algorithm,
         digits: isSteam ? 5 : this.digits,
         period: isSteam ? 30 : parsedPeriod,
         iconPath: token.iconPath,
@@ -229,7 +233,20 @@ export struct TokenDetailPage {
       const approve = dialog.index === 1;
       await service.respondQrLogin(token.steam.steamId, token.steam.accessToken, token.steam.refreshToken,
         Base32.decode(token.secret), challenge, approve, info.persistent);
-      this.showToast(approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝', 2200);
+      const historyContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      let historySaved = true;
+      try {
+        await new SteamConfirmationHistoryRepository().append(historyContext, [
+          SteamConfirmationHistoryRepository.create(token.id, 'login', info.deviceName || '扫码登录请求',
+            `${info.location}${info.ip ? ` · ${info.ip}` : ''}`, 0, approve)
+        ]);
+      } catch (historyError) {
+        historySaved = false;
+        DiagnosticLogService.warn('SteamQrLogin',
+          `QR response succeeded but history save failed: ${(historyError as Error).message}`);
+      }
+      this.showToast(historySaved ? (approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝') :
+        `${approve ? 'Steam 登录已批准' : 'Steam 登录已拒绝'}，但历史保存失败`, 2800);
     } catch (error) {
       const detail = error as BusinessError;
       // Scan Kit 将用户主动关闭扫码页作为异常返回；这是正常取消，不应显示英文系统错误。
@@ -328,6 +345,26 @@ export struct TokenDetailPage {
           TextInput({ placeholder: 'Base32 密钥', text: this.secret }).type(InputType.Password)
             .onChange((value: string) => this.secret = value)
           if (this.issuer.trim().toLowerCase() !== 'steam') {
+            Column({ space: 8 }) {
+              Text('摘要算法').fontSize(15).fontWeight(FontWeight.Medium).width('100%')
+              Row({ space: 8 }) {
+                Button('SHA-1').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA1 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA1 ? Color.White :
+                    $r('app.color.text_secondary')).onClick(() => this.algorithm = TokenAlgorithm.SHA1)
+                Button('SHA-256').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA256 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA256 ? Color.White :
+                    $r('app.color.text_secondary')).onClick(() => this.algorithm = TokenAlgorithm.SHA256)
+                Button('SHA-512').layoutWeight(1)
+                  .backgroundColor(this.algorithm === TokenAlgorithm.SHA512 ? '#4668E8' :
+                    $r('app.color.surface_control'))
+                  .fontColor(this.algorithm === TokenAlgorithm.SHA512 ? Color.White :
+                    $r('app.color.text_secondary')).onClick(() => this.algorithm = TokenAlgorithm.SHA512)
+              }.width('100%')
+            }.width('100%')
             Row({ space: 10 }) {
               Button('6 位').layoutWeight(1)
                 .backgroundColor(this.digits === 6 ? '#4668E8' : $r('app.color.surface_control'))
@@ -337,6 +374,16 @@ export struct TokenDetailPage {
                 .backgroundColor(this.digits === 8 ? '#4668E8' : $r('app.color.surface_control'))
                 .fontColor(this.digits === 8 ? Color.White : $r('app.color.text_secondary'))
                 .onClick(() => this.digits = 8)
+            }.width('100%')
+            Row({ space: 8 }) {
+              Button('30 秒').layoutWeight(1)
+                .backgroundColor(this.periodValue === '30' ? '#4668E8' : $r('app.color.surface_control'))
+                .fontColor(this.periodValue === '30' ? Color.White : $r('app.color.text_secondary'))
+                .onClick(() => this.periodValue = '30')
+              Button('60 秒').layoutWeight(1)
+                .backgroundColor(this.periodValue === '60' ? '#4668E8' : $r('app.color.surface_control'))
+                .fontColor(this.periodValue === '60' ? Color.White : $r('app.color.text_secondary'))
+                .onClick(() => this.periodValue = '60')
             }.width('100%')
             TextInput({ placeholder: '刷新周期（秒）', text: this.periodValue }).type(InputType.Number)
               .onChange((value: string) => this.periodValue = value)
@@ -357,11 +404,11 @@ export struct TokenDetailPage {
             }.width('100%')
             Text(this.steamMetadataSummary()).fontSize(13)
               .fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
-            Button('管理 Steam 信息').width('100%')
-              .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
-              .onClick(() => this.onOpenSteamManagement())
           }.padding(18).margin({ left: 16, right: 16 })
-            .backgroundColor($r('app.color.surface')).borderRadius(18)
+            .backgroundColor($r('app.color.steam_surface')).borderRadius(18)
+            .border({ width: 1, color: $r('app.color.steam_divider') })
+            .onClick(() => this.onOpenSteamManagement())
+            .accessibilityText('管理 Steam 信息')
         }
 
         if (this.errorMessage.length > 0) {

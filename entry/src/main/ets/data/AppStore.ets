@@ -51,21 +51,6 @@ export class AppStore {
     AppStorage.set<string>(APP_ACTIVE_ICON_PACK_KEY, activeIconPackKey);
   }
 
-  /** 返回系统路由 Builder 创建页面时使用的最新 Token 快照。 */
-  static tokens(): StoredToken[] {
-    return AppStorage.get<StoredToken[]>(APP_TOKENS_KEY) ?? [];
-  }
-
-  /** 返回已安装图标包快照。 */
-  static iconPacks(): IconPack[] {
-    return AppStorage.get<IconPack[]>(APP_ICON_PACKS_KEY) ?? [];
-  }
-
-  /** 返回当前活动图标包标识。 */
-  static activeIconPackKey(): string {
-    return AppStorage.get<string>(APP_ACTIVE_ICON_PACK_KEY) ?? IconPackService.noPackKey();
-  }
-
   /** 先写入加密仓库，成功后再通知所有 @StorageLink 页面。 */
   static async updateTokens(tokens: StoredToken[]): Promise<void> {
     const next = [...tokens];

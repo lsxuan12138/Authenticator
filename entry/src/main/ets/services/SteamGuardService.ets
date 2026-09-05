@@ -5,6 +5,7 @@ import { SteamSessionService } from './SteamSessionService';
 import { SteamHttpHeaders, SteamWebApiClient } from './SteamWebApiClient';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamProtocol, SteamQrSessionInfoData } from './SteamProtocol';
+import { DiagnosticLogService } from './DiagnosticLogService';
 
 export interface SteamConfirmation {
   type: number;
@@ -39,21 +40,23 @@ export interface SteamQrLoginInfo {
   deviceTrust: number;
 }
 
+/** Steam 当前账户中可由移动验证器批准或拒绝的登录会话。 */
+export interface SteamPendingLogin extends SteamQrLoginInfo {
+  clientId: string;
+  version: string;
+}
+
+/** 待登录请求解析结果；skipped 用于让 UI 区分“没有请求”和“存在但无法解析”。 */
+export interface SteamPendingLoginResult {
+  items: SteamPendingLogin[];
+  skipped: number;
+}
+
 /** Steam 移动确认和扫码登录服务；会话与 HTTP 均复用统一底层。 */
 export class SteamGuardService {
-  /** 返回 Access Token 的 JWT 过期时间；无法读取时返回 0。 */
-  static tokenExpiresAt(token: string): number {
-    return SteamSessionService.tokenExpiresAt(token);
-  }
-
   /** 为页面生成人类可读的 Access Token 有效期说明。 */
   static tokenStatus(token: string): string {
     return SteamSessionService.tokenStatus(token);
-  }
-
-  /** 使用 Refresh Token 更新短期 Access Token。 */
-  async refreshAccessToken(steamId: string, refreshToken: string): Promise<string> {
-    return (await new SteamSessionService().refresh(steamId, refreshToken, false)).accessToken;
   }
 
   /** 显式更新会话时允许 Steam 一并轮换 Refresh Token。 */
@@ -87,11 +90,55 @@ export class SteamGuardService {
       throw new Error('当前 Steam Token 缺少扫码登录所需的会话信息');
     }
     const challenge = this.parseQrChallenge(challengeUrl);
-    const signature = this.qrSignature(steamId, sharedSecret, challenge);
+    await this.respondLoginChallenge(steamId, accessToken, refreshToken, sharedSecret, challenge,
+      approve, persistent);
+  }
+
+  /** 查询账户下尚可处理的登录会话，并补齐每条请求的设备与位置详情。 */
+  async getPendingLogins(steamId: string, accessToken: string,
+    refreshToken: string): Promise<SteamPendingLoginResult> {
+    if (!steamId || (!accessToken && !refreshToken)) {
+      throw new Error('当前 Steam Token 缺少登录请求列表所需的会话信息');
+    }
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
-    await SteamWebApiClient.protobuf('Authentication', 'UpdateAuthSessionWithMobileConfirmation',
-      SteamProtocol.encodeQrResponse(challenge.version, challenge.clientId, steamId, signature,
-        approve, persistent), usableAccessToken);
+    // 该空请求接口当前只接受 GET；使用通用 POST 会稳定返回 HTTP 405。
+    const response = await SteamWebApiClient.protobufGet('Authentication', 'GetAuthSessionsForAccount',
+      SteamProtocol.encodeAuthSessionsForAccount(), usableAccessToken);
+    const clientIds = SteamProtocol.decodeAuthSessionsForAccount(response);
+    const result: SteamPendingLogin[] = [];
+    let skipped = 0;
+    for (const clientId of clientIds) {
+      try {
+        const detail = await SteamWebApiClient.protobuf('Authentication', 'GetAuthSessionInfo',
+          SteamProtocol.encodeQrSessionInfo(clientId), usableAccessToken);
+        const data = SteamProtocol.decodeQrSessionInfo(detail);
+        const info = this.qrLoginInfo(data);
+        result.push({
+          clientId: clientId,
+          version: `${data.version}`,
+          ip: info.ip,
+          location: info.location,
+          deviceName: info.deviceName,
+          persistent: info.persistent,
+          locationMismatch: info.locationMismatch,
+          highUsage: info.highUsage,
+          deviceTrust: info.deviceTrust
+        });
+      } catch (error) {
+        skipped++;
+        const detail = error as BusinessError;
+        DiagnosticLogService.warn('SteamGuardService',
+          `Skipped an unreadable login request: ${detail.message ?? 'unknown'}`);
+      }
+    }
+    return { items: result, skipped: skipped };
+  }
+
+  /** 使用待登录列表携带的原始挑战参数批准或拒绝登录。 */
+  async respondPendingLogin(steamId: string, accessToken: string, refreshToken: string,
+    sharedSecret: Uint8Array, login: SteamPendingLogin, approve: boolean): Promise<void> {
+    await this.respondLoginChallenge(steamId, accessToken, refreshToken, sharedSecret,
+      { version: login.version, clientId: login.clientId }, approve, login.persistent);
   }
 
   /** 获取 Steam Community 返回的移动确认列表。 */
@@ -149,9 +196,11 @@ export class SteamGuardService {
     }
     const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
     const operation = approve ? 'allow' : 'cancel';
-    // 列表签名使用 conf；实际操作必须使用 allow/cancel，否则 Steam 会以 HTTP 200 返回业务失败。
+    // Steam 当前协议已将签名用途与操作名拆开：签名使用 accept/reject，op 仍使用 allow/cancel。
+    // 不对旧 tag 自动重试，避免首个请求实际成功但响应异常时重复提交资金相关操作。
+    const signatureTag = approve ? 'accept' : 'reject';
     let data = `${await this.confirmationParameters(
-      steamId, identitySecret, deviceId, operation)}&op=${operation}`;
+      steamId, identitySecret, deviceId, signatureTag)}&op=${operation}`;
     for (const confirmation of confirmations) {
       if (!confirmation.id || !confirmation.nonce) {
         throw new Error('Steam 确认条目缺少 ID 或 Nonce');
@@ -253,6 +302,19 @@ export class SteamGuardService {
       const detail = error as BusinessError;
       throw new Error(`生成 Steam 扫码登录签名失败：${detail.message ?? '二维码或密钥无效'}`);
     }
+  }
+
+  /** 汇合扫码与列表入口，确保两者使用完全相同的签名和协议请求。 */
+  private async respondLoginChallenge(steamId: string, accessToken: string, refreshToken: string,
+    sharedSecret: Uint8Array, challenge: SteamQrChallenge, approve: boolean, persistent: boolean): Promise<void> {
+    if (!steamId || (!accessToken && !refreshToken) || sharedSecret.length === 0) {
+      throw new Error('当前 Steam Token 缺少登录确认所需的会话信息');
+    }
+    const signature = this.qrSignature(steamId, sharedSecret, challenge);
+    const usableAccessToken = await new SteamSessionService().accessToken(steamId, accessToken, refreshToken);
+    await SteamWebApiClient.protobuf('Authentication', 'UpdateAuthSessionWithMobileConfirmation',
+      SteamProtocol.encodeQrResponse(challenge.version, challenge.clientId, steamId, signature,
+        approve, persistent), usableAccessToken);
   }
 
   /** 将协议层的分散位置字段整理为适合确认弹窗展示的摘要。 */

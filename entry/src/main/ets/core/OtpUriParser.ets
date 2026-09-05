@@ -1,5 +1,5 @@
 import { uri } from '@kit.ArkTS';
-import { StoredToken, TokenKind } from '../domain/Token';
+import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from './Base32';
 import { TokenId } from './TokenId';
 
@@ -20,17 +20,32 @@ export class OtpUriParser {
     const account = separator >= 0 ? label.substring(separator + 1) : label;
     const issuer = parsed.getQueryValue('issuer') ?? labelIssuer;
     const kind = issuer.trim().toLowerCase() === 'steam' ? TokenKind.STEAM : TokenKind.TOTP;
-    const parsedPeriod = Number.parseInt(parsed.getQueryValue('period') ?? '30');
-    // 30 秒只是默认值；保留合法的自定义周期，同时限制异常 URI 的极端值。
-    const period = Number.isNaN(parsedPeriod) || parsedPeriod <= 0 ? 30 : Math.min(parsedPeriod, 300);
+    const periodValue = parsed.getQueryValue('period') ?? '30';
+    const period = Number(periodValue);
+    // URI 是密钥配置，不能静默截断或替换非法值，否则导入后会稳定地产生错误验证码。
+    if (!Number.isInteger(period) || period < 1 || period > 300) {
+      throw new Error(`不支持的 OTP 刷新周期：${periodValue}`);
+    }
+    if (issuer.trim().length === 0 || account.trim().length === 0) {
+      throw new Error('OTP URI 缺少服务名称或账户名称');
+    }
+    // Steam 的标准迁移 URI 使用 5 位验证码；普通 TOTP 仅接受应用支持的 6/8 位。
+    const digitsValue = parsed.getQueryValue('digits') ?? (kind === TokenKind.STEAM ? '5' : '6');
+    const digits = Number(digitsValue);
+    const digitsSupported = kind === TokenKind.STEAM ? digits === 5 : digits === 6 || digits === 8;
+    if (!Number.isInteger(digits) || !digitsSupported) {
+      throw new Error(`不支持的 OTP 位数：${digitsValue}`);
+    }
+    const algorithm = OtpUriParser.parseAlgorithm(parsed.getQueryValue('algorithm') ?? 'SHA1');
     return {
       id: OtpUriParser.createId(),
-      issuer: issuer,
-      account: account,
+      issuer: issuer.trim(),
+      account: account.trim(),
       secret: secret,
-      digits: kind === TokenKind.STEAM ? 5 : (parsed.getQueryValue('digits') === '8' ? 8 : 6),
-      period: period,
+      digits: kind === TokenKind.STEAM ? 5 : digits,
+      period: kind === TokenKind.STEAM ? 30 : period,
       kind: kind,
+      algorithm: kind === TokenKind.STEAM ? TokenAlgorithm.SHA1 : algorithm,
       iconPath: '',
       createdAt: Date.now()
     };
@@ -47,8 +62,19 @@ export class OtpUriParser {
     const issuer = encodeURIComponent(token.issuer);
     const secret = encodeURIComponent(Base32.normalize(token.secret));
     const digits = token.kind === TokenKind.STEAM ? 5 : token.digits;
+    const algorithm = token.kind === TokenKind.STEAM ? TokenAlgorithm.SHA1 :
+      (token.algorithm ?? TokenAlgorithm.SHA1);
     const period = token.kind === TokenKind.STEAM ? 30 : token.period;
     return `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` +
-      `&algorithm=SHA1&digits=${digits}&period=${period}`;
+      `&algorithm=${encodeURIComponent(algorithm)}&digits=${digits}&period=${period}`;
+  }
+
+  /** 兼容 URI 中 SHA-256、sha256 等常见拼写差异。 */
+  private static parseAlgorithm(value: string): TokenAlgorithm {
+    const normalized = value.trim().toUpperCase().replace(/[-_]/g, '');
+    const algorithms: TokenAlgorithm[] = [TokenAlgorithm.SHA1, TokenAlgorithm.SHA256, TokenAlgorithm.SHA512];
+    const matched = algorithms.find((item: TokenAlgorithm): boolean => item === normalized);
+    if (!matched) throw new Error(`不支持的 OTP 摘要算法：${value}`);
+    return matched;
   }
 }

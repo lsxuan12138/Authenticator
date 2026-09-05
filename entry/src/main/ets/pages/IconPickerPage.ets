@@ -48,18 +48,17 @@ struct IconPickerPage {
       this.showToast('对应的 Token 已不存在', 2200);
       return;
     }
-    const previousPath = token.iconPath;
-    const previousManual = token.iconManual;
     try {
-      token.iconPath = path;
-      token.iconManual = path.length > 0;
-      this.tokens = [...this.tokens];
-      await AppStore.updateTokens(this.tokens);
+      const updated: StoredToken = {
+        id: token.id, issuer: token.issuer, account: token.account, secret: token.secret,
+        digits: token.digits, period: token.period, kind: token.kind, algorithm: token.algorithm,
+        iconPath: path, iconManual: path.length > 0, createdAt: token.createdAt, steam: token.steam
+      };
+      const next = this.tokens.map((item: StoredToken): StoredToken => item.id === token.id ? updated : item);
+      await AppStore.updateTokens(next);
+      this.tokens = next;
       AppRouter.pop();
     } catch (error) {
-      token.iconPath = previousPath;
-      token.iconManual = previousManual;
-      this.tokens = [...this.tokens];
       this.showToast(`保存图标选择失败：${(error as Error).message}`, 3000);
     }
   }
