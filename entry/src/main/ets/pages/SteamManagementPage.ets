@@ -536,11 +536,6 @@ export struct SteamManagementPage {
           Text($r('app.string.steam_access_lifetime')).fontSize(14).fontWeight(FontWeight.Medium).width('100%')
           Text(this.tokenLifetimeStatus(this.steamAccessToken))
             .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-          Text($r('app.string.steam_guard_data')).fontSize(14).fontWeight(FontWeight.Medium).width('100%')
-          Text(this.configuredStatus(this.currentToken()?.steam?.guardData ?? ''))
-            .fontSize(13).fontColor($r('app.color.text_secondary')).width('100%')
-          Text($r('app.string.steam_guard_data_note'))
-            .fontSize(12).fontColor($r('app.color.text_tertiary')).lineHeight(18).width('100%')
           Button(this.steamSessionLoading ? $r('app.string.steam_updating') : $r('app.string.steam_update_access'))
             .width('100%').enabled(!this.steamSessionLoading && this.currentRefreshToken().length > 0)
             .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
@@ -678,6 +673,10 @@ export struct SteamManagementPage {
               .enableAutoFill(false)
               .fontColor($r('app.color.text_secondary'))
               .opacity(1)
+            // Guard Data 仅用于 Steam 重新登录兼容，不属于日常会话信息；高级修复中只显示配置状态。
+            Text($r('app.string.steam_guard_data_status_value',
+              this.configuredStatus(this.currentToken()?.steam?.guardData ?? '')))
+              .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
             Row({ space: 10 }) {
               Button($r('app.string.common_cancel')).layoutWeight(1)
                 .backgroundColor($r('app.color.surface_muted')).fontColor($r('app.color.text_secondary'))
@@ -702,9 +701,6 @@ export struct SteamManagementPage {
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
             Text($r('app.string.steam_identity_status_value',
               this.configuredStatus(this.currentToken()?.steam?.identitySecret ?? '')))
-              .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
-            Text($r('app.string.steam_guard_data_status_value',
-              this.configuredStatus(this.currentToken()?.steam?.guardData ?? '')))
               .fontSize(14).fontColor($r('app.color.text_secondary')).width('100%')
             Text($r('app.string.steam_revocation_status_value',
               this.configuredStatus(this.currentToken()?.steam?.revocationCode ?? '')))

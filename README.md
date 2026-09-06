@@ -124,6 +124,9 @@ python tools/export_backup_tokens.py path/to/backup.authbackup
 
 ## 项目结构
 
+面向开发与代码审查的完整页面、功能、服务、数据边界和渐进式重构计划见
+[项目与代码架构](docs/PROJECT_ARCHITECTURE.md)。新增功能前应先核对其中的产品边界和审查门槛。
+
 ```text
 entry/src/main/ets/
 ├── components/       可复用 UI 组件
