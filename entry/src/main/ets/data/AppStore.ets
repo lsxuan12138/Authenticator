@@ -58,6 +58,35 @@ export class AppStore {
     AppStorage.set<StoredToken[]>(APP_TOKENS_KEY, next);
   }
 
+  /**
+   * 将 Steam 透明刷新产生的新会话写回安全仓库，并返回更新后的 Token。
+   * 该入口按 UUID 读取 AppStorage 最新快照，避免页面持有的旧数组覆盖其他修改。
+   */
+  static async updateSteamSession(tokenId: string, accessToken: string,
+    refreshToken: string): Promise<StoredToken | null> {
+    const tokens = AppStorage.get<StoredToken[]>(APP_TOKENS_KEY) ?? [];
+    const token = tokens.find((item: StoredToken): boolean => item.id === tokenId);
+    const metadata = token?.steam;
+    if (!token || !metadata) return null;
+    if (metadata.accessToken === accessToken && metadata.refreshToken === refreshToken) return token;
+    const updated: StoredToken = {
+      id: token.id, issuer: token.issuer, account: token.account, secret: token.secret,
+      digits: token.digits, period: token.period, kind: token.kind, algorithm: token.algorithm,
+      iconPath: token.iconPath, iconManual: token.iconManual, createdAt: token.createdAt,
+      steam: {
+        steamId: metadata.steamId, accountName: metadata.accountName,
+        identitySecret: metadata.identitySecret, deviceId: metadata.deviceId,
+        accessToken: accessToken, refreshToken: refreshToken,
+        guardData: metadata.guardData, revocationCode: metadata.revocationCode,
+        serialNumber: metadata.serialNumber, tokenGid: metadata.tokenGid,
+        uri: metadata.uri, secret1: metadata.secret1
+      }
+    };
+    const next = tokens.map((item: StoredToken): StoredToken => item.id === tokenId ? updated : item);
+    await AppStore.updateTokens(next);
+    return updated;
+  }
+
   /** 同步图标包安装或删除结果。 */
   static updateIconPacks(packs: IconPack[]): void {
     AppStorage.set<IconPack[]>(APP_ICON_PACKS_KEY, [...packs]);

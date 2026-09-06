@@ -61,12 +61,12 @@ export interface SteamAuthenticatorStatus {
 export class SteamAuthenticatorService {
   /** 为已登录账户申请一个待激活的移动验证器。 */
   async addAuthenticator(steamId: string, refreshToken: string,
-    deviceId: string): Promise<SteamAuthenticatorEnrollment> {
+    deviceId: string, currentAccessToken: string = ''): Promise<SteamAuthenticatorEnrollment> {
     if (!steamId || !refreshToken || !deviceId) {
       throw new AppError('steam_error_authenticator_data_required',
         'Adding an authenticator requires Steam ID, Refresh Token, and Device ID');
     }
-    const accessToken = await this.accessToken(steamId, refreshToken);
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const payload = SteamProtocol.encodeAddAuthenticator(steamId, deviceId, await SteamTimeService.now());
     let bytes: Uint8Array;
     try {
@@ -91,8 +91,9 @@ export class SteamAuthenticatorService {
 
   /** 使用短信激活码和当前五位码完成新验证器绑定。 */
   async finalizeAuthenticator(steamId: string, refreshToken: string, authenticatorCode: string,
-    authenticatorTime: number, activationCode: string): Promise<SteamFinalizeResult> {
-    const accessToken = await this.accessToken(steamId, refreshToken);
+    authenticatorTime: number, activationCode: string,
+    currentAccessToken: string = ''): Promise<SteamFinalizeResult> {
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const payload = SteamProtocol.encodeFinalizeAuthenticator(
       steamId, authenticatorCode, authenticatorTime, activationCode);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'FinalizeAddAuthenticator', payload, accessToken);
@@ -101,8 +102,9 @@ export class SteamAuthenticatorService {
   }
 
   /** 查询 Steam 服务端记录的验证器状态和最近使用事件。 */
-  async queryAuthenticatorStatus(steamId: string, refreshToken: string): Promise<SteamAuthenticatorStatus> {
-    const accessToken = await this.accessToken(steamId, refreshToken);
+  async queryAuthenticatorStatus(steamId: string, refreshToken: string,
+    currentAccessToken: string = ''): Promise<SteamAuthenticatorStatus> {
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'QueryStatus',
       SteamProtocol.encodeAuthenticatorStatus(steamId), accessToken);
     return this.status(SteamProtocol.decodeAuthenticatorStatus(bytes));
@@ -110,12 +112,12 @@ export class SteamAuthenticatorService {
 
   /** 使用撤销码从账户移除当前移动验证器。 */
   async revokeAuthenticator(steamId: string, refreshToken: string,
-    revocationCode: string): Promise<number> {
+    revocationCode: string, currentAccessToken: string = ''): Promise<number> {
     if (!revocationCode.trim()) {
       throw new AppError('steam_error_revocation_code_missing',
         'The token has no revocation code; the Steam authenticator cannot be revoked');
     }
-    const accessToken = await this.accessToken(steamId, refreshToken);
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticator',
       SteamProtocol.encodeRemoveAuthenticator(revocationCode.trim()), accessToken);
     const result = SteamProtocol.decodeRemoveAuthenticator(bytes);
@@ -128,8 +130,9 @@ export class SteamAuthenticatorService {
   }
 
   /** 请求 Steam 向绑定手机号发送验证器转移短信。 */
-  async beginTransfer(steamId: string, refreshToken: string): Promise<void> {
-    const accessToken = await this.accessToken(steamId, refreshToken);
+  async beginTransfer(steamId: string, refreshToken: string,
+    currentAccessToken: string = ''): Promise<void> {
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticatorViaChallengeStart',
       SteamProtocol.encodeBeginTransfer(), accessToken);
     if (bytes.length === 0) {
@@ -144,11 +147,11 @@ export class SteamAuthenticatorService {
 
   /** 提交转移短信码并读取服务端下发的新验证器密钥。 */
   async completeTransfer(steamId: string, refreshToken: string,
-    smsCode: string): Promise<SteamAuthenticatorEnrollment> {
+    smsCode: string, currentAccessToken: string = ''): Promise<SteamAuthenticatorEnrollment> {
     if (!smsCode.trim()) {
       throw new AppError('steam_error_sms_required', 'An SMS verification code is required');
     }
-    const accessToken = await this.accessToken(steamId, refreshToken);
+    const accessToken = await this.accessToken(steamId, refreshToken, currentAccessToken);
     const bytes = await SteamWebApiClient.protobuf('TwoFactor', 'RemoveAuthenticatorViaChallengeContinue',
       SteamProtocol.encodeCompleteTransfer(smsCode.trim()), accessToken);
     const enrollment = SteamProtocol.decodeCompleteTransfer(bytes);
@@ -157,8 +160,9 @@ export class SteamAuthenticatorService {
   }
 
   /** 为 TwoFactor 调用获取仍有效的短期 Access Token。 */
-  private async accessToken(steamId: string, refreshToken: string): Promise<string> {
-    return new SteamSessionService().accessToken(steamId, '', refreshToken);
+  private async accessToken(steamId: string, refreshToken: string,
+    currentAccessToken: string = ''): Promise<string> {
+    return new SteamSessionService().accessToken(steamId, currentAccessToken, refreshToken);
   }
 
   /** 拒绝缺少验证码或移动确认所需核心密钥的不完整响应。 */

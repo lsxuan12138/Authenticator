@@ -128,7 +128,9 @@ struct Index {
       this.showToast(this.localized($r('app.string.home_code_copied')), 1600);
     } catch (error) {
       const detail = error as BusinessError;
-      this.showToast(this.localized($r('app.string.error_copy'), detail.message ??
+      DiagnosticLogService.warn('Clipboard', `Copy failed: ${detail.message ?? 'unknown'}`);
+      // 系统异常原文可能与应用当前语言不同，仅在日志中保留技术细节。
+      this.showToast(this.localized($r('app.string.error_copy'),
         this.localized($r('app.string.error_unknown'))), 2500);
     }
   }

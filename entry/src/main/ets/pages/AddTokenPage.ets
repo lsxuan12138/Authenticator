@@ -17,6 +17,7 @@ import { SteamVerificationStep } from '../components/SteamVerificationStep';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 import { Localization } from '../core/Localization';
 import { AppError } from '../core/AppError';
+import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -59,6 +60,31 @@ export struct AddTokenPage {
   private steamAddDeviceId: string = '';
   private steamAddTimeOffset: number = 0;
   private steamLoginCancellation?: SteamLoginCancellation;
+
+  /**
+   * 添加/迁移阶段尚未创建 StoredToken，因此透明刷新只能先写回当前流程的内存会话。
+   * 最终保存验证器时会把这里的最新 Access Token 与 Refresh Token 一并写入安全仓库。
+   */
+  private async resolveSteamAddSession(): Promise<SteamAccessTokenPair> {
+    if (!this.steamAddSession || !this.steamAddTokens) {
+      throw new AppError('steam_error_session_tokens_missing', 'Steam add session is unavailable');
+    }
+    const session = await new SteamSessionService().resolveAccessToken(
+      this.steamAddSession.steamId.toString(), this.steamAddTokens.accessToken,
+      this.steamAddTokens.refreshToken);
+    if (session.accessToken !== this.steamAddTokens.accessToken ||
+      session.refreshToken !== this.steamAddTokens.refreshToken) {
+      this.steamAddTokens = {
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        accountName: this.steamAddTokens.accountName,
+        agreementSessionUrl: this.steamAddTokens.agreementSessionUrl,
+        guardData: this.steamAddTokens.guardData
+      };
+      DiagnosticLogService.info('SteamEnrollment', 'Updated temporary Steam session after transparent refresh');
+    }
+    return session;
+  }
 
   /** 页面离开时取消轮询，并主动丢弃仍停留在内存中的密码、验证码和临时密钥。 */
   aboutToDisappear(): void {
@@ -278,8 +304,10 @@ export struct AddTokenPage {
     this.steamAddStatus = this.localized($r('app.string.steam_requesting_guard'));
     let enrollment: SteamAuthenticatorEnrollment;
     try {
+      const sessionTokens = await this.resolveSteamAddSession();
       enrollment = await new SteamAuthenticatorService().addAuthenticator(
-        session.steamId.toString(), tokens.refreshToken, this.steamAddDeviceId);
+        session.steamId.toString(), sessionTokens.refreshToken, this.steamAddDeviceId,
+        sessionTokens.accessToken);
     } catch (error) {
       if (error instanceof AppError) {
         if (error.resourceName === 'steam_guard_already_exists') {
@@ -312,6 +340,7 @@ export struct AddTokenPage {
     this.steamAddBusy = true;
     this.steamAddStatus = this.localized($r('app.string.steam_activating_guard'));
     try {
+      const sessionTokens = await this.resolveSteamAddSession();
       const enrollment = this.steamAddEnrollment;
       const now = Date.now() + this.steamAddTimeOffset;
       const seconds = Math.floor(now / 1000);
@@ -330,8 +359,8 @@ export struct AddTokenPage {
       };
       const authenticatorCode = OtpEngine.generate(temporary, now).value;
       const finalized = await new SteamAuthenticatorService().finalizeAuthenticator(
-        this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken,
-        authenticatorCode, seconds, this.steamAddActivationCode.trim());
+        this.steamAddSession.steamId.toString(), sessionTokens.refreshToken,
+        authenticatorCode, seconds, this.steamAddActivationCode.trim(), sessionTokens.accessToken);
       if (!finalized.success) {
         throw new AppError('steam_error_activation_status',
           `Steam Guard activation failed (status ${finalized.status})`, [finalized.status]);
@@ -352,8 +381,10 @@ export struct AddTokenPage {
     this.steamAddBusy = true;
     this.steamAddStatus = this.localized($r('app.string.steam_requesting_transfer'));
     try {
+      const sessionTokens = await this.resolveSteamAddSession();
       await new SteamAuthenticatorService().beginTransfer(
-        this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken);
+        this.steamAddSession.steamId.toString(), sessionTokens.refreshToken,
+        sessionTokens.accessToken);
       this.steamAddActivationCode = '';
       this.steamAddStep = 4;
       this.steamAddStatus = this.localized($r('app.string.steam_transfer_started'));
@@ -378,10 +409,11 @@ export struct AddTokenPage {
     this.steamAddBusy = true;
     this.steamAddStatus = this.localized($r('app.string.steam_transferring_guard'));
     try {
+      const sessionTokens = await this.resolveSteamAddSession();
       const service = new SteamAuthenticatorService();
       const enrollment = await service.completeTransfer(
-        this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken,
-        this.steamAddActivationCode.trim());
+        this.steamAddSession.steamId.toString(), sessionTokens.refreshToken,
+        this.steamAddActivationCode.trim(), sessionTokens.accessToken);
       // 迁移协议没有上传或返回 Device ID；以迁移后的服务端状态为准，查询失败时才退回本地 UUID。
       const deviceId = await this.transferredDeviceId(service);
       await this.saveSteamEnrollment(enrollment, this.localized($r('app.string.steam_guard_transferred')), deviceId);
@@ -401,8 +433,10 @@ export struct AddTokenPage {
       return this.steamAddDeviceId;
     }
     try {
+      const sessionTokens = await this.resolveSteamAddSession();
       const status = await service.queryAuthenticatorStatus(
-        this.steamAddSession.steamId.toString(), this.steamAddTokens.refreshToken);
+        this.steamAddSession.steamId.toString(), sessionTokens.refreshToken,
+        sessionTokens.accessToken);
       const serverDeviceId = status.deviceIdentifier.trim();
       if (serverDeviceId.length > 0) {
         DiagnosticLogService.info('SteamTransfer', 'Using Device ID returned by post-transfer QueryStatus');
@@ -518,8 +552,11 @@ export struct AddTokenPage {
       if (detail.code === 1000500002) {
         return;
       }
+      DiagnosticLogService.warn('OtpScan',
+        `Scan failed: code=${detail.code ?? 'unknown'}, message=${detail.message ?? `${error}`}`);
+      // Scan Kit 的 message 由系统提供，语言不一定和应用一致；界面只显示本地化兜底。
       this.showToast(this.localized($r('app.string.error_scan_failed'),
-        `${detail.code ?? 'unknown'}`, detail.message ?? `${error}`), 3000);
+        `${detail.code ?? 'unknown'}`, this.localized($r('app.string.error_unknown'))), 3000);
     }
   }
 

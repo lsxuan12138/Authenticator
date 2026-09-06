@@ -24,7 +24,9 @@ export class Localization {
       try {
         return context.resourceManager.getStringByNameSync(error.resourceName, ...error.resourceArgs);
       } catch (_) {
-        return error.message;
+        // resourceName 拼写或语言资源缺失属于开发问题；诊断 message 可能包含内部操作名、
+        // 服务端原文甚至其他语言，不能作为面向用户的兜底文案。
+        return Localization.text(context, fallback);
       }
     }
     return Localization.text(context, fallback);

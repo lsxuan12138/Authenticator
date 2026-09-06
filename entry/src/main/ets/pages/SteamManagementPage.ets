@@ -4,7 +4,6 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { SteamGuardMetadata, StoredToken } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { OtpEngine } from '../core/OtpEngine';
-import { SteamAccessTokenResult, SteamGuardService } from '../services/SteamGuardService';
 import { SteamImportResult, SteamImportService } from '../services/SteamImportService';
 import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLoginService';
 import { SteamGuardType } from '../services/SteamProtocol';
@@ -12,10 +11,10 @@ import { SteamAuthenticatorService, SteamAuthenticatorStatus } from '../services
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
-import { SteamProfile, SteamProfileService } from '../services/SteamProfileService';
-import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
-import { SteamTokenLifetime, SteamTokenLifetimeState } from '../services/SteamSessionService';
+import { SteamAccessTokenPair, SteamSessionService, SteamTokenLifetime,
+  SteamTokenLifetimeState } from '../services/SteamSessionService';
+import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { Localization } from '../core/Localization';
 
 /** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
@@ -54,32 +53,11 @@ export struct SteamManagementPage {
   @State private steamSessionStatus: string = '';
   @State private steamAuthenticatorLoading: boolean = false;
   @State private steamAuthenticatorStatus: SteamAuthenticatorStatus | null = null;
-  @State private steamProfile: SteamProfile | null = null;
-  @State private steamProfileLoading: boolean = false;
   private steamLoginCancellation?: SteamLoginCancellation;
 
   /** 页面出现时从当前 Token 加载可展示和可修复的元信息。 */
   aboutToAppear(): void {
     this.loadMetadata();
-    this.loadSteamProfile(false);
-  }
-
-  /** 读取带 12 小时有效期的公开资料缓存；手动刷新时强制联网更新。 */
-  private async loadSteamProfile(forceRefresh: boolean): Promise<void> {
-    const metadata = this.currentToken()?.steam;
-    if (!metadata?.steamId || (!metadata.accessToken && !metadata.refreshToken)) return;
-    this.steamProfileLoading = true;
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      this.steamProfile = await new SteamProfileService().load(context, metadata.steamId,
-        metadata.accessToken, metadata.refreshToken, forceRefresh);
-      if (forceRefresh) this.showToast(this.localized($r('app.string.steam_profile_updated')), 1600);
-    } catch (error) {
-      DiagnosticLogService.warn('SteamManagement', `Profile load failed: ${(error as Error).message}`);
-      if (forceRefresh) this.showToast(this.localizedError(error as Object), 2800);
-    } finally {
-      this.steamProfileLoading = false;
-    }
   }
 
   /** 页面离开时取消登录轮询，并清除未提交的密码与导入文本。 */
@@ -124,6 +102,12 @@ export struct SteamManagementPage {
     return this.currentToken()?.steam?.refreshToken ?? '';
   }
 
+  /** 判断当前 Token 是否至少包含一种可用于联网请求的会话凭据。 */
+  private hasCurrentSession(): boolean {
+    const metadata = this.currentToken()?.steam;
+    return !!metadata?.steamId && (!!metadata.accessToken || !!metadata.refreshToken);
+  }
+
   /** 用新的 Steam 元信息复制 Token，避免原地修改 @StorageLink 中的旧对象。 */
   private tokenWithSteam(token: StoredToken, steam: SteamGuardMetadata): StoredToken {
     return {
@@ -131,6 +115,37 @@ export struct SteamManagementPage {
       digits: token.digits, period: token.period, kind: token.kind, algorithm: token.algorithm,
       iconPath: token.iconPath, iconManual: token.iconManual, createdAt: token.createdAt, steam: steam
     };
+  }
+
+  /**
+   * 获取实际可用的 Access Token，并在发生透明刷新时立即写回加密仓库。
+   * 这样查询状态等只读操作也不会把新凭据仅留在进程内存中。
+   */
+  private async resolveStoredSession(token: StoredToken): Promise<SteamAccessTokenPair> {
+    const metadata = token.steam;
+    if (!metadata) {
+      throw new Error('Steam metadata is unavailable');
+    }
+    const session = await new SteamSessionService().resolveAccessToken(
+      metadata.steamId, metadata.accessToken, metadata.refreshToken);
+    if (session.accessToken === metadata.accessToken && session.refreshToken === metadata.refreshToken) {
+      return session;
+    }
+    const steam: SteamGuardMetadata = {
+      steamId: metadata.steamId, accountName: metadata.accountName,
+      identitySecret: metadata.identitySecret, deviceId: metadata.deviceId,
+      accessToken: session.accessToken, refreshToken: session.refreshToken,
+      guardData: metadata.guardData, revocationCode: metadata.revocationCode,
+      serialNumber: metadata.serialNumber, tokenGid: metadata.tokenGid,
+      uri: metadata.uri, secret1: metadata.secret1
+    };
+    const updated = this.tokenWithSteam(token, steam);
+    const next = this.tokens.map((item: StoredToken): StoredToken => item.id === token.id ? updated : item);
+    await this.onTokensChanged(next);
+    this.tokens = next;
+    this.steamAccessToken = session.accessToken;
+    DiagnosticLogService.info('SteamManagement', 'Persisted transparently refreshed Steam session');
+    return session;
   }
 
   /** 保存 Steam 已返回的新会话；失败时仍保留在内存，避免立刻丢失可能已轮换的 Refresh Token。 */
@@ -157,8 +172,8 @@ export struct SteamManagementPage {
     }
     this.steamSessionLoading = true;
     try {
-      const refreshed: SteamAccessTokenResult = await new SteamGuardService().refreshSessionTokens(
-        token.steam.steamId, token.steam.refreshToken);
+      const refreshed: SteamAccessTokenPair = await new SteamSessionService().refresh(
+        token.steam.steamId, token.steam.refreshToken, true);
       const steam: SteamGuardMetadata = {
         steamId: token.steam.steamId,
         accountName: token.steam.accountName,
@@ -276,15 +291,17 @@ export struct SteamManagementPage {
 
   /** 从 Steam 服务端查询验证器状态和最近使用记录。 */
   private async queryAuthenticatorStatus(): Promise<void> {
-    const metadata = this.currentToken()?.steam;
-    if (!metadata?.steamId || !metadata.refreshToken) {
+    const token = this.currentToken();
+    const metadata = token?.steam;
+    if (!token || !metadata?.steamId || (!metadata.accessToken && !metadata.refreshToken)) {
       this.showToast(this.localized($r('app.string.steam_query_requires_tokens')), 2500);
       return;
     }
     this.steamAuthenticatorLoading = true;
     try {
+      const session = await this.resolveStoredSession(token);
       this.steamAuthenticatorStatus = await new SteamAuthenticatorService().queryAuthenticatorStatus(
-        metadata.steamId, metadata.refreshToken);
+        metadata.steamId, session.refreshToken, session.accessToken);
       this.showToast(this.localized($r('app.string.steam_status_updated')), 1600);
     } catch (error) {
       this.showToast(this.localizedError(error as Object), 3500);
@@ -297,7 +314,8 @@ export struct SteamManagementPage {
   private async revokeAuthenticator(): Promise<void> {
     const token = this.currentToken();
     const metadata = token?.steam;
-    if (!token || !metadata?.steamId || !metadata.refreshToken || !metadata.revocationCode) {
+    if (!token || !metadata?.steamId || (!metadata.accessToken && !metadata.refreshToken) ||
+      !metadata.revocationCode) {
       this.showToast(this.localized($r('app.string.steam_revoke_requires_data')), 2800);
       return;
     }
@@ -316,8 +334,9 @@ export struct SteamManagementPage {
         return;
       }
       this.steamAuthenticatorLoading = true;
+      const session = await this.resolveStoredSession(token);
       await new SteamAuthenticatorService().revokeAuthenticator(
-        metadata.steamId, metadata.refreshToken, metadata.revocationCode);
+        metadata.steamId, session.refreshToken, metadata.revocationCode, session.accessToken);
       const next: StoredToken[] = this.tokens.filter((item: StoredToken): boolean => item.id !== this.tokenId);
       try {
         await this.onTokensChanged(next);
@@ -439,7 +458,7 @@ export struct SteamManagementPage {
 
   /** 以同一结构显示未过期和已过期令牌：状态、相对时长以及绝对到期时间。 */
   private tokenLifetimeStatus(token: string): string {
-    const lifetime: SteamTokenLifetime = SteamGuardService.tokenLifetime(token);
+    const lifetime: SteamTokenLifetime = SteamSessionService.tokenLifetime(token);
     if (lifetime.state === SteamTokenLifetimeState.NOT_CONFIGURED) {
       return this.localized($r('app.string.common_not_configured'));
     }
@@ -610,7 +629,7 @@ export struct SteamManagementPage {
             }.width('100%').padding(12).backgroundColor($r('app.color.surface_muted')).borderRadius(12)
           }
           Button($r('app.string.steam_query_status')).width('100%')
-            .enabled(!this.steamAuthenticatorLoading && this.currentRefreshToken().length > 0)
+            .enabled(!this.steamAuthenticatorLoading && this.hasCurrentSession())
             .backgroundColor($r('app.color.brand_surface_alt')).fontColor($r('app.color.brand_strong'))
             .onClick(() => this.queryAuthenticatorStatus())
         }.width('100%').padding(16).alignItems(HorizontalAlign.Start)
@@ -623,7 +642,7 @@ export struct SteamManagementPage {
             .fontSize(13).fontColor($r('app.color.text_secondary')).lineHeight(20).width('100%')
           Button($r('app.string.steam_revoke')).width('100%')
             .enabled(!this.steamAuthenticatorLoading &&
-              (this.currentToken()?.steam?.revocationCode?.length ?? 0) > 0)
+              this.hasCurrentSession() && (this.currentToken()?.steam?.revocationCode?.length ?? 0) > 0)
             .backgroundColor($r('app.color.danger_surface')).fontColor($r('app.color.danger_strong'))
             .onClick(() => this.revokeAuthenticator())
         }.width('100%').padding(16).alignItems(HorizontalAlign.Start)
@@ -726,27 +745,12 @@ export struct SteamManagementPage {
             .fontColor([$r('app.color.text_secondary')])
         }.type(ButtonType.Circle).width(38).height(38)
           .backgroundColor($r('app.color.surface_muted')).onClick(() => this.onClose())
-        if (this.steamProfile?.avatarPath) {
-          Image(this.steamProfile.avatarPath).width(42).height(42).borderRadius(21)
-            .objectFit(ImageFit.Cover).draggable(false)
-        }
         Column({ space: 3 }) {
           Text($r('app.string.steam_manage_title')).fontSize(26).fontWeight(FontWeight.Bold)
-          Text(this.steamProfile?.displayName || this.currentToken()?.steam?.accountName ||
+          Text(this.currentToken()?.steam?.accountName ||
             this.currentToken()?.account || 'Steam Token')
             .fontSize(13).fontColor($r('app.color.text_tertiary'))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        Button() {
-          if (this.steamProfileLoading) {
-            LoadingProgress().width(20).height(20).color($r('app.color.brand_strong'))
-          } else {
-            SymbolGlyph($r('sys.symbol.arrow_clockwise')).fontSize(20)
-              .fontColor([$r('app.color.text_secondary')])
-          }
-        }.type(ButtonType.Circle).width(38).height(38).enabled(!this.steamProfileLoading)
-          .backgroundColor($r('app.color.surface_muted'))
-          .accessibilityText($r('app.string.steam_manage_refresh_profile'))
-          .onClick(() => this.loadSteamProfile(true))
       }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
 
       Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {

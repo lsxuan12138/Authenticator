@@ -109,31 +109,6 @@ export class SteamWebApiClient {
     return SteamWebApiClient.parseJson(label, response);
   }
 
-  /** 执行普通文本 GET；用于 Steam Community 的公开资料 XML。 */
-  static async getText(label: string, url: string, header: SteamHttpHeaders = {}): Promise<string> {
-    return (await SteamWebApiClient.requestText(label, url, http.RequestMethod.GET, '', header)).body;
-  }
-
-  /** 下载小型二进制资源；当前仅用于账户头像缓存。 */
-  static async getBytes(label: string, url: string): Promise<Uint8Array> {
-    const request = http.createHttp();
-    try {
-      const response = await request.request(url, {
-        method: http.RequestMethod.GET,
-        expectDataType: http.HttpDataType.ARRAY_BUFFER,
-        connectTimeout: SteamWebApiClient.TIMEOUT,
-        readTimeout: SteamWebApiClient.TIMEOUT
-      });
-      SteamWebApiClient.validate('HTTP', label, response.responseCode,
-        SteamWebApiClient.eResult(response.header), ['1', 'OK'], false);
-      return new Uint8Array(response.result as ArrayBuffer);
-    } catch (error) {
-      throw SteamWebApiClient.requestError(label, error as Object);
-    } finally {
-      request.destroy();
-    }
-  }
-
   /** 执行表单 POST 并解析 JSON；移动确认操作使用该入口。 */
   static async postFormJson(label: string, url: string, data: string,
     header: SteamHttpHeaders = {}): Promise<Record<string, Object>> {
@@ -141,15 +116,9 @@ export class SteamWebApiClient {
     return SteamWebApiClient.parseJson(label, response);
   }
 
-  /** 执行不依赖响应体的表单 POST，同时严格校验 Steam 协议结果码。 */
-  static async postForm(label: string, url: string, data: string, header: SteamHttpHeaders = {},
-    requireEResult: boolean = false): Promise<void> {
-    await SteamWebApiClient.requestText(label, url, http.RequestMethod.POST, data, header, requireEResult);
-  }
-
   /** Network Kit 文本请求的共同实现，不让业务服务直接接触 HttpRequest。 */
   private static async requestText(label: string, url: string, method: http.RequestMethod,
-    data: string, header: SteamHttpHeaders, requireEResult: boolean = false): Promise<SteamTextResponse> {
+    data: string, header: SteamHttpHeaders): Promise<SteamTextResponse> {
     const request = http.createHttp();
     try {
       DiagnosticLogService.info('SteamWebApi', `${label} request`);
@@ -162,7 +131,7 @@ export class SteamWebApiClient {
         readTimeout: SteamWebApiClient.TIMEOUT
       });
       const eResult = SteamWebApiClient.eResult(response.header);
-      SteamWebApiClient.validate('HTTP', label, response.responseCode, eResult, ['1', 'OK'], requireEResult);
+      SteamWebApiClient.validate('HTTP', label, response.responseCode, eResult, ['1', 'OK'], false);
       return {
         body: typeof response.result === 'string' ? response.result : '',
         responseCode: response.responseCode,
@@ -183,10 +152,10 @@ export class SteamWebApiClient {
       `${service}.${method} response: HTTP=${responseCode}, EResult=${eResult || 'missing'}${size}`);
     if (responseCode < 200 || responseCode >= 300) {
       throw new AppError('error_steam_http', `Steam ${method} request failed (HTTP ${responseCode})`,
-        [method, responseCode]);
+        [responseCode]);
     }
     if (requireEResult && eResult.length === 0) {
-      throw new AppError('error_steam_result_missing', `Steam ${method} response is missing x-eresult`, [method]);
+      throw new AppError('error_steam_result_missing', `Steam ${method} response is missing x-eresult`);
     }
     if (eResult.length > 0 && !acceptedResults.includes(eResult)) {
       throw SteamResult.error(eResult, `Steam ${method} request failed`);
@@ -202,7 +171,7 @@ export class SteamWebApiClient {
       DiagnosticLogService.error('SteamWebApi',
         `${label} returned invalid JSON: length=${response.body.length}, message=${detail.message ?? 'unknown'}`);
       throw new AppError('error_steam_invalid_response',
-        `Steam ${label} returned invalid data (HTTP ${response.responseCode})`, [label, response.responseCode]);
+        `Steam ${label} returned invalid data (HTTP ${response.responseCode})`, [response.responseCode]);
     }
   }
 
@@ -226,6 +195,6 @@ export class SteamWebApiClient {
     if (error instanceof AppError) {
       return error;
     }
-    return new AppError('error_steam_network', `Steam ${label} network request failed: ${message}`, [label]);
+    return new AppError('error_steam_network', `Steam ${label} network request failed: ${message}`);
   }
 }

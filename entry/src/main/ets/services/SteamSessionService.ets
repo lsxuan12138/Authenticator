@@ -30,6 +30,18 @@ export interface SteamTokenLifetime {
 export class SteamSessionService {
   private static readonly EXPIRY_MARGIN: number = 120000;
   private static readonly accessTokens: Map<string, SteamCachedAccessToken> = new Map();
+  private static readonly pendingRefreshes: Map<string, Promise<SteamAccessTokenPair>> = new Map();
+  private static readonly cacheGenerations: Map<string, number> = new Map();
+
+  /** Token 被删除或验证器被撤销后清除进程内会话，避免同一 Steam ID 复用旧缓存。 */
+  static forget(steamId: string): void {
+    if (steamId.length === 0) return;
+    SteamSessionService.accessTokens.delete(steamId);
+    SteamSessionService.cacheGenerations.set(steamId,
+      (SteamSessionService.cacheGenerations.get(steamId) ?? 0) + 1);
+    // 已发出的网络请求无法安全取消；完成时 resolveAccessToken 的 finally 会移除挂起记录。
+    SteamSessionService.pendingRefreshes.delete(steamId);
+  }
 
   /** 仅解析 JWT 的 exp 用于本地有效期提示，不把未验签载荷用于身份判断。 */
   static tokenExpiresAt(token: string): number {
@@ -66,16 +78,25 @@ export class SteamSessionService {
 
   /** 优先复用仍有效的现有 Access Token，仅在需要时使用 Refresh Token 换新。 */
   async accessToken(steamId: string, currentAccessToken: string, refreshToken: string): Promise<string> {
+    return (await this.resolveAccessToken(steamId, currentAccessToken, refreshToken)).accessToken;
+  }
+
+  /**
+   * 返回实际使用的完整会话。调用方可比较返回值并持久化透明刷新结果，
+   * 避免新 Access Token 只存在于进程内缓存。
+   */
+  async resolveAccessToken(steamId: string, currentAccessToken: string,
+    refreshToken: string): Promise<SteamAccessTokenPair> {
     if (!steamId) {
       throw new AppError('steam_error_id_missing', 'Steam ID is missing');
     }
     if (this.isUsable(currentAccessToken)) {
       this.remember(steamId, currentAccessToken);
-      return currentAccessToken;
+      return { accessToken: currentAccessToken, refreshToken: refreshToken };
     }
     const cached = SteamSessionService.accessTokens.get(steamId);
     if (cached && cached.expiresAt - SteamSessionService.EXPIRY_MARGIN > Date.now()) {
-      return cached.token;
+      return { accessToken: cached.token, refreshToken: refreshToken };
     }
     if (cached) {
       SteamSessionService.accessTokens.delete(steamId);
@@ -88,12 +109,42 @@ export class SteamSessionService {
             'Steam Access Token expired and no Refresh Token is available');
         }
         // 兼容旧备份中无法解析为 JWT、但服务端仍可能接受的 Access Token。
-        return currentAccessToken;
+        return { accessToken: currentAccessToken, refreshToken: refreshToken };
       }
       throw new AppError('steam_error_session_tokens_missing',
         'Steam session is missing an Access Token or Refresh Token');
     }
-    return (await this.generate(steamId, refreshToken, false)).accessToken;
+    const cacheGeneration = SteamSessionService.cacheGenerations.get(steamId) ?? 0;
+    const pending = SteamSessionService.pendingRefreshes.get(steamId);
+    if (pending) {
+      const generation = SteamSessionService.cacheGenerations.get(steamId) ?? 0;
+      const result = await pending;
+      if ((SteamSessionService.cacheGenerations.get(steamId) ?? 0) !== generation) {
+        throw new AppError('steam_error_session_tokens_missing',
+          'Steam session was removed while an Access Token refresh was pending');
+      }
+      return result;
+    }
+    // 页面出现、状态查询等操作可能同时准备同一账户会话；共享同一个透明刷新，
+    // 防止对同一 Refresh Token 并发请求并产生相互覆盖的持久化结果。
+    const refresh = this.generate(steamId, refreshToken, false).then(
+      (generated: SteamAccessTokenPair): SteamAccessTokenPair => ({
+        accessToken: generated.accessToken,
+        refreshToken: generated.refreshToken || refreshToken
+      }));
+    SteamSessionService.pendingRefreshes.set(steamId, refresh);
+    try {
+      const result = await refresh;
+      if ((SteamSessionService.cacheGenerations.get(steamId) ?? 0) !== cacheGeneration) {
+        throw new AppError('steam_error_session_tokens_missing',
+          'Steam session was removed while an Access Token refresh was pending');
+      }
+      return result;
+    } finally {
+      if (SteamSessionService.pendingRefreshes.get(steamId) === refresh) {
+        SteamSessionService.pendingRefreshes.delete(steamId);
+      }
+    }
   }
 
   /** 强制换取新 Access Token；用户显式更新会话时允许 Steam 同时轮换 Refresh Token。 */
@@ -108,6 +159,7 @@ export class SteamSessionService {
   /** 调用 Steam 表单接口换取令牌，并缓存可解析有效期的 Access Token。 */
   private async generate(steamId: string, refreshToken: string,
     allowRenewal: boolean): Promise<SteamAccessTokenPair> {
+    const cacheGeneration = SteamSessionService.cacheGenerations.get(steamId) ?? 0;
     const url = 'https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/';
     const data = `refresh_token=${encodeURIComponent(refreshToken)}` +
       `&steamid=${encodeURIComponent(steamId)}&renewal_type=${allowRenewal ? 1 : 0}`;
@@ -126,7 +178,10 @@ export class SteamSessionService {
     if (!tokens.accessToken) {
       throw new AppError('steam_error_access_missing', 'Steam did not return an Access Token');
     }
-    this.remember(steamId, tokens.accessToken);
+    // 删除/撤销可能发生在请求等待期间；代际变化后不得把旧请求结果重新塞回缓存。
+    if ((SteamSessionService.cacheGenerations.get(steamId) ?? 0) === cacheGeneration) {
+      this.remember(steamId, tokens.accessToken);
+    }
     return tokens;
   }
 

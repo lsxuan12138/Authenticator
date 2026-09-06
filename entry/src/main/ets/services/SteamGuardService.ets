@@ -1,7 +1,7 @@
 import { BusinessError } from '@kit.BasicServicesKit';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { util } from '@kit.ArkTS';
-import { SteamSessionService, SteamTokenLifetime } from './SteamSessionService';
+import { SteamSessionService } from './SteamSessionService';
 import { SteamHttpHeaders, SteamWebApiClient } from './SteamWebApiClient';
 import { SteamTimeService } from './SteamTimeService';
 import { SteamProtocol, SteamQrSessionInfoData } from './SteamProtocol';
@@ -23,11 +23,6 @@ export interface SteamConfirmation {
 interface SteamQrChallenge {
   version: string;
   clientId: string;
-}
-
-export interface SteamAccessTokenResult {
-  accessToken: string;
-  refreshToken: string;
 }
 
 /** 扫码确认前展示给用户的登录来源信息。 */
@@ -55,17 +50,6 @@ export interface SteamPendingLoginResult {
 
 /** Steam 移动确认和扫码登录服务；会话与 HTTP 均复用统一底层。 */
 export class SteamGuardService {
-  /** 返回令牌有效期的结构化数据，避免服务层固定使用某一种界面语言。 */
-  static tokenLifetime(token: string): SteamTokenLifetime {
-    return SteamSessionService.tokenLifetime(token);
-  }
-
-  /** 显式更新会话时允许 Steam 一并轮换 Refresh Token。 */
-  async refreshSessionTokens(steamId: string, refreshToken: string): Promise<SteamAccessTokenResult> {
-    const result = await new SteamSessionService().refresh(steamId, refreshToken, true);
-    return { accessToken: result.accessToken, refreshToken: result.refreshToken };
-  }
-
   /** 快速判断扫码内容是否符合 Steam 登录挑战 URL 格式。 */
   static isQrLoginChallenge(challengeUrl: string): boolean {
     return /^https:\/\/s\.team\/q\/\d+\/\d+(?:\?.*)?$/.test(challengeUrl.trim());

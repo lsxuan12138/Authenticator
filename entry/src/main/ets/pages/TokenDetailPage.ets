@@ -10,6 +10,8 @@ import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore 
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamConfirmationHistoryRepository } from '../services/SteamConfirmationHistoryRepository';
 import { Localization } from '../core/Localization';
+import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
+import { AppError } from '../core/AppError';
 
 /** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
 @Builder
@@ -70,6 +72,23 @@ export struct TokenDetailPage {
   /** 按稳定 UUID 返回当前 Token，排序、插入或删除其他条目均不会改变目标。 */
   private currentToken(): StoredToken | null {
     return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
+  }
+
+  /** 获取扫码登录所需会话，并持久化底层透明刷新的 Access Token。 */
+  private async resolveStoredSession(token: StoredToken): Promise<SteamAccessTokenPair> {
+    const metadata = token.steam;
+    if (!metadata) throw new Error('Steam metadata is unavailable');
+    const session = await new SteamSessionService().resolveAccessToken(
+      metadata.steamId, metadata.accessToken, metadata.refreshToken);
+    if (session.accessToken !== metadata.accessToken || session.refreshToken !== metadata.refreshToken) {
+      const updated = await AppStore.updateSteamSession(token.id, session.accessToken, session.refreshToken);
+      if (!updated) {
+        throw new AppError('steam_error_session_tokens_missing',
+          'Steam token was removed before its refreshed session could be saved');
+      }
+      DiagnosticLogService.info('SteamQrLogin', 'Persisted transparently refreshed Steam session');
+    }
+    return session;
   }
 
   /** 详情页与首页使用完全相同的解析顺序：手动图标优先，否则从当前图标包自动匹配。 */
@@ -215,11 +234,12 @@ export struct TokenDetailPage {
       }
       this.steamQrLoading = true;
       const service = new SteamGuardService();
+      const session = await this.resolveStoredSession(token);
       let info: SteamQrLoginInfo;
       let detailsAvailable = true;
       try {
-        info = await service.getQrLoginInfo(token.steam.steamId, token.steam.accessToken,
-          token.steam.refreshToken, challenge);
+        info = await service.getQrLoginInfo(token.steam.steamId, session.accessToken,
+          session.refreshToken, challenge);
       } catch (error) {
         detailsAvailable = false;
         info = {
@@ -244,8 +264,15 @@ export struct TokenDetailPage {
         return;
       }
       const approve = dialog.index === 1;
-      await service.respondQrLogin(token.steam.steamId, token.steam.accessToken, token.steam.refreshToken,
-        Base32.decode(token.secret), challenge, approve, info.persistent);
+      // 对话框可能停留较久；真正提交前再次读取当前 Token，并持久化可能发生的刷新。
+      const actionToken = this.currentToken();
+      if (!actionToken?.steam) {
+        return;
+      }
+      const actionSession = await this.resolveStoredSession(actionToken);
+      await service.respondQrLogin(actionToken.steam.steamId, actionSession.accessToken,
+        actionSession.refreshToken,
+        Base32.decode(actionToken.secret), challenge, approve, info.persistent);
       const historyContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
       let historySaved = true;
       try {

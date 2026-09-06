@@ -7,9 +7,11 @@ import { SteamConfirmation, SteamGuardService, SteamPendingLogin,
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { SteamConfirmationHistoryItem, SteamConfirmationHistoryRepository } from
   '../services/SteamConfirmationHistoryRepository';
-import { APP_TOKENS_KEY } from '../data/AppStore';
+import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
+import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
+import { AppError } from '../core/AppError';
 
 @Builder
 export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
@@ -68,6 +70,23 @@ export struct SteamConfirmationsPage {
     return this.tokens.find((token: StoredToken): boolean => token.id === this.tokenId) ?? null;
   }
 
+  /** 获取可用会话，并把透明刷新的凭据立即同步到加密仓库。 */
+  private async resolveStoredSession(token: StoredToken): Promise<SteamAccessTokenPair> {
+    const metadata = token.steam;
+    if (!metadata) throw new Error('Steam metadata is unavailable');
+    const session = await new SteamSessionService().resolveAccessToken(
+      metadata.steamId, metadata.accessToken, metadata.refreshToken);
+    if (session.accessToken !== metadata.accessToken || session.refreshToken !== metadata.refreshToken) {
+      const updated = await AppStore.updateSteamSession(token.id, session.accessToken, session.refreshToken);
+      if (!updated) {
+        throw new AppError('steam_error_session_tokens_missing',
+          'Steam token was removed before its refreshed session could be saved');
+      }
+      DiagnosticLogService.info('SteamConfirmations', 'Persisted transparently refreshed Steam session');
+    }
+    return session;
+  }
+
   /** 两类列表独立请求，其中一个失败时仍展示另一个结果。 */
   private async requestAll(): Promise<void> {
     const token = this.currentToken();
@@ -85,13 +104,26 @@ export struct SteamConfirmationsPage {
     this.confirmationError = '';
     const service = new SteamGuardService();
     let failed = false;
+    let session: SteamAccessTokenPair;
+    try {
+      session = await this.resolveStoredSession(token);
+    } catch (error) {
+      const message = this.localizedError(error as Object);
+      this.pendingError = message;
+      this.confirmationError = message;
+      this.loading = false;
+      this.hasLoaded = true;
+      DiagnosticLogService.warn('SteamConfirmations',
+        `Session preparation failed: ${(error as Error).message}`);
+      return;
+    }
     try {
       const logins: SteamPendingLoginResult = await service.getPendingLogins(metadata.steamId,
-        metadata.accessToken, metadata.refreshToken);
+        session.accessToken, session.refreshToken);
       this.pendingLogins = logins.items;
       if (logins.skipped > 0) {
         failed = true;
-        this.pendingError = `有 ${logins.skipped} 条登录请求无法解析，请稍后刷新或导出诊断日志`;
+        this.pendingError = this.localized($r('app.string.confirm_skipped_requests'), logins.skipped);
         DiagnosticLogService.warn('SteamConfirmations',
           `Skipped unreadable pending login requests, count=${logins.skipped}`);
       }
@@ -102,8 +134,8 @@ export struct SteamConfirmationsPage {
     }
     if (metadata.identitySecret && metadata.deviceId) {
       try {
-        this.confirmations = await service.getConfirmations(metadata.steamId, metadata.accessToken,
-          metadata.refreshToken, metadata.identitySecret, metadata.deviceId);
+        this.confirmations = await service.getConfirmations(metadata.steamId, session.accessToken,
+          session.refreshToken, metadata.identitySecret, metadata.deviceId);
       } catch (error) {
         failed = true;
         this.confirmationError = this.localizedError(error as Object);
@@ -129,7 +161,6 @@ export struct SteamConfirmationsPage {
       await this.loadHistory();
       return true;
     } catch (error) {
-      // Steam 操作已经完成，诊断性历史失败不能反向把远端成功显示为失败。
       DiagnosticLogService.warn('SteamConfirmations',
         `Steam action succeeded but history save failed: ${(error as Error).message}`);
       return false;
@@ -142,8 +173,11 @@ export struct SteamConfirmationsPage {
     if (!token || !metadata || this.submitting) return;
     this.submitting = true;
     try {
-      await new SteamGuardService().respondPendingLogin(metadata.steamId, metadata.accessToken,
-        metadata.refreshToken, Base32.decode(token.secret), login, approve);
+      // 用户可能在列表页停留到 Access Token 临近过期；提交前重新准备并持久化会话，
+      // 避免服务层透明刷新后只有本次请求拿到新令牌。
+      const session = await this.resolveStoredSession(token);
+      await new SteamGuardService().respondPendingLogin(metadata.steamId, session.accessToken,
+        session.refreshToken, Base32.decode(token.secret), login, approve);
       this.pendingLogins = this.pendingLogins.filter((item: SteamPendingLogin): boolean =>
         item.clientId !== login.clientId);
       const historySaved = await this.saveHistory([SteamConfirmationHistoryRepository.create(this.tokenId, 'login',
@@ -160,11 +194,13 @@ export struct SteamConfirmationsPage {
   /** 处理移动确认；成功后才移除条目并写入历史。 */
   private async respond(confirmation: SteamConfirmation, approve: boolean): Promise<void> {
     if (this.submitting) return;
-    const metadata = this.currentToken()?.steam; if (!metadata) return;
+    const token = this.currentToken(); const metadata = token?.steam;
+    if (!token || !metadata) return;
     this.submitting = true;
     try {
-      await new SteamGuardService().respondToConfirmation(metadata.steamId, metadata.accessToken,
-        metadata.refreshToken, metadata.identitySecret, metadata.deviceId, confirmation, approve);
+      const session = await this.resolveStoredSession(token);
+      await new SteamGuardService().respondToConfirmation(metadata.steamId, session.accessToken,
+        session.refreshToken, metadata.identitySecret, metadata.deviceId, confirmation, approve);
       this.confirmations = this.confirmations.filter((item: SteamConfirmation): boolean => item.id !== confirmation.id);
       const historySaved = await this.saveHistory([SteamConfirmationHistoryRepository.create(this.tokenId, 'mobile',
         confirmation.headline, confirmation.summary.join(' · '), confirmation.creationTime, approve)]);
@@ -178,8 +214,8 @@ export struct SteamConfirmationsPage {
 
   /** 二次确认后批量处理移动确认，并为每条成功操作保留历史。 */
   private async respondAll(approve: boolean): Promise<void> {
-    const metadata = this.currentToken()?.steam;
-    if (!metadata || this.submitting || this.confirmations.length === 0) return;
+    const token = this.currentToken(); const metadata = token?.steam;
+    if (!token || !metadata || this.submitting || this.confirmations.length === 0) return;
     try {
       const dialog = await this.getUIContext().getPromptAction().showDialog({
         title: this.localized(approve ? $r('app.string.confirm_approve_all_title') :
@@ -197,8 +233,9 @@ export struct SteamConfirmationsPage {
       if (dialog.index !== 1) return;
       this.submitting = true;
       const pending = [...this.confirmations];
-      await new SteamGuardService().respondToConfirmations(metadata.steamId, metadata.accessToken,
-        metadata.refreshToken, metadata.identitySecret, metadata.deviceId, pending, approve);
+      const session = await this.resolveStoredSession(token);
+      await new SteamGuardService().respondToConfirmations(metadata.steamId, session.accessToken,
+        session.refreshToken, metadata.identitySecret, metadata.deviceId, pending, approve);
       const entries = pending.map((item: SteamConfirmation): SteamConfirmationHistoryItem =>
         SteamConfirmationHistoryRepository.create(this.tokenId, 'mobile', item.headline,
           item.summary.join(' · '), item.creationTime, approve));
