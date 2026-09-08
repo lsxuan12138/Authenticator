@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@ohos/hypium';
 import { Base32 } from '../main/ets/core/Base32';
 import { TokenDuplicateGuard } from '../main/ets/core/TokenDuplicateGuard';
+import { OtpUriCandidate, OtpUriParser } from '../main/ets/core/OtpUriParser';
 import { StoredToken, TokenAlgorithm, TokenKind } from '../main/ets/domain/Token';
 import { BackupMergeResult, BackupService } from '../main/ets/services/BackupService';
 
@@ -43,6 +44,17 @@ export default function localUnitTest(): void {
       const left = createToken('11111111-1111-4111-8111-111111111111');
       const right = createToken('22222222-2222-4222-8222-222222222222');
       expect(TokenDuplicateGuard.isSameConfiguration(left, right)).assertTrue();
+    });
+
+    it('extracts and normalizes multiple OTP URI lines', 0, (): void => {
+      const input = '说明文字\n"otpauth://totp/Example:alice?secret=MY&amp;issuer=Example"\n\n' +
+        'otpauth%3A%2F%2Ftotp%2FExample%3Abob%3Fsecret%3DMY%26issuer%3DExample';
+      const candidates: OtpUriCandidate[] = OtpUriParser.candidates(input);
+      expect(candidates.length).assertEqual(2);
+      expect(candidates[0].lineNumber).assertEqual(2);
+      expect(candidates[0].value.includes('&amp;')).assertFalse();
+      expect(candidates[1].lineNumber).assertEqual(4);
+      expect(OtpUriParser.parse(candidates[1].value).account).assertEqual('bob');
     });
 
     it('skips same OTP configuration with a different backup UUID', 0, (): void => {

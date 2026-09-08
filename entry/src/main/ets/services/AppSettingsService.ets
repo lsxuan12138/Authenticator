@@ -7,6 +7,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 export class AppSettingsService {
   private static readonly STORE_NAME: string = 'authenticator_settings';
   private static readonly SCREENSHOT_PROTECTION_KEY: string = 'screenshot_protection';
+  private static readonly CONFIRMATION_NOTICE_DISMISSED_KEY: string = 'confirmation_notice_dismissed';
 
   /** 读取用户保存的防截屏开关，默认关闭以保持系统常规行为。 */
   static async getScreenshotProtectionEnabled(context: common.Context): Promise<boolean> {
@@ -28,6 +29,29 @@ export class AppSettingsService {
     } catch (error) {
       const detail = error as BusinessError;
       throw new Error(`保存截屏保护设置失败：${detail.message ?? '未知错误'}`);
+    }
+  }
+
+  /** 读取 Steam 确认页安全提醒是否已被用户永久关闭。 */
+  static async getConfirmationNoticeDismissed(context: common.Context): Promise<boolean> {
+    try {
+      const store = await preferences.getPreferences(context, AppSettingsService.STORE_NAME);
+      return await store.get(AppSettingsService.CONFIRMATION_NOTICE_DISMISSED_KEY, false) as boolean;
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`读取 Steam 确认提醒设置失败：${detail.message ?? '未知错误'}`);
+    }
+  }
+
+  /** 记录用户已经了解 Steam 确认风险，后续启动不再显示大块提醒。 */
+  static async dismissConfirmationNotice(context: common.Context): Promise<void> {
+    try {
+      const store = await preferences.getPreferences(context, AppSettingsService.STORE_NAME);
+      await store.put(AppSettingsService.CONFIRMATION_NOTICE_DISMISSED_KEY, true);
+      await store.flush();
+    } catch (error) {
+      const detail = error as BusinessError;
+      throw new Error(`保存 Steam 确认提醒设置失败：${detail.message ?? '未知错误'}`);
     }
   }
 

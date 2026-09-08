@@ -4,8 +4,63 @@ import { Base32 } from './Base32';
 import { TokenId } from './TokenId';
 import { AppError } from './AppError';
 
+/** 从多行输入中提取的一条 URI，保留原始行号以便页面准确提示错误。 */
+export interface OtpUriCandidate {
+  lineNumber: number;
+  value: string;
+}
+
 /** 解析 otpauth://totp URI，并把外部参数收敛为应用内部的 StoredToken。 */
 export class OtpUriParser {
+  /**
+   * 按行提取 URI，并兼容引号、HTML 转义、百分号编码和同行说明文字。
+   * 输入中存在 otpauth 行时忽略其他说明行；完全没有 URI 标记时保留非空行交给解析器报告格式错误。
+   */
+  static candidates(rawValue: string): OtpUriCandidate[] {
+    const lines = rawValue.split(/\r?\n/);
+    const nonEmpty: OtpUriCandidate[] = [];
+    const marked: OtpUriCandidate[] = [];
+    lines.forEach((line: string, index: number): void => {
+      if (line.trim().length === 0) return;
+      const candidate: OtpUriCandidate = {
+        lineNumber: index + 1,
+        value: OtpUriParser.normalizePayload(line)
+      };
+      nonEmpty.push(candidate);
+      const lower = line.toLowerCase();
+      if (lower.includes('otpauth://') || lower.includes('otpauth%3a')) {
+        marked.push(candidate);
+      }
+    });
+    return marked.length > 0 ? marked : nonEmpty;
+  }
+
+  /** 容忍二维码和剪贴板常见包装格式，提取单个可解析的 otpauth URI。 */
+  static normalizePayload(rawValue: string): string {
+    let value = rawValue.trim().replaceAll('&amp;', '&');
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.substring(1, value.length - 1).trim();
+    }
+    if (value.toLowerCase().startsWith('otpauth%3a')) {
+      try {
+        value = decodeURIComponent(value);
+      } catch (_) {
+      }
+    }
+    const lower = value.toLowerCase();
+    const start = lower.indexOf('otpauth://');
+    if (start >= 0) {
+      value = value.substring(start);
+      const whitespace = value.search(/\s/);
+      if (whitespace > 0) {
+        value = value.substring(0, whitespace);
+      }
+      value = `otpauth://${value.substring('otpauth://'.length)}`;
+    }
+    return value.trim();
+  }
+
   /** 校验并解析 otpauth URI，自动识别 Steam issuer 并生成新的记录 UUID。 */
   static parse(rawValue: string): StoredToken {
     const parsed = new uri.URI(rawValue.trim());

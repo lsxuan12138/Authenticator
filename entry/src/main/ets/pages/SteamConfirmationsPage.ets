@@ -12,6 +12,7 @@ import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 import { AppError } from '../core/AppError';
+import { AppSettingsService } from '../services/AppSettingsService';
 
 @Builder
 export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
@@ -37,9 +38,15 @@ export struct SteamConfirmationsPage {
   @State private lastRefresh: string = '';
   @State private pendingError: string = '';
   @State private confirmationError: string = '';
+  // 默认不显示，等持久化设置读取完成后再决定，避免已关闭用户看到提醒闪现。
+  @State private confirmationNoticeVisible: boolean = false;
 
   /** 页面首次显示时并行读取本地历史与服务端待处理列表。 */
-  aboutToAppear(): void { this.loadHistory(); this.requestAll(); }
+  aboutToAppear(): void {
+    this.loadConfirmationNotice();
+    this.loadHistory();
+    this.requestAll();
+  }
 
   /** 获取页面所属 UIAbilityContext，供加密历史仓库使用。 */
   private context(): common.UIAbilityContext {
@@ -63,6 +70,32 @@ export struct SteamConfirmationsPage {
   /** 翻译可预期业务错误，并阻止底层异常文本直接进入页面。 */
   private localizedError(error: Object): string {
     return Localization.error(this.context(), error, $r('app.string.error_steam_operation_failed'));
+  }
+
+  /** 从非敏感应用设置恢复安全提醒的永久关闭状态。 */
+  private async loadConfirmationNotice(): Promise<void> {
+    try {
+      const dismissed = await AppSettingsService.getConfirmationNoticeDismissed(this.context());
+      this.confirmationNoticeVisible = !dismissed;
+    } catch (error) {
+      // 读取失败时宁可继续显示安全提醒；底层异常只进入诊断日志。
+      this.confirmationNoticeVisible = true;
+      DiagnosticLogService.warn('SteamConfirmations',
+        `Failed to load confirmation notice setting: ${(error as Error).message}`);
+    }
+  }
+
+  /** 立即隐藏安全提醒并持久化；写入失败时恢复，避免误以为已经永久关闭。 */
+  private async dismissConfirmationNotice(): Promise<void> {
+    this.confirmationNoticeVisible = false;
+    try {
+      await AppSettingsService.dismissConfirmationNotice(this.context());
+    } catch (error) {
+      this.confirmationNoticeVisible = true;
+      DiagnosticLogService.error('SteamConfirmations',
+        `Failed to dismiss confirmation notice: ${(error as Error).message}`);
+      this.showToast(this.localized($r('app.string.error_settings_operation_failed')), 3000);
+    }
   }
 
   /** 按 UUID 查找当前 Steam Token，防止列表重排后误用索引。 */
@@ -382,11 +415,24 @@ export struct SteamConfirmationsPage {
     } else {
       Scroll() {
         Column({ space: 16 }) {
-          Column({ space: 5 }) {
-            Text($r('app.string.confirm_notice_title')).fontSize(16).fontWeight(FontWeight.Bold).width('100%')
-            Text($r('app.string.confirm_notice'))
-              .fontSize(12).fontColor($r('app.color.text_secondary')).lineHeight(18).width('100%')
-          }.padding(16).backgroundColor($r('app.color.brand_surface')).borderRadius(16).width('100%')
+          if (this.confirmationNoticeVisible) {
+            Column({ space: 5 }) {
+              Row({ space: 8 }) {
+                Text($r('app.string.confirm_notice_title'))
+                  .fontSize(16).fontWeight(FontWeight.Bold).layoutWeight(1)
+                Button() {
+                  SymbolGlyph($r('sys.symbol.xmark')).fontSize(18)
+                    .fontColor([$r('app.color.text_secondary')])
+                }
+                  .width(32).height(32).backgroundColor(Color.Transparent)
+                  .accessibilityText($r('app.string.common_close'))
+                  .onClick(() => this.dismissConfirmationNotice())
+              }.width('100%')
+              Text($r('app.string.confirm_notice'))
+                .fontSize(12).fontColor($r('app.color.text_secondary')).lineHeight(18).width('100%')
+            }.padding({ left: 16, right: 10, top: 10, bottom: 14 })
+              .backgroundColor($r('app.color.brand_surface')).borderRadius(16).width('100%')
+          }
           this.pendingCategorySwitcher()
           if (this.pendingCategory === 0) {
             this.loginRequests()

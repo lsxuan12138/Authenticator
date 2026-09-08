@@ -5,7 +5,7 @@ import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { TokenDuplicateGuard } from '../core/TokenDuplicateGuard';
-import { OtpUriParser } from '../core/OtpUriParser';
+import { OtpUriCandidate, OtpUriParser } from '../core/OtpUriParser';
 import { OtpEngine } from '../core/OtpEngine';
 import { SteamLoginCancellation, SteamLoginService } from '../services/SteamLoginService';
 import { SteamAuthenticatorEnrollment, SteamAuthenticatorService } from '../services/SteamAuthenticatorService';
@@ -131,16 +131,25 @@ export struct AddTokenPage {
     this.resetSteamAddFlow();
   }
 
-  /** 所有新增入口统一经过配置去重；随机 UUID 仍只作为记录主键。 */
-  private async commitNewToken(token: StoredToken): Promise<void> {
-    TokenDuplicateGuard.assertCanAdd(this.tokens, token);
-    token.iconPath = '';
-    token.iconManual = false;
-    const next = [...this.tokens, token];
+  /** 所有新增入口统一经过整批配置去重；随机 UUID 仍只作为记录主键。 */
+  private async commitNewTokens(tokens: StoredToken[]): Promise<void> {
+    const next = [...this.tokens];
+    tokens.forEach((token: StoredToken): void => {
+      // next 同时包含已有记录与本批前序记录，因此也能阻止同一次粘贴中的重复 URI。
+      TokenDuplicateGuard.assertCanAdd(next, token);
+      token.iconPath = '';
+      token.iconManual = false;
+      next.push(token);
+    });
     await this.onTokensChanged(next);
     this.tokens = next;
     this.resetForm();
     this.onClose();
+  }
+
+  /** 单条手动、扫码和 Steam 添加沿用统一批量提交边界。 */
+  private async commitNewToken(token: StoredToken): Promise<void> {
+    await this.commitNewTokens([token]);
   }
 
   /** 校验手动输入并根据 issuer 自动创建 TOTP 或 Steam Token。 */
@@ -490,41 +499,31 @@ export struct AddTokenPage {
     this.showToast(message, 2200);
   }
 
-  /** 规范化并解析粘贴的 otpauth URI，然后提交到 Token 仓库。 */
+  /** 按行解析粘贴的 otpauth URI；全部校验通过后再一次性提交。 */
   private async addUri(): Promise<void> {
     try {
-      this.uriValue = this.normalizeOtpPayload(this.uriValue);
-      const token = OtpUriParser.parse(this.uriValue);
-      await this.commitNewToken(token);
+      const candidates: OtpUriCandidate[] = OtpUriParser.candidates(this.uriValue);
+      if (candidates.length === 0) {
+        throw new AppError('error_uri_empty', 'No OTP URI was provided');
+      }
+      const parsed: StoredToken[] = [];
+      const checked: StoredToken[] = [...this.tokens];
+      for (const candidate of candidates) {
+        try {
+          const token = OtpUriParser.parse(candidate.value);
+          TokenDuplicateGuard.assertCanAdd(checked, token);
+          checked.push(token);
+          parsed.push(token);
+        } catch (lineError) {
+          const reason = this.localizedError(lineError as Object, $r('app.string.error_token_save_failed'));
+          this.errorMessage = this.localized($r('app.string.error_uri_line'), candidate.lineNumber, reason);
+          return;
+        }
+      }
+      await this.commitNewTokens(parsed);
     } catch (error) {
       this.errorMessage = this.localizedError(error as Object, $r('app.string.error_token_save_failed'));
     }
-  }
-
-  /** 容忍二维码和剪贴板常见包装格式，提取可解析的 otpauth URI。 */
-  private normalizeOtpPayload(rawValue: string): string {
-    // 容忍 HTML 转义、引号包裹、百分号编码及二维码中夹带说明文字等常见输入。
-    let value = rawValue.trim().replaceAll('&amp;', '&');
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.substring(1, value.length - 1).trim();
-    }
-    if (value.toLowerCase().startsWith('otpauth%3a')) {
-      try {
-        value = decodeURIComponent(value);
-      } catch (_) {
-      }
-    }
-    const lower = value.toLowerCase();
-    const start = lower.indexOf('otpauth://');
-    if (start >= 0) {
-      value = value.substring(start);
-      const whitespace = value.search(/\s/);
-      if (whitespace > 0) {
-        value = value.substring(0, whitespace);
-      }
-      value = `otpauth://${value.substring('otpauth://'.length)}`;
-    }
-    return value.trim();
   }
 
   /** 调用 Scan Kit 扫描 OTP 二维码，成功后直接去重并添加。 */
@@ -537,7 +536,7 @@ export struct AddTokenPage {
       };
       const context: common.Context = this.getUIContext().getHostContext() as common.Context;
       const result: scanBarcode.ScanResult = await scanBarcode.startScanForResult(context, options);
-      this.uriValue = this.normalizeOtpPayload(result.originalValue);
+      this.uriValue = OtpUriParser.normalizePayload(result.originalValue);
       try {
         const token = OtpUriParser.parse(this.uriValue);
         await this.commitNewToken(token);

@@ -9,7 +9,7 @@
 ### 1.1 当前应提供的功能
 
 - 标准 TOTP：SHA-1、SHA-256、SHA-512，6/8 位，周期 1–300 秒。
-- Token 添加：二维码、`otpauth://` URI、手动填写。
+- Token 添加：二维码、单条或多行 `otpauth://` URI、手动填写。
 - Token 管理：编辑、删除、拖拽排序、长按复制、二维码展示和手动选择图标。
 - Steam Guard：五位验证码、maFile/JSON 导入、账号登录、新增验证器、短信迁移。
 - Steam 在线操作：会话更新、扫码登录、待登录请求、交易/账户操作确认、验证器状态查询和撤销。
@@ -101,7 +101,7 @@ HarmonyOS Kit / Steam 服务端
 
 | 功能 | 核心流程 | 数据写入 |
 | --- | --- | --- |
-| 扫码/URI 添加 | Scan Kit → `OtpUriParser` → `TokenValidator` → `TokenDuplicateGuard` → `AppStore.updateTokens` | 加密 Token 仓库 |
+| 扫码/URI 添加 | Scan Kit 或逐行 URI → `OtpUriParser` → `TokenValidator` → `TokenDuplicateGuard` → 整批 `AppStore.updateTokens` | 加密 Token 仓库 |
 | 手动添加 | 页面输入 → `Base32`/字段检查 → `TokenDuplicateGuard` → `AppStore.updateTokens` | 加密 Token 仓库 |
 | 验证码显示 | `StoredToken` → `OtpEngine` → `TokenCode` | 无 |
 | 编辑/排序/删除 | 页面生成新数组 → `AppStore.updateTokens` | 加密 Token 仓库 |
@@ -177,7 +177,7 @@ Steam 底层必须遵守：
 | Steam 操作历史 | Preferences `authenticator_steam_history` | 可能敏感 | 独立 AAD 加密；全局最多 100 条 |
 | 活动图标包键 | Preferences `icon_settings_v1` | 否 | 只保存当前选择 |
 | 图标包文件 | `filesDir/icon_packs` | 否 | 每个包独立正式目录 |
-| 防截屏设置 | Preferences `authenticator_settings` | 否 | Ability 启动时恢复 |
+| 防截屏及已关闭提示 | Preferences `authenticator_settings` | 否 | Ability 启动时恢复防截屏；Steam 确认安全提醒关闭后不再显示 |
 | 诊断日志 | `filesDir/diagnostic_logs` | 可能敏感 | 脱敏后轮换；不自动上传 |
 | 备份文件 | 用户选择的外部位置 | 是 | 密码派生密钥加密；应用不保存密码 |
 | Steam 登录密码/验证码 | 页面内存 | 是 | 页面离开或流程重置时清空，不落盘 |

@@ -11,7 +11,7 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
   - 支持常用的 HMAC-SHA1、HMAC-SHA256 和 HMAC-SHA512
   - 支持自定义刷新周期（1–300 秒）
   - 手动添加与详情页提供常用的 30/60 秒快捷选择
-  - 支持手动填写、`otpauth://` URI 和二维码添加
+  - 支持手动填写、单条或多行 `otpauth://` URI 和二维码添加
   - 长按验证码复制
 - Steam Guard
   - 自动识别 `issuer=Steam`，无需手动开启 Steam 模式
@@ -53,7 +53,7 @@ Authenticator 是一款面向 HarmonyOS 的本地双重验证应用，支持标�
 添加入口位于首页右上角，页面提供四种方式：
 
 1. 扫码：扫描普通 TOTP 或 Steam `otpauth://` 二维码。
-2. URI：粘贴完整的 `otpauth://` URI。
+2. URI：粘贴完整的 `otpauth://` URI；批量添加时每行一个。
 3. 手动：填写服务名称、账户、密钥、位数和刷新周期。服务名称为 `Steam` 时会自动使用 Steam 五位验证码与 30 秒周期。
 4. Steam：登录 Steam 后添加新的移动验证器，或转移已经存在的移动验证器。
 
