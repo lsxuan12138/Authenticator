@@ -6,11 +6,6 @@
       "buildFunction": "AddTokenPageBuilder"
     },
     {
-      "name": "settings",
-      "pageSourceFile": "src/main/ets/pages/SettingsPage.ets",
-      "buildFunction": "SettingsPageBuilder"
-    },
-    {
       "name": "steam",
       "pageSourceFile": "src/main/ets/pages/SteamConfirmationsPage.ets",
       "buildFunction": "SteamConfirmationsPageBuilder"

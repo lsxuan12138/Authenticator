@@ -5,7 +5,7 @@ import { StoredToken } from '../domain/Token';
 import { APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { IconPack } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
-import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
 
 /** 系统路由表入口；图标列表只在进入页面后创建，维持原有懒加载行为。 */
@@ -16,7 +16,9 @@ export function IconPickerPageBuilder(_name: string, param: ESObject) {
       tokenId: AppRouter.tokenId(param),
       issuer: AppRouter.issuer(param)
     })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.ICON_PICKER))
+  }.hideTitleBar(true)
+    .backgroundColor($r('app.color.page_background'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 }
 
 /** 为系统路由封装图标选择、保存和错误反馈。 */

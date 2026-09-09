@@ -8,7 +8,7 @@ import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { SteamConfirmationHistoryItem, SteamConfirmationHistoryRepository } from
   '../services/SteamConfirmationHistoryRepository';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
-import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 import { AppError } from '../core/AppError';
@@ -18,7 +18,9 @@ import { AppSettingsService } from '../services/AppSettingsService';
 export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
   NavDestination() {
     SteamConfirmationsPage({ tokenId: AppRouter.tokenId(param), onClose: (): void => AppRouter.pop() })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.STEAM))
+  }.hideTitleBar(true)
+    .backgroundColor($r('app.color.page_background'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 }
 
 /** 集中显示待登录、移动确认与本机加密操作历史。 */

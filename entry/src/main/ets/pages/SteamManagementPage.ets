@@ -10,7 +10,7 @@ import { SteamGuardType } from '../services/SteamProtocol';
 import { SteamAuthenticatorService, SteamAuthenticatorStatus } from '../services/SteamAuthenticatorService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
-import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { AppRouter } from '../navigation/AppRouter';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 import { SteamAccessTokenPair, SteamSessionService, SteamTokenLifetime,
   SteamTokenLifetimeState } from '../services/SteamSessionService';
@@ -27,7 +27,9 @@ export function SteamManagementPageBuilder(_name: string, param: ESObject) {
       onClose: (): void => AppRouter.pop(),
       onTokenRemoved: (): void => AppRouter.returnHome()
     })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.STEAM_MANAGEMENT))
+  }.hideTitleBar(true)
+    .backgroundColor($r('app.color.page_background'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 }
 
 /**

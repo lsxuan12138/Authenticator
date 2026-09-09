@@ -12,7 +12,7 @@ import { SteamAuthenticatorEnrollment, SteamAuthenticatorService } from '../serv
 import { SteamAllowedConfirmation, SteamAuthSession, SteamGuardType, SteamSessionTokens } from '../services/SteamProtocol';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
-import { AppRoute, AppRouter } from '../navigation/AppRouter';
+import { AppRouter } from '../navigation/AppRouter';
 import { SteamVerificationStep } from '../components/SteamVerificationStep';
 import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 import { Localization } from '../core/Localization';
@@ -27,7 +27,9 @@ export function AddTokenPageBuilder(_name: string, _param: ESObject) {
       onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
       onClose: (): void => AppRouter.pop()
     })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.ADD))
+  }.hideTitleBar(true)
+    .backgroundColor($r('app.color.page_background'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 }
 
 /** Token 添加页。表单、Steam 密码与登录会话只在该 NavDestination 存活期间保留。 */

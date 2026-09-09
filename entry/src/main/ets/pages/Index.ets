@@ -1,14 +1,17 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
+import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { DividerMode, HdsTabs } from '@kit.UIDesignKit';
 import { StoredToken, TokenCode, TokenKind } from '../domain/Token';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { OtpEngine } from '../core/OtpEngine';
 import { OtpUriParser } from '../core/OtpUriParser';
 import { IconPack, IconPackService } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
-import { APP_ROUTE_KEY, AppRoute, AppRouter } from '../navigation/AppRouter';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { Localization } from '../core/Localization';
+import { SettingsPage } from './SettingsPage';
 
 /**
  * 应用主界面，同时协调 Token 持久化、验证码刷新、Steam 操作和图标包设置。
@@ -18,7 +21,6 @@ import { Localization } from '../core/Localization';
 @Component
 struct Index {
   // 首页与跨页面共享状态。
-  @StorageLink(APP_ROUTE_KEY) private currentRoute: AppRoute = AppRoute.HOME;
   @StorageLink(APP_TOKENS_KEY) private tokens: StoredToken[] = [];
   @State private codes: TokenCode[] = [];
   // 图标包及手动图标选择状态。
@@ -57,11 +59,6 @@ struct Index {
   /** 所有二级界面均进入 Navigation 路由栈，系统返回手势与页面生命周期由框架统一管理。 */
   private navigate(route: AppRoute): void {
     AppRouter.push(route);
-  }
-
-  /** 清空二级页面选择状态并回到首页列表。 */
-  private returnHome(): void {
-    AppRouter.returnHome();
   }
 
   // ===== 生命周期、存储与动态验证码 =====
@@ -416,42 +413,63 @@ struct Index {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
-  /** 构建首页底部导航，仅保留首页与设置两个一级入口。 */
+  /**
+   * 构建系统一级页签。验证码和设置保持并列，二级业务页面仍由外层 Navigation 管理。
+   * HdsTabs 会统一处理页签栏、安全区和窗口大小变化，后续可直接启用系统材质效果。
+   */
   @Builder
-  private bottomBar() {
-    Row() {
-      Button($r('app.string.home_title')).layoutWeight(1).backgroundColor(Color.Transparent)
-        .fontColor(this.currentRoute === AppRoute.HOME ? '#4668E8' : $r('app.color.text_tertiary'))
-        .onClick(() => this.returnHome())
-      Button($r('app.string.home_settings')).layoutWeight(1).backgroundColor(Color.Transparent)
-        .fontColor(this.currentRoute === AppRoute.SETTINGS ? '#4668E8' : $r('app.color.text_tertiary'))
-        .onClick(() => {
-          if (this.currentRoute !== AppRoute.SETTINGS) {
-            this.navPathStack.clear();
-            this.navigate(AppRoute.SETTINGS);
-          }
+  private primaryTabs() {
+    HdsTabs() {
+      TabContent() {
+        this.tokenList()
+      }.tabBar(BottomTabBarStyle.of({
+        normal: new SymbolGlyphModifier($r('sys.symbol.list_bullet'))
+          .fontSize(24).fontColor([$r('app.color.text_tertiary')]),
+        selected: new SymbolGlyphModifier($r('sys.symbol.list_bullet'))
+          .fontSize(24).fontColor(['#4668E8'])
+      }, $r('app.string.home_title')).labelStyle({
+        font: { size: 14, weight: FontWeight.Medium },
+        selectedColor: '#4668E8',
+        unselectedColor: $r('app.color.text_tertiary')
+      }).layoutMode(LayoutMode.HORIZONTAL).padding({ left: 12, right: 12 }))
+
+      TabContent() {
+        SettingsPage({
+          onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+          onIconPacksChanged: (packs: IconPack[]): void => AppStore.updateIconPacks(packs),
+          onActiveIconPackChanged: (key: string): void => AppStore.updateActiveIconPack(key)
         })
-    }.height(62).padding({ left: 10, right: 10 }).backgroundColor($r('app.color.surface'))
-    .border({ width: { top: 1 }, color: $r('app.color.border') })
+      }.tabBar(BottomTabBarStyle.of({
+        normal: new SymbolGlyphModifier($r('sys.symbol.gearshape'))
+          .fontSize(24).fontColor([$r('app.color.text_tertiary')]),
+        selected: new SymbolGlyphModifier($r('sys.symbol.gearshape'))
+          .fontSize(24).fontColor(['#4668E8'])
+      }, $r('app.string.home_settings')).labelStyle({
+        font: { size: 14, weight: FontWeight.Medium },
+        selectedColor: '#4668E8',
+        unselectedColor: $r('app.color.text_tertiary')
+      }).layoutMode(LayoutMode.HORIZONTAL).padding({ left: 12, right: 12 }))
+    }
+    .barPosition(BarPosition.End)
+    .vertical(false)
+    .scrollable(false)
+    .barBackgroundColor($r('app.color.surface'))
+    .divider({ mode: DividerMode.VISIBLE,
+      style: { strokeWidth: 1, color: $r('app.color.border') } })
+    .width('100%')
+    .height('100%')
   }
 
-  /** 组合 Navigation、首页内容、弹层与底部导航。 */
+  /** 组合一级系统页签、二级 Navigation 页面与首页弹层。 */
   build() {
     Column() {
       Navigation(this.navPathStack) {
-        this.tokenList()
+        this.primaryTabs()
       }.layoutWeight(1).width('100%').height('100%')
         .hideTitleBar(true).mode(NavigationMode.Stack)
-        .onNavBarStateChange((isVisible: boolean) => {
-          if (isVisible) {
-            AppRouter.markCurrent(AppRoute.HOME);
-          }
-        })
-
-      if (this.currentRoute === AppRoute.HOME || this.currentRoute === AppRoute.SETTINGS) {
-        this.bottomBar()
-      }
     }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
+      // 根背景覆盖状态栏；HdsTabs 自身负责底部页签栏与手势导航安全区。
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
       .bindSheet(this.showTokenQr, this.tokenQrSheet(), {
         height: 500,
         preferType: SheetType.BOTTOM,

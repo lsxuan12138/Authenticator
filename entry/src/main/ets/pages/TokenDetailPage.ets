@@ -27,7 +27,9 @@ export function TokenDetailPageBuilder(_name: string, param: ESObject) {
       onOpenSteamManagement: (): void =>
         AppRouter.pushToken(AppRoute.STEAM_MANAGEMENT, AppRouter.tokenId(param))
     })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.DETAIL))
+  }.hideTitleBar(true)
+    .backgroundColor($r('app.color.page_background'))
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 }
 
 /** Token 基础信息页。Steam 高级设置已拆分到独立管理页。 */

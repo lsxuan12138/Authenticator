@@ -1,8 +1,6 @@
-/** 应用路由名称；首页是 Navigation 的 NavBar，不注册到系统路由表。 */
+/** 应用二级路由名称；验证码与设置由根 HdsTabs 承载，不进入路由栈。 */
 export enum AppRoute {
-  HOME = 'home',
   ADD = 'add',
-  SETTINGS = 'settings',
   STEAM = 'steam',
   STEAM_MANAGEMENT = 'steamManagement',
   DETAIL = 'detail',
@@ -14,8 +12,6 @@ export class TokenRouteParam {
   tokenId: string = '';
   issuer: string = '';
 }
-
-export const APP_ROUTE_KEY: string = 'authenticator.currentRoute';
 
 /**
  * 集中持有与根 Navigation 一一对应的路由栈，并封装应用级跳转操作。
@@ -50,13 +46,6 @@ export class AppRouter {
   /** 清空二级页面并回到首页 NavBar。 */
   static returnHome(): void {
     AppRouter.pathStack.clear();
-    AppRouter.markCurrent(AppRoute.HOME);
-  }
-
-  /** 由 NavDestination 可见事件同步底栏所需的当前路由。 */
-  static markCurrent(route: AppRoute): void {
-    AppStorage.setOrCreate<AppRoute>(APP_ROUTE_KEY, AppRoute.HOME);
-    AppStorage.set<AppRoute>(APP_ROUTE_KEY, route);
   }
 
   /** 从系统 Builder 参数读取 Token UUID。 */

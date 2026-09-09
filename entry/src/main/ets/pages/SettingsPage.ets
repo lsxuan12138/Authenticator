@@ -6,22 +6,9 @@ import { BackupMergeResult, BackupService } from '../services/BackupService';
 import { DiagnosticLogService, DiagnosticLogStats } from '../services/DiagnosticLogService';
 import { AppSettingsService } from '../services/AppSettingsService';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
-import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
 
-/** 系统路由表入口；设置结果通过 AppStorage 自动同步回首页。 */
-@Builder
-export function SettingsPageBuilder(_name: string, _param: ESObject) {
-  NavDestination() {
-    SettingsPage({
-      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
-      onIconPacksChanged: (packs: IconPack[]): void => AppStore.updateIconPacks(packs),
-      onActiveIconPackChanged: (key: string): void => AppStore.updateActiveIconPack(key)
-    })
-  }.hideTitleBar(true).onShown(() => AppRouter.markCurrent(AppRoute.SETTINGS))
-}
-
-/** 设置页只接收跨页面共享的数据，其余交互状态均随页面创建和销毁。 */
+/** 设置页作为根 HdsTabs 的一级页签，只接收跨页面共享的数据。 */
 @Component
 export struct SettingsPage {
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];

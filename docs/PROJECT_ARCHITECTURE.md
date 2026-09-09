@@ -32,7 +32,7 @@
 
 ## 2. 总体结构
 
-当前应用适合继续保持单 Entry HAP、单 UIAbility。HarmonyOS 推荐以 `Navigation` 作为根容器、`NavDestination` 作为子页面并由 `NavPathStack` 管理页面栈；项目已经使用系统路由表完成页面名到 Builder 的映射，不需要改回已不推荐的 `router`。
+当前应用适合继续保持单 Entry HAP、单 UIAbility。根容器使用 `Navigation`，其中以系统 `HdsTabs` 承载“验证码/设置”两个一级入口；添加、详情和 Steam 等二级页面使用 `NavDestination`，并由 `NavPathStack` 管理页面栈。项目已经使用系统路由表完成二级页面名到 Builder 的映射，不需要改回已不推荐的 `router`。
 
 逻辑依赖方向应保持为：
 
@@ -66,21 +66,24 @@ HarmonyOS Kit / Steam 服务端
 
 ## 3. 页面与导航
 
-首页是根 `Navigation` 的 NavBar，不进入页面栈。其他页面由 `router_map.json` 注册为 `NavDestination`。
+验证码首页和设置页是根 `Navigation` NavBar 中的两个 `HdsTabs` 一级页签，不进入页面栈。其他页面由 `router_map.json` 注册为 `NavDestination`。
 
 ```text
-首页 Index
-├─ 添加 AddTokenPage
-├─ 设置 SettingsPage
-└─ Token 详情 TokenDetailPage
-   ├─ 图标选择 IconPickerPage
-   ├─ Steam 确认 SteamConfirmationsPage
-   └─ Steam 管理 SteamManagementPage
+根 Navigation
+├─ 一级 HdsTabs
+│  ├─ 验证码首页 Index.tokenList
+│  └─ 设置 SettingsPage
+└─ 二级 NavDestination
+   ├─ 添加 AddTokenPage
+   └─ Token 详情 TokenDetailPage
+      ├─ 图标选择 IconPickerPage
+      ├─ Steam 确认 SteamConfirmationsPage
+      └─ Steam 管理 SteamManagementPage
 ```
 
 | 页面 | 用户入口与职责 | 主要依赖 |
 | --- | --- | --- |
-| `Index.ets` | 显示动态验证码；复制；排序；删除；展示 URI 二维码；进入详情、添加、设置和图标选择 | `OtpEngine`、`OtpUriParser`、`IconPackService`、`AppStore`、`SteamLocalDataCleaner` |
+| `Index.ets` | 组合根 `Navigation` 与系统 `HdsTabs`；验证码页签负责显示、复制、排序、删除、URI 二维码及进入二级页面 | `HdsTabs`、`OtpEngine`、`OtpUriParser`、`IconPackService`、`AppStore`、`SteamLocalDataCleaner` |
 | `AddTokenPage.ets` | 四个 Tab：扫码、URI、手动、Steam；Steam Tab 负责登录后新增或迁移验证器 | `OtpUriParser`、`TokenDuplicateGuard`、`SteamLoginService`、`SteamAuthenticatorService`、`SteamSessionService`、`AppStore` |
 | `TokenDetailPage.ets` | 编辑通用 Token 字段；选择图标；Steam Token 进入确认/管理；处理 Steam 扫码登录 | `Base32`、`IconPackService`、`SteamGuardService`、`SteamSessionService`、`SteamConfirmationHistoryRepository`、`AppStore` |
 | `IconPickerPage.ets` | 懒加载全部已安装图标包并保存手动图标覆盖 | `TokenIconPicker`、`IconPackService`、`AppStore` |
@@ -91,6 +94,7 @@ HarmonyOS Kit / Steam 服务端
 路由约束：
 
 - Token 相关页面只传 UUID，不传完整 Token，页面始终从共享状态读取最新记录。
+- 验证码和设置属于一级页签，不应加入 `AppRoute` 或 `router_map.json`。
 - `AppRouter` 持有与根 `Navigation` 一一对应的唯一 `NavPathStack`。
 - `*PageBuilder` 由系统路由表调用，即使静态搜索没有普通调用点也不能删除。
 - 页面离开时必须清理密码、验证码、临时密钥和进行中的轮询。
