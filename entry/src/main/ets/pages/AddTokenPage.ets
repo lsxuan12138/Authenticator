@@ -1,6 +1,12 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
+import {
+  hdsMaterial,
+  HdsNavDestination,
+  HdsNavDestinationTitleMode,
+  ScrollEffectType
+} from '@kit.UIDesignKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
@@ -22,17 +28,38 @@ import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSess
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
 export function AddTokenPageBuilder(_name: string, _param: ESObject) {
-  NavDestination() {
+  HdsNavDestination() {
     AddTokenPage({
       onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
       onClose: (): void => AppRouter.pop()
     })
-  }.hideTitleBar(true)
+  }.titleMode(HdsNavDestinationTitleMode.MINI)
+    .titleBar({
+      enableComponentSafeArea: true,
+      content: {
+        title: {
+          mainTitle: $r('app.string.add_title'),
+          subTitle: $r('app.string.add_subtitle')
+        }
+      },
+      style: {
+        // 添加页由多个独立 Tabs 组成，使用稳定材质而不错误绑定某一个内部滚动容器。
+        scrollEffectOpts: {
+          enableScrollEffect: false,
+          scrollEffectType: ScrollEffectType.GRADIENT_BLUR
+        },
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        }
+      }
+    })
     .backgroundColor($r('app.color.page_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
+      [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
 }
 
-/** Token 添加页。表单、Steam 密码与登录会话只在该 NavDestination 存活期间保留。 */
+/** Token 添加页。表单、Steam 密码与登录会话只在该 HdsNavDestination 存活期间保留。 */
 @Component
 export struct AddTokenPage {
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
@@ -891,36 +918,9 @@ export struct AddTokenPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
-  /** 组合添加页标题和四种添加方式的 Tabs。 */
+  /** 构建四种添加方式的 Tabs；页面标题与返回行为由外层 HdsNavDestination 提供。 */
   build() {
     Column() {
-      Row({ space: 10 }) {
-        Button() {
-          SymbolGlyph($r('sys.symbol.chevron_left'))
-            .fontSize(22)
-            .fontColor([$r('app.color.text_secondary')])
-        }
-          .type(ButtonType.Circle)
-          .width(38)
-          .height(38)
-          .backgroundColor($r('app.color.surface_muted'))
-          .onClick(() => {
-            this.resetForm();
-            this.onClose();
-          })
-        Column({ space: 3 }) {
-          Text($r('app.string.add_title')).fontSize(26).fontWeight(FontWeight.Bold)
-          Text($r('app.string.add_subtitle')).fontSize(13).fontColor($r('app.color.text_tertiary'))
-        }.alignItems(HorizontalAlign.Start)
-      }
-      .width('100%')
-      .padding({
-        left: 18,
-        right: 18,
-        top: 18,
-        bottom: 8
-      })
-
       Tabs({ barPosition: BarPosition.Start, index: this.addTabIndex }) {
         TabContent() {
           this.scanAddTab()

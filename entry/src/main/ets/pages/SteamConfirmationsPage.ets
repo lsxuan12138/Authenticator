@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { StoredToken } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { SteamConfirmation, SteamGuardService, SteamPendingLogin,
@@ -16,7 +17,7 @@ import { AppSettingsService } from '../services/AppSettingsService';
 
 @Builder
 export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
-  NavDestination() {
+  HdsNavDestination() {
     SteamConfirmationsPage({ tokenId: AppRouter.tokenId(param), onClose: (): void => AppRouter.pop() })
   }.hideTitleBar(true)
     .backgroundColor($r('app.color.page_background'))

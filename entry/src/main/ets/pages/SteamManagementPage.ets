@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { SteamGuardMetadata, StoredToken } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { OtpEngine } from '../core/OtpEngine';
@@ -20,7 +21,7 @@ import { Localization } from '../core/Localization';
 /** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
 @Builder
 export function SteamManagementPageBuilder(_name: string, param: ESObject) {
-  NavDestination() {
+  HdsNavDestination() {
     SteamManagementPage({
       tokenId: AppRouter.tokenId(param),
       onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),

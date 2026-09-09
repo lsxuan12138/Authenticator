@@ -1,7 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
-import { DividerMode, HdsTabs } from '@kit.UIDesignKit';
+import { DividerMode, HdsNavigation, HdsTabs, hdsMaterial } from '@kit.UIDesignKit';
 import { StoredToken, TokenCode, TokenKind } from '../domain/Token';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { OtpEngine } from '../core/OtpEngine';
@@ -56,7 +56,7 @@ struct Index {
 
   private timer: number = -1;
 
-  /** 所有二级界面均进入 Navigation 路由栈，系统返回手势与页面生命周期由框架统一管理。 */
+  /** 所有二级界面均进入 HDS 路由栈，系统返回手势与页面生命周期由框架统一管理。 */
   private navigate(route: AppRoute): void {
     AppRouter.push(route);
   }
@@ -408,13 +408,13 @@ struct Index {
               })
             }, (item: StoredToken) => this.tokenRenderKey(item))
           }
-        }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 8 })
+        }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 84 })
       }
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
   /**
-   * 构建系统一级页签。验证码和设置保持并列，二级业务页面仍由外层 Navigation 管理。
+   * 构建系统一级页签。验证码和设置保持并列，二级业务页面仍由外层 HdsNavigation 管理。
    * HdsTabs 会统一处理页签栏、安全区和窗口大小变化，后续可直接启用系统材质效果。
    */
   @Builder
@@ -431,7 +431,7 @@ struct Index {
         font: { size: 14, weight: FontWeight.Medium },
         selectedColor: '#4668E8',
         unselectedColor: $r('app.color.text_tertiary')
-      }).layoutMode(LayoutMode.HORIZONTAL).padding({ left: 12, right: 12 }))
+      }).layoutMode(LayoutMode.VERTICAL))
 
       TabContent() {
         SettingsPage({
@@ -448,22 +448,35 @@ struct Index {
         font: { size: 14, weight: FontWeight.Medium },
         selectedColor: '#4668E8',
         unselectedColor: $r('app.color.text_tertiary')
-      }).layoutMode(LayoutMode.HORIZONTAL).padding({ left: 12, right: 12 }))
+      }).layoutMode(LayoutMode.VERTICAL))
     }
+    // 页签栏悬浮在内容上方，使用系统自适应材质随明暗模式和壁纸环境变化。
+    .barOverlap(true)
     .barPosition(BarPosition.End)
     .vertical(false)
     .scrollable(false)
-    .barBackgroundColor($r('app.color.surface'))
-    .divider({ mode: DividerMode.VISIBLE,
-      style: { strokeWidth: 1, color: $r('app.color.border') } })
+    .barBackgroundColor(Color.Transparent)
+    .divider({ mode: DividerMode.NONE })
+    .barFloatingStyle({
+      barWidth: {
+        smallWidth: 224,
+        mediumWidth: 240,
+        largeWidth: 256
+      },
+      barBottomMargin: 8,
+      systemMaterialEffect: {
+        materialType: hdsMaterial.MaterialType.ADAPTIVE,
+        materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+      }
+    })
     .width('100%')
     .height('100%')
   }
 
-  /** 组合一级系统页签、二级 Navigation 页面与首页弹层。 */
+  /** 组合一级系统页签、二级 HDS 导航页面与首页弹层。 */
   build() {
     Column() {
-      Navigation(this.navPathStack) {
+      HdsNavigation(this.navPathStack) {
         this.primaryTabs()
       }.layoutWeight(1).width('100%').height('100%')
         .hideTitleBar(true).mode(NavigationMode.Stack)

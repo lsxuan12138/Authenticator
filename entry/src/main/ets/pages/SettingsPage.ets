@@ -507,8 +507,9 @@ export struct SettingsPage {
           Text($r('app.string.settings_local_protection_hint'))
             .fontSize(13).fontColor($r('app.color.text_tertiary')).lineHeight(20).width('100%')
         }.alignItems(HorizontalAlign.Start).width('calc(100% - 32vp)').padding(18)
-          .margin({ left: 16, right: 16, bottom: 18 }).backgroundColor($r('app.color.brand_surface')).borderRadius(18)
-      }.width('100%').alignItems(HorizontalAlign.Start)
+          .margin({ left: 16, right: 16 }).backgroundColor($r('app.color.brand_surface')).borderRadius(18)
+      // 悬浮页签栏会覆盖滚动内容，为最后一张卡片保留完整的可滚动空间。
+      }.width('100%').alignItems(HorizontalAlign.Start).padding({ bottom: 84 })
     }.height('100%').width('100%').align(Alignment.TopStart).scrollBar(BarState.Off)
       .backgroundColor($r('app.color.page_background'))
   }

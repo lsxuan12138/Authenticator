@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { TokenIconPicker } from '../components/TokenIconPicker';
 import { StoredToken } from '../domain/Token';
 import { APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
@@ -11,7 +12,7 @@ import { Localization } from '../core/Localization';
 /** 系统路由表入口；图标列表只在进入页面后创建，维持原有懒加载行为。 */
 @Builder
 export function IconPickerPageBuilder(_name: string, param: ESObject) {
-  NavDestination() {
+  HdsNavDestination() {
     IconPickerPage({
       tokenId: AppRouter.tokenId(param),
       issuer: AppRouter.issuer(param)

@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { HdsNavDestination } from '@kit.UIDesignKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { SteamGuardMetadata, StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
@@ -16,7 +17,7 @@ import { AppError } from '../core/AppError';
 /** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
 @Builder
 export function TokenDetailPageBuilder(_name: string, param: ESObject) {
-  NavDestination() {
+  HdsNavDestination() {
     TokenDetailPage({
       tokenId: AppRouter.tokenId(param),
       onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
