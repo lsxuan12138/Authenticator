@@ -98,8 +98,8 @@ export class ImmersiveStyle {
   }
 
   /**
-   * 为文字密集型表单创建始终生效的均匀模糊标题栏。
-   * 不绑定滚动状态可避免临界偏移处在透明态与模糊态之间反复切换。
+   * 为文字密集型表单创建始终生效的静态渐变模糊标题栏。
+   * 保留空间渐变，但不绑定滚动状态，避免临界偏移处反复切换材质。
    */
   static formTitleBarStyle(
     primaryColor: ResourceColor,
@@ -108,7 +108,7 @@ export class ImmersiveStyle {
     scrollBackgroundColor: ResourceColor
   ): TitleBarStyleOptions {
     return ImmersiveStyle.titleBarStyle(false, primaryColor, secondaryColor, tertiaryColor,
-      scrollBackgroundColor, ScrollEffectType.COMMON_BLUR, scrollBackgroundColor, 20);
+      scrollBackgroundColor, ScrollEffectType.GRADIENT_BLUR, scrollBackgroundColor, 20);
   }
 
   /** 根据设备底部指示区调整悬浮一级页签，避免依赖固定机型间距。 */

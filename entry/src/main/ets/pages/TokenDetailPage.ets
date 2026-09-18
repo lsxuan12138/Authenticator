@@ -477,7 +477,7 @@ export struct TokenDetailPage {
     }
     .titleMode(HdsNavDestinationTitleMode.MINI)
     .titleBar({
-      // 首屏通过 Scroll 内部间距避让标题栏；标题栏使用稳定的均匀模糊材质。
+      // 首屏通过 Scroll 内部间距避让标题栏；标题栏使用不依赖滚动阈值的静态渐变模糊。
       avoidLayoutSafeArea: false,
       enableComponentSafeArea: false,
       content: {
