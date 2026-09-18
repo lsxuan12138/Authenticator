@@ -1,6 +1,10 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import {
+  HdsNavDestination,
+  HdsNavDestinationTitleMode,
+  HdsNavigationMenuContentOptions
+} from '@kit.UIDesignKit';
 import { StoredToken } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { SteamConfirmation, SteamGuardService, SteamPendingLogin,
@@ -14,14 +18,11 @@ import { Localization } from '../core/Localization';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 import { AppError } from '../core/AppError';
 import { AppSettingsService } from '../services/AppSettingsService';
+import { ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 @Builder
 export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
-  HdsNavDestination() {
-    SteamConfirmationsPage({ tokenId: AppRouter.tokenId(param), onClose: (): void => AppRouter.pop() })
-  }.hideTitleBar(true)
-    .backgroundColor($r('app.color.page_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+  SteamConfirmationsPage({ tokenId: AppRouter.tokenId(param) })
 }
 
 /** 集中显示待登录、移动确认与本机加密操作历史。 */
@@ -29,7 +30,6 @@ export function SteamConfirmationsPageBuilder(_name: string, param: ESObject) {
 export struct SteamConfirmationsPage {
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   tokenId: string = '';
-  onClose: () => void = (): void => {};
   @State private selectedTab: number = 0;
   @State private pendingCategory: number = 0;
   @State private confirmations: SteamConfirmation[] = [];
@@ -43,6 +43,23 @@ export struct SteamConfirmationsPage {
   @State private confirmationError: string = '';
   // 默认不显示，等持久化设置读取完成后再决定，避免已关闭用户看到提醒闪现。
   @State private confirmationNoticeVisible: boolean = false;
+
+  /** 将列表刷新放入系统标题栏，并在请求或提交期间禁用重复操作。 */
+  private titleMenu(): HdsNavigationMenuContentOptions {
+    return {
+      maxCount: 1,
+      value: [{
+        content: {
+          icon: $r('sys.symbol.arrow_clockwise'),
+          label: $r('app.string.common_refresh'),
+          isEnabled: !this.loading && !this.submitting,
+          action: (): void => {
+            this.requestAll();
+          }
+        }
+      }]
+    };
+  }
 
   /** 页面首次显示时并行读取本地历史与服务端待处理列表。 */
   aboutToAppear(): void {
@@ -485,33 +502,36 @@ export struct SteamConfirmationsPage {
   }
 
   build() {
-    Column() {
-      Row({ space: 10 }) {
-        Button() { SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(22) }
-          .type(ButtonType.Circle).width(38).height(38).backgroundColor($r('app.color.surface_muted'))
-          .onClick(() => this.onClose())
-        Column({ space: 3 }) {
-          Text($r('app.string.confirm_title')).fontSize(26).fontWeight(FontWeight.Bold)
-          Text(this.lastRefresh ? $r('app.string.confirm_last_refresh', this.lastRefresh) :
-            $r('app.string.confirm_subtitle'))
-            .fontSize(13).fontColor($r('app.color.text_tertiary'))
-        }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        Button() {
-          if (this.loading) {
-            LoadingProgress().width(20).height(20).color(Color.White)
-          } else {
-            SymbolGlyph($r('sys.symbol.arrow_clockwise')).fontSize(22).fontColor([Color.White])
-          }
-        }
-          .type(ButtonType.Circle).width(40).height(40).backgroundColor($r('app.color.brand_strong'))
-          .enabled(!this.loading && !this.submitting).onClick(() => this.requestAll())
-      }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
-      Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
-        TabContent() { this.pendingTab() }.tabBar($r('app.string.confirm_pending'))
-        TabContent() { this.historyTab() }.tabBar($r('app.string.confirm_history'))
-      }.barMode(BarMode.Fixed).barHeight(48).barBackgroundColor($r('app.color.surface'))
-        .divider({ strokeWidth: 1, color: $r('app.color.divider') }).layoutWeight(1).width('100%')
-        .onChange((index: number) => this.selectedTab = index)
-    }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
+    HdsNavDestination() {
+      Column() {
+        Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
+          TabContent() { this.pendingTab() }.tabBar($r('app.string.confirm_pending'))
+          TabContent() { this.historyTab() }.tabBar($r('app.string.confirm_history'))
+        }.barMode(BarMode.Fixed).barHeight(48).barBackgroundColor($r('app.color.surface'))
+          .divider({ strokeWidth: 1, color: $r('app.color.divider') }).layoutWeight(1).width('100%')
+          .onChange((index: number) => this.selectedTab = index)
+      }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
+    }
+    .titleMode(HdsNavDestinationTitleMode.MINI)
+    .titleBar({
+      enableComponentSafeArea: true,
+      content: {
+        title: {
+          mainTitle: $r('app.string.confirm_title'),
+          subTitle: this.lastRefresh ? $r('app.string.confirm_last_refresh', this.lastRefresh) :
+            $r('app.string.confirm_subtitle')
+        },
+        menu: this.titleMenu()
+      },
+      // 待处理与历史分页拥有不同滚动容器，标题栏使用稳定的系统材质。
+      style: ImmersiveStyle.titleBarStyle(false,
+        $r('app.color.text_primary'),
+        $r('app.color.text_secondary'),
+        $r('app.color.text_tertiary'),
+        $r('app.color.title_bar_scrim'))
+    })
+    .backgroundColor($r('app.color.page_background'))
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
+      [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
   }
 }

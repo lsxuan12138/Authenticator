@@ -1,7 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { SteamGuardMetadata, StoredToken } from '../domain/Token';
 import { Base32 } from '../core/Base32';
 import { OtpEngine } from '../core/OtpEngine';
@@ -17,20 +17,16 @@ import { SteamAccessTokenPair, SteamSessionService, SteamTokenLifetime,
   SteamTokenLifetimeState } from '../services/SteamSessionService';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { Localization } from '../core/Localization';
+import { ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 /** 使用系统路由参数构建 Steam 会话、验证器和数据管理页面。 */
 @Builder
 export function SteamManagementPageBuilder(_name: string, param: ESObject) {
-  HdsNavDestination() {
-    SteamManagementPage({
-      tokenId: AppRouter.tokenId(param),
-      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
-      onClose: (): void => AppRouter.pop(),
-      onTokenRemoved: (): void => AppRouter.returnHome()
-    })
-  }.hideTitleBar(true)
-    .backgroundColor($r('app.color.page_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+  SteamManagementPage({
+    tokenId: AppRouter.tokenId(param),
+    onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+    onTokenRemoved: (): void => AppRouter.returnHome()
+  })
 }
 
 /**
@@ -41,7 +37,6 @@ export struct SteamManagementPage {
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   tokenId: string = '';
   onTokensChanged: (tokens: StoredToken[]) => Promise<void> = async (_tokens: StoredToken[]): Promise<void> => {};
-  onClose: () => void = (): void => {};
   onTokenRemoved: () => void = (): void => {};
 
   @State private selectedTab: number = 0;
@@ -735,43 +730,51 @@ export struct SteamManagementPage {
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
 
-  /** 组合 Steam 管理页标题及会话、验证器、数据三个分区。 */
+  /** 使用系统 HDS 标题栏组合会话、验证器和数据三个管理分区。 */
   build() {
-    Column() {
-      Row({ space: 10 }) {
-        Button() {
-          SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(22)
-            .fontColor([$r('app.color.text_secondary')])
-        }.type(ButtonType.Circle).width(38).height(38)
-          .backgroundColor($r('app.color.surface_muted')).onClick(() => this.onClose())
-        Column({ space: 3 }) {
-          Text($r('app.string.steam_manage_title')).fontSize(26).fontWeight(FontWeight.Bold)
-          Text(this.currentToken()?.steam?.accountName ||
-            this.currentToken()?.account || 'Steam Token')
-            .fontSize(13).fontColor($r('app.color.text_tertiary'))
-        }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-      }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
-
-      Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
-        TabContent() {
-          this.sessionTab()
-        }.tabBar($r('app.string.steam_tab_session')).align(Alignment.TopStart)
-        TabContent() {
-          this.authenticatorTab()
-        }.tabBar($r('app.string.steam_tab_authenticator')).align(Alignment.TopStart)
-        TabContent() {
-          this.dataTab()
-        }.tabBar($r('app.string.steam_tab_data')).align(Alignment.TopStart)
-      }
-        .barMode(BarMode.Fixed)
-        .barHeight(48)
-        .barBackgroundColor($r('app.color.surface'))
-        .onChange((index: number) => this.selectedTab = index)
-        .layoutWeight(1)
-        .width('100%')
-        .align(Alignment.TopStart)
-    }.width('100%').height('100%').alignItems(HorizontalAlign.Start)
-      .justifyContent(FlexAlign.Start).align(Alignment.TopStart)
+    HdsNavDestination() {
+      Column() {
+        Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
+          TabContent() {
+            this.sessionTab()
+          }.tabBar($r('app.string.steam_tab_session')).align(Alignment.TopStart)
+          TabContent() {
+            this.authenticatorTab()
+          }.tabBar($r('app.string.steam_tab_authenticator')).align(Alignment.TopStart)
+          TabContent() {
+            this.dataTab()
+          }.tabBar($r('app.string.steam_tab_data')).align(Alignment.TopStart)
+        }
+          .barMode(BarMode.Fixed)
+          .barHeight(48)
+          .barBackgroundColor($r('app.color.surface'))
+          .onChange((index: number) => this.selectedTab = index)
+          .layoutWeight(1)
+          .width('100%')
+          .align(Alignment.TopStart)
+      }.width('100%').height('100%').alignItems(HorizontalAlign.Start)
+        .justifyContent(FlexAlign.Start).align(Alignment.TopStart)
+        .backgroundColor($r('app.color.page_background'))
+    }
+    .titleMode(HdsNavDestinationTitleMode.MINI)
+    .titleBar({
+      enableComponentSafeArea: true,
+      content: {
+        title: {
+          mainTitle: $r('app.string.steam_manage_title'),
+          subTitle: this.currentToken()?.steam?.accountName || this.currentToken()?.account ||
+            $r('app.string.detail_unnamed_account')
+        }
+      },
+      // 三个分页分别拥有滚动容器，因此这里只启用稳定的系统材质，不绑定单个 Scroller。
+      style: ImmersiveStyle.titleBarStyle(false,
+        $r('app.color.text_primary'),
+        $r('app.color.text_secondary'),
+        $r('app.color.text_tertiary'),
+        $r('app.color.title_bar_scrim'))
+    })
       .backgroundColor($r('app.color.page_background'))
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
+        [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
   }
 }

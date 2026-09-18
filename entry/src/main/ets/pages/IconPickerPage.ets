@@ -1,6 +1,10 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import {
+  HdsNavDestination,
+  HdsNavDestinationTitleMode,
+  HdsNavigationMenuContentOptions
+} from '@kit.UIDesignKit';
 import { TokenIconPicker } from '../components/TokenIconPicker';
 import { StoredToken } from '../domain/Token';
 import { APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
@@ -8,18 +12,15 @@ import { IconPack } from '../services/IconPackService';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
+import { ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 /** 系统路由表入口；图标列表只在进入页面后创建，维持原有懒加载行为。 */
 @Builder
 export function IconPickerPageBuilder(_name: string, param: ESObject) {
-  HdsNavDestination() {
-    IconPickerPage({
-      tokenId: AppRouter.tokenId(param),
-      issuer: AppRouter.issuer(param)
-    })
-  }.hideTitleBar(true)
-    .backgroundColor($r('app.color.page_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+  IconPickerPage({
+    tokenId: AppRouter.tokenId(param),
+    issuer: AppRouter.issuer(param)
+  })
 }
 
 /** 为系统路由封装图标选择、保存和错误反馈。 */
@@ -29,6 +30,30 @@ struct IconPickerPage {
   issuer: string = '';
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   @StorageLink(APP_ICON_PACKS_KEY) packs: IconPack[] = [];
+  @State private selectedPath: string = '';
+  @State private saving: boolean = false;
+
+  /** 页面打开时将当前手动图标同步为标题栏“完成”操作所保存的选择。 */
+  aboutToAppear(): void {
+    this.selectedPath = this.currentPath();
+  }
+
+  /** 将保存操作放入系统标题栏；保存期间禁用，避免重复写入安全仓库。 */
+  private titleMenu(): HdsNavigationMenuContentOptions {
+    return {
+      maxCount: 1,
+      value: [{
+        content: {
+          icon: $r('sys.symbol.checkmark'),
+          label: $r('app.string.common_done'),
+          isEnabled: !this.saving,
+          action: (): void => {
+            this.applyManualIcon(this.selectedPath);
+          }
+        }
+      }]
+    };
+  }
 
   /** 显示图标保存错误，UIContext 不可用时写入诊断日志。 */
   private showToast(message: string, duration: number = 2000): void {
@@ -54,6 +79,7 @@ struct IconPickerPage {
       this.showToast(Localization.text(context, $r('app.string.error_token_missing')), 2200);
       return;
     }
+    this.saving = true;
     try {
       const updated: StoredToken = {
         id: token.id, issuer: token.issuer, account: token.account, secret: token.secret,
@@ -67,19 +93,38 @@ struct IconPickerPage {
     } catch (error) {
       this.showToast(Localization.error(context, error as Object,
         $r('app.string.error_icon_pack_operation_failed')), 3000);
+    } finally {
+      this.saving = false;
     }
   }
 
   /** 构建实际的懒加载图标选择组件。 */
   build() {
-    TokenIconPicker({
-      issuer: this.issuer,
-      currentPath: this.currentPath(),
-      packs: this.packs,
-      onConfirm: (path: string): void => {
-        this.applyManualIcon(path);
+    HdsNavDestination() {
+      TokenIconPicker({
+        issuer: this.issuer,
+        packs: this.packs,
+        selectedPath: $selectedPath
+      })
+    }
+    .titleMode(HdsNavDestinationTitleMode.MINI)
+    .titleBar({
+      enableComponentSafeArea: true,
+      content: {
+        title: {
+          mainTitle: $r('app.string.icon_picker_title'),
+          subTitle: this.issuer
+        },
+        menu: this.titleMenu()
       },
-      onClose: (): void => AppRouter.pop()
+      style: ImmersiveStyle.titleBarStyle(false,
+        $r('app.color.text_primary'),
+        $r('app.color.text_secondary'),
+        $r('app.color.text_tertiary'),
+        $r('app.color.title_bar_scrim'))
     })
+    .backgroundColor($r('app.color.page_background'))
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
+      [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
   }
 }

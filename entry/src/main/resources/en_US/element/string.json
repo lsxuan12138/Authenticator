@@ -18,6 +18,7 @@
     { "name": "common_unknown_device", "value": "Unknown device" },
     { "name": "common_unknown_location", "value": "Unknown location" },
     { "name": "common_processing", "value": "Processing…" },
+    { "name": "common_refresh", "value": "Refresh" },
     { "name": "home_title", "value": "Verification codes" },
     { "name": "home_reorder_hint", "value": "Hold the handle and drag to reorder" },
     { "name": "home_empty_hint", "value": "Add your first two-factor account" },

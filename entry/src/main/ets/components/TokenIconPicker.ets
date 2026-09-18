@@ -43,19 +43,13 @@ class IconPathDataSource implements IDataSource {
 @Component
 export struct TokenIconPicker {
   @Prop issuer: string = '';
-  @Prop currentPath: string = '';
   @Prop packs: IconPack[] = [];
-  onConfirm: (path: string) => void = (_path: string): void => {
-  };
-  onClose: () => void = (): void => {
-  };
-  @State private selectedPath: string = '';
+  @Link selectedPath: string;
   @State private suggestions: string[] = [];
   private sources: Map<string, IconPathDataSource> = new Map();
 
   /** 页面显示时按当前 issuer 计算推荐图标和各包懒加载数据源。 */
   aboutToAppear(): void {
-    this.selectedPath = this.currentPath;
     this.suggestions = IconPackService.suggestedIcons(this.issuer, this.packs);
     // 每个图标包维护独立惰性数据源，分组标题本身仍由轻量的 ForEach 创建。
     this.packs.forEach((pack: IconPack) => {
@@ -104,62 +98,33 @@ export struct TokenIconPicker {
 
   /** 组合自动模式、推荐项与各图标包的懒加载列表。 */
   build() {
-    Column() {
-      Row({ space: 10 }) {
-        Button() {
-          SymbolGlyph($r('sys.symbol.chevron_left'))
-            .fontSize(22)
-            .fontColor([$r('app.color.text_secondary')])
-        }
-          .type(ButtonType.Circle)
-          .width(38)
-          .height(38)
-          .backgroundColor($r('app.color.surface_muted'))
-          .onClick(() => this.onClose())
-        Column({ space: 3 }) {
-          Text($r('app.string.icon_picker_title')).fontSize(26).fontWeight(FontWeight.Bold)
-          Text(this.issuer).fontSize(13).fontColor($r('app.color.text_tertiary')).maxLines(1)
-        }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-
-        Button($r('app.string.common_done')).backgroundColor('#4668E8')
-          .onClick(() => this.onConfirm(this.selectedPath))
+    List({ space: 6 }) {
+      ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_display')) }) {
+        this.iconCell('', true)
       }
-      .width('100%')
-      .padding({
-        left: 18,
-        right: 18,
-        top: 18,
-        bottom: 8
-      })
 
-      List({ space: 6 }) {
-        ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_display')) }) {
-          this.iconCell('', true)
+      if (this.suggestions.length > 0) {
+        ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_recommended')) }) {
+          ForEach(this.suggestions, (path: string) => {
+            this.iconCell(path)
+          }, (path: string) => `suggested_${path}`)
         }
-
-        if (this.suggestions.length > 0) {
-          ListItemGroup({ header: this.sectionHeader($r('app.string.icon_picker_recommended')) }) {
-            ForEach(this.suggestions, (path: string) => {
+      }
+      ForEach(this.packs, (pack: IconPack) => {
+        ListItemGroup({ header: this.sectionHeader(pack.name) }) {
+          LazyForEach(this.sources.get(IconPackService.packKey(pack)) as IconPathDataSource,
+            (path: string) => {
               this.iconCell(path)
-            }, (path: string) => `suggested_${path}`)
-          }
+            }, (path: string) => path)
         }
-        ForEach(this.packs, (pack: IconPack) => {
-          ListItemGroup({ header: this.sectionHeader(pack.name) }) {
-            LazyForEach(this.sources.get(IconPackService.packKey(pack)) as IconPathDataSource,
-              (path: string) => {
-                this.iconCell(path)
-              }, (path: string) => path)
-          }
-        }, (pack: IconPack) => IconPackService.packKey(pack))
-      }
-      .layoutWeight(1)
-      .width('100%')
-      .height('100%')
-      .padding({ left: 12, right: 12, bottom: 12 })
-      .lanes({ minLength: 74, maxLength: 74 })
-      .cachedCount(10)
-      .scrollBar(BarState.Auto)
-    }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
+      }, (pack: IconPack) => IconPackService.packKey(pack))
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 12, right: 12, bottom: 12 })
+    .lanes({ minLength: 74, maxLength: 74 })
+    .cachedCount(10)
+    .scrollBar(BarState.Auto)
+    .backgroundColor($r('app.color.page_background'))
   }
 }

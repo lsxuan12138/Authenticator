@@ -18,6 +18,7 @@
     { "name": "common_unknown_device", "value": "未知设备" },
     { "name": "common_unknown_location", "value": "位置未知" },
     { "name": "common_processing", "value": "处理中…" },
+    { "name": "common_refresh", "value": "刷新" },
     { "name": "home_title", "value": "验证码" },
     { "name": "home_reorder_hint", "value": "长按右侧手柄并上下拖动" },
     { "name": "home_empty_hint", "value": "添加你的第一个双重验证账户" },
