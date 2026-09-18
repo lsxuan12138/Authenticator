@@ -477,7 +477,7 @@ export struct TokenDetailPage {
     }
     .titleMode(HdsNavDestinationTitleMode.MINI)
     .titleBar({
-      // 首屏通过 Scroll 内部间距避让标题栏；滚动后内容进入均匀模糊层背后。
+      // 首屏通过 Scroll 内部间距避让标题栏；标题栏使用稳定的均匀模糊材质。
       avoidLayoutSafeArea: false,
       enableComponentSafeArea: false,
       content: {
@@ -493,7 +493,6 @@ export struct TokenDetailPage {
         $r('app.color.text_tertiary'),
         $r('app.color.title_bar_scrim'))
     })
-    .bindToScrollable([this.scroller])
     .backgroundColor($r('app.color.page_background'))
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
       [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])

@@ -38,7 +38,9 @@ export class ImmersiveStyle {
     secondaryColor: ResourceColor,
     tertiaryColor: ResourceColor,
     scrollBackgroundColor: ResourceColor,
-    scrollEffectType: ScrollEffectType = ScrollEffectType.GRADIENT_BLUR
+    scrollEffectType: ScrollEffectType = ScrollEffectType.GRADIENT_BLUR,
+    originalBackgroundColor: ResourceColor = Color.Transparent,
+    originalBlurRadius: number = 0
   ): TitleBarStyleOptions {
     return {
       scrollEffectOpts: {
@@ -48,8 +50,8 @@ export class ImmersiveStyle {
       blurStrategy: BlurStrategy.ADAPTIVE,
       originalStyle: {
         backgroundStyle: {
-          backgroundColor: Color.Transparent,
-          blurRadius: 0
+          backgroundColor: originalBackgroundColor,
+          blurRadius: originalBlurRadius
         },
         contentStyle: {
           titleStyle: {
@@ -95,15 +97,18 @@ export class ImmersiveStyle {
     };
   }
 
-  /** 为文字密集型表单创建均匀模糊标题栏，避免渐变下缘出现可读文字叠放。 */
+  /**
+   * 为文字密集型表单创建始终生效的均匀模糊标题栏。
+   * 不绑定滚动状态可避免临界偏移处在透明态与模糊态之间反复切换。
+   */
   static formTitleBarStyle(
     primaryColor: ResourceColor,
     secondaryColor: ResourceColor,
     tertiaryColor: ResourceColor,
     scrollBackgroundColor: ResourceColor
   ): TitleBarStyleOptions {
-    return ImmersiveStyle.titleBarStyle(true, primaryColor, secondaryColor, tertiaryColor,
-      scrollBackgroundColor, ScrollEffectType.COMMON_BLUR);
+    return ImmersiveStyle.titleBarStyle(false, primaryColor, secondaryColor, tertiaryColor,
+      scrollBackgroundColor, ScrollEffectType.COMMON_BLUR, scrollBackgroundColor, 20);
   }
 
   /** 根据设备底部指示区调整悬浮一级页签，避免依赖固定机型间距。 */
