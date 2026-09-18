@@ -9,6 +9,10 @@
       "value": "#0F1115"
     },
     {
+      "name": "title_bar_scrim",
+      "value": "#D90F1115"
+    },
+    {
       "name": "surface",
       "value": "#1A1D23"
     },

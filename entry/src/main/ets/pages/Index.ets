@@ -1,7 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
-import { DividerMode, HdsNavigation, HdsTabs, hdsMaterial } from '@kit.UIDesignKit';
+import { DividerMode, HdsNavigation, HdsTabs } from '@kit.UIDesignKit';
 import { StoredToken, TokenCode, TokenKind } from '../domain/Token';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
 import { OtpEngine } from '../core/OtpEngine';
@@ -12,6 +12,7 @@ import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { SteamLocalDataCleaner } from '../services/SteamLocalDataCleaner';
 import { Localization } from '../core/Localization';
 import { SettingsPage } from './SettingsPage';
+import { APP_NAVIGATION_INDICATOR_HEIGHT_KEY, ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 /**
  * 应用主界面，同时协调 Token 持久化、验证码刷新、Steam 操作和图标包设置。
@@ -26,6 +27,7 @@ struct Index {
   // 图标包及手动图标选择状态。
   @StorageLink(APP_ICON_PACKS_KEY) private iconPacks: IconPack[] = [];
   @StorageLink(APP_ACTIVE_ICON_PACK_KEY) private activeIconPackKey: string = IconPackService.noPackKey();
+  @StorageProp(APP_NAVIGATION_INDICATOR_HEIGHT_KEY) private navigationIndicatorHeight: number = 0;
   @State private reorderMode: boolean = false;
   @State private showTokenQr: boolean = false;
   @State private qrTokenIndex: number = -1;
@@ -408,7 +410,11 @@ struct Index {
               })
             }, (item: StoredToken) => this.tokenRenderKey(item))
           }
-        }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 84 })
+        }
+        // contentEndOffset 会在列表末尾生成真正可滚动的留白；不能使用 bottom padding，
+        // 否则 List 的绘制视口会在浮动页签上方提前结束，卡片看起来像被横向裁断。
+        .contentEndOffset(ImmersiveStyle.listEndOffset(this.navigationIndicatorHeight))
+        .layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16 })
       }
     }.width('100%').height('100%').align(Alignment.TopStart)
   }
@@ -457,18 +463,10 @@ struct Index {
     .scrollable(false)
     .barBackgroundColor(Color.Transparent)
     .divider({ mode: DividerMode.NONE })
-    .barFloatingStyle({
-      barWidth: {
-        smallWidth: 224,
-        mediumWidth: 240,
-        largeWidth: 256
-      },
-      barBottomMargin: 8,
-      systemMaterialEffect: {
-        materialType: hdsMaterial.MaterialType.ADAPTIVE,
-        materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-      }
-    })
+    .barFloatingStyle(ImmersiveStyle.floatingTabs(
+      this.navigationIndicatorHeight,
+      $r('app.color.brand')
+    ))
     .width('100%')
     .height('100%')
   }

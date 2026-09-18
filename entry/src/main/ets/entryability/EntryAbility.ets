@@ -2,14 +2,21 @@ import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want 
 import { window } from '@kit.ArkUI';
 import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { AppSettingsService } from '../services/AppSettingsService';
+import {
+  APP_NAVIGATION_INDICATOR_HEIGHT_KEY,
+  APP_STATUS_BAR_HEIGHT_KEY
+} from '../ui/ImmersiveStyle';
 
 /** 应用入口 Ability：设置跟随系统的颜色模式，并将主窗口加载到 Index 根组件。 */
 export default class EntryAbility extends UIAbility {
   private mainWindow: window.Window | null = null;
+  private hasAvoidAreaListener: boolean = false;
 
   /** Ability 创建时初始化应用主题和诊断日志等进程级能力。 */
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     DiagnosticLogService.initialize(this.context);
+    AppStorage.setOrCreate<number>(APP_NAVIGATION_INDICATOR_HEIGHT_KEY, 0);
+    AppStorage.setOrCreate<number>(APP_STATUS_BAR_HEIGHT_KEY, 0);
     try {
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     } catch (err) {
@@ -48,6 +55,18 @@ export default class EntryAbility extends UIAbility {
       const mainWindow = await windowStage.getMainWindow();
       this.mainWindow = mainWindow;
       await this.applyCurrentWindowAppearance(mainWindow, this.context.config.colorMode);
+      this.syncNavigationIndicatorHeight(mainWindow);
+      this.syncStatusBarHeight(mainWindow);
+      if (!this.hasAvoidAreaListener) {
+        mainWindow.on('avoidAreaChange', (data) => {
+          if (data.type === window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR) {
+            this.syncNavigationIndicatorHeight(mainWindow);
+          } else if (data.type === window.AvoidAreaType.TYPE_SYSTEM) {
+            this.syncStatusBarHeight(mainWindow);
+          }
+        });
+        this.hasAvoidAreaListener = true;
+      }
     } catch (error) {
       DiagnosticLogService.error('Window', `Failed to apply window appearance: ${(error as Error).message}`);
     }
@@ -69,7 +88,32 @@ export default class EntryAbility extends UIAbility {
   onWindowStageDestroy(): void {
     // 当前页面资源由 ArkUI 生命周期释放，此处只保留系统生命周期日志。
     this.mainWindow = null;
+    this.hasAvoidAreaListener = false;
     DiagnosticLogService.info('Lifecycle', 'Window stage destroyed');
+  }
+
+  /** 将不同设备的底部导航指示区高度同步给悬浮页签和首页列表。 */
+  private syncNavigationIndicatorHeight(mainWindow: window.Window): void {
+    try {
+      const avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+      const height = mainWindow.getUIContext().px2vp(avoidArea.bottomRect.height);
+      AppStorage.set<number>(APP_NAVIGATION_INDICATOR_HEIGHT_KEY, height);
+    } catch (error) {
+      DiagnosticLogService.warn('Window',
+        `Failed to read navigation indicator avoid area: ${(error as Error).message}`);
+    }
+  }
+
+  /** 将状态栏高度同步给需要在系统标题栏背后滚动内容的页面。 */
+  private syncStatusBarHeight(mainWindow: window.Window): void {
+    try {
+      const avoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+      const height = mainWindow.getUIContext().px2vp(avoidArea.topRect.height);
+      AppStorage.set<number>(APP_STATUS_BAR_HEIGHT_KEY, height);
+    } catch (error) {
+      DiagnosticLogService.warn('Window',
+        `Failed to read status bar avoid area: ${(error as Error).message}`);
+    }
   }
 
   /** 系统深浅色模式变化时重新解析主题资源，并同步更新状态栏。 */

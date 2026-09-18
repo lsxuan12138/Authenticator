@@ -1,6 +1,10 @@
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import {
+  HdsNavDestination,
+  HdsNavDestinationTitleMode,
+  HdsNavigationMenuContentOptions
+} from '@kit.UIDesignKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { SteamGuardMetadata, StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
@@ -13,29 +17,27 @@ import { SteamConfirmationHistoryRepository } from '../services/SteamConfirmatio
 import { Localization } from '../core/Localization';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 import { AppError } from '../core/AppError';
+import { APP_STATUS_BAR_HEIGHT_KEY, ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 /** 使用系统路由参数构建 Token 详情页，并在页面内部继续发起 Steam 子路由。 */
 @Builder
 export function TokenDetailPageBuilder(_name: string, param: ESObject) {
-  HdsNavDestination() {
-    TokenDetailPage({
-      tokenId: AppRouter.tokenId(param),
-      onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
-      onClose: (): void => AppRouter.pop(),
-      onOpenIconPicker: (issuer: string): void =>
-        AppRouter.pushToken(AppRoute.ICON_PICKER, AppRouter.tokenId(param), issuer),
-      onOpenConfirm: (): void => AppRouter.pushToken(AppRoute.STEAM, AppRouter.tokenId(param)),
-      onOpenSteamManagement: (): void =>
-        AppRouter.pushToken(AppRoute.STEAM_MANAGEMENT, AppRouter.tokenId(param))
-    })
-  }.hideTitleBar(true)
-    .backgroundColor($r('app.color.page_background'))
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+  TokenDetailPage({
+    tokenId: AppRouter.tokenId(param),
+    onTokensChanged: (tokens: StoredToken[]): Promise<void> => AppStore.updateTokens(tokens),
+    onClose: (): void => AppRouter.pop(),
+    onOpenIconPicker: (issuer: string): void =>
+      AppRouter.pushToken(AppRoute.ICON_PICKER, AppRouter.tokenId(param), issuer),
+    onOpenConfirm: (): void => AppRouter.pushToken(AppRoute.STEAM, AppRouter.tokenId(param)),
+    onOpenSteamManagement: (): void =>
+      AppRouter.pushToken(AppRoute.STEAM_MANAGEMENT, AppRouter.tokenId(param))
+  })
 }
 
 /** Token 基础信息页。Steam 高级设置已拆分到独立管理页。 */
 @Component
 export struct TokenDetailPage {
+  @StorageProp(APP_STATUS_BAR_HEIGHT_KEY) private statusBarHeight: number = 0;
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   @StorageLink(APP_ICON_PACKS_KEY) iconPacks: IconPack[] = [];
   @StorageLink(APP_ACTIVE_ICON_PACK_KEY) activeIconPackKey: string = IconPackService.noPackKey();
@@ -54,6 +56,7 @@ export struct TokenDetailPage {
   @State private periodValue: string = '30';
   @State private errorMessage: string = '';
   @State private steamQrLoading: boolean = false;
+  private scroller: Scroller = new Scroller();
 
   /** 页面显示时把当前 Token 字段复制到可编辑状态。 */
   aboutToAppear(): void {
@@ -109,6 +112,32 @@ export struct TokenDetailPage {
   private fallbackIconText(): string {
     const name = this.issuer.trim() || this.currentToken()?.issuer || '?';
     return name.substring(0, 1).toUpperCase();
+  }
+
+  /** 将 Steam 专属操作放入系统标题栏；普通 Token 不显示额外菜单。 */
+  private titleMenu(): HdsNavigationMenuContentOptions {
+    if (this.issuer.trim().toLowerCase() !== 'steam') {
+      return { value: [] };
+    }
+    return {
+      maxCount: 2,
+      value: [{
+        content: {
+          icon: $r('sys.symbol.qrcode'),
+          label: $r('app.string.detail_steam_qr'),
+          isEnabled: !this.steamQrLoading,
+          action: (): void => {
+            this.scanSteamQrLogin();
+          }
+        }
+      }, {
+        content: {
+          icon: $r('sys.symbol.list_checkmask'),
+          label: $r('app.string.detail_steam_confirmations'),
+          action: (): void => this.onOpenConfirm()
+        }
+      }]
+    };
   }
 
   /** 显示详情页操作反馈，UIContext 不可用时仅记录日志。 */
@@ -331,42 +360,9 @@ export struct TokenDetailPage {
 
   /** 构建 Token 编辑表单、图标入口以及 Steam 专属操作。 */
   build() {
-    Scroll() {
-      Column({ space: 14 }) {
-        Row({ space: 10 }) {
-          Button() {
-            SymbolGlyph($r('sys.symbol.chevron_left')).fontSize(22)
-              .fontColor([$r('app.color.text_secondary')])
-          }.type(ButtonType.Circle).width(38).height(38)
-            .backgroundColor($r('app.color.surface_muted')).onClick(() => this.onClose())
-          Column({ space: 3 }) {
-            Text($r('app.string.detail_title')).fontSize(26).fontWeight(FontWeight.Bold)
-            Text($r('app.string.detail_subtitle')).fontSize(13).fontColor($r('app.color.text_tertiary'))
-          }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-
-          if (this.issuer.trim().toLowerCase() === 'steam') {
-            Row({ space: 6 }) {
-              Button() {
-                if (this.steamQrLoading) {
-                  LoadingProgress().width(20).height(20).color($r('app.color.brand_strong'))
-                } else {
-                  SymbolGlyph($r('sys.symbol.qrcode')).fontSize(22)
-                    .fontColor([$r('app.color.brand_strong')])
-                }
-              }.type(ButtonType.Circle).width(40).height(40)
-                .backgroundColor($r('app.color.steam_surface')).enabled(!this.steamQrLoading)
-                .accessibilityText($r('app.string.detail_steam_qr')).onClick(() => this.scanSteamQrLogin())
-              Button() {
-                SymbolGlyph($r('sys.symbol.list_checkmask')).fontSize(22)
-                  .fontColor([$r('app.color.text_secondary')])
-              }.type(ButtonType.Circle).width(40).height(40)
-                .backgroundColor($r('app.color.surface_muted'))
-                .accessibilityText($r('app.string.detail_steam_confirmations'))
-                .onClick(() => this.onOpenConfirm())
-            }
-          }
-        }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 6 })
-
+    HdsNavDestination() {
+      Scroll(this.scroller) {
+        Column({ space: 14 }) {
         Column({ space: 12 }) {
           Text($r('app.string.detail_general')).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
           Row({ space: 12 }) {
@@ -471,8 +467,35 @@ export struct TokenDetailPage {
         }
         Button($r('app.string.detail_save')).margin({ left: 16, right: 16 }).width('calc(100% - 32vp)')
           .backgroundColor('#4668E8').onClick(() => this.saveTokenDetail())
-      }.width('100%').padding({ bottom: 24 }).justifyContent(FlexAlign.Start)
-    }.width('100%').height('100%').align(Alignment.TopStart)
-      .backgroundColor($r('app.color.page_background'))
+
+        }.width('100%').padding({
+          top: ImmersiveStyle.miniTitleContentTopPadding(this.statusBarHeight),
+          bottom: 24
+        }).justifyContent(FlexAlign.Start)
+      }.width('100%').height('100%').align(Alignment.TopStart)
+        .backgroundColor($r('app.color.page_background'))
+    }
+    .titleMode(HdsNavDestinationTitleMode.MINI)
+    .titleBar({
+      // 首屏通过 Scroll 内部间距避让标题栏；滚动后内容进入均匀模糊层背后。
+      avoidLayoutSafeArea: false,
+      enableComponentSafeArea: false,
+      content: {
+        title: {
+          mainTitle: $r('app.string.detail_title'),
+          subTitle: $r('app.string.detail_subtitle')
+        },
+        menu: this.titleMenu()
+      },
+      style: ImmersiveStyle.formTitleBarStyle(
+        $r('app.color.text_primary'),
+        $r('app.color.text_secondary'),
+        $r('app.color.text_tertiary'),
+        $r('app.color.title_bar_scrim'))
+    })
+    .bindToScrollable([this.scroller])
+    .backgroundColor($r('app.color.page_background'))
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
+      [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
   }
 }

@@ -1,12 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { BusinessError } from '@kit.BasicServicesKit';
-import {
-  hdsMaterial,
-  HdsNavDestination,
-  HdsNavDestinationTitleMode,
-  ScrollEffectType
-} from '@kit.UIDesignKit';
+import { HdsNavDestination, HdsNavDestinationTitleMode } from '@kit.UIDesignKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { StoredToken, TokenAlgorithm, TokenKind } from '../domain/Token';
 import { Base32 } from '../core/Base32';
@@ -24,6 +19,7 @@ import { PasswordAutoFillService } from '../services/PasswordAutoFillService';
 import { Localization } from '../core/Localization';
 import { AppError } from '../core/AppError';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
+import { ImmersiveStyle } from '../ui/ImmersiveStyle';
 
 /** 系统路由表入口；页面依赖由共享 Store 和应用路由控制器提供。 */
 @Builder
@@ -42,17 +38,12 @@ export function AddTokenPageBuilder(_name: string, _param: ESObject) {
           subTitle: $r('app.string.add_subtitle')
         }
       },
-      style: {
-        // 添加页由多个独立 Tabs 组成，使用稳定材质而不错误绑定某一个内部滚动容器。
-        scrollEffectOpts: {
-          enableScrollEffect: false,
-          scrollEffectType: ScrollEffectType.GRADIENT_BLUR
-        },
-        systemMaterialEffect: {
-          materialType: hdsMaterial.MaterialType.ADAPTIVE,
-          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-        }
-      }
+      // 添加页由多个独立 Tabs 组成，不绑定单个内部滚动容器。
+      style: ImmersiveStyle.titleBarStyle(false,
+        $r('app.color.text_primary'),
+        $r('app.color.text_secondary'),
+        $r('app.color.text_tertiary'),
+        $r('app.color.title_bar_scrim'))
     })
     .backgroundColor($r('app.color.page_background'))
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM],
