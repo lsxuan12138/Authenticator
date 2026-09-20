@@ -2,6 +2,7 @@
 export enum AppRoute {
   ADD = 'add',
   STEAM = 'steam',
+  STEAM_HISTORY = 'steamHistory',
   STEAM_MANAGEMENT = 'steamManagement',
   DETAIL = 'detail',
   ICON_PICKER = 'iconPicker'

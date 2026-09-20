@@ -56,6 +56,7 @@
     { "name": "confirm_subtitle", "value": "登录、交易与账户操作" },
     { "name": "confirm_pending", "value": "待处理" },
     { "name": "confirm_history", "value": "历史" },
+    { "name": "confirm_history_title", "value": "确认历史" },
     { "name": "confirm_login_tab", "value": "登录请求 %d" },
     { "name": "confirm_mobile_tab", "value": "交易确认 %d" },
     { "name": "confirm_login_title", "value": "登录请求" },
