@@ -11,6 +11,11 @@
       "buildFunction": "SteamConfirmationsPageBuilder"
     },
     {
+      "name": "steamHistory",
+      "pageSourceFile": "src/main/ets/pages/SteamConfirmationHistoryPage.ets",
+      "buildFunction": "SteamConfirmationHistoryPageBuilder"
+    },
+    {
       "name": "steamManagement",
       "pageSourceFile": "src/main/ets/pages/SteamManagementPage.ets",
       "buildFunction": "SteamManagementPageBuilder"

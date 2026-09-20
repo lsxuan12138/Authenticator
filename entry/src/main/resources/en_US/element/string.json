@@ -55,6 +55,7 @@
     { "name": "confirm_subtitle", "value": "Logins, trades, and account actions" },
     { "name": "confirm_pending", "value": "Pending" },
     { "name": "confirm_history", "value": "History" },
+    { "name": "confirm_history_title", "value": "Confirmation history" },
     { "name": "confirm_login_tab", "value": "Login requests %d" },
     { "name": "confirm_mobile_tab", "value": "Trade confirmations %d" },
     { "name": "confirm_login_title", "value": "Login requests" },

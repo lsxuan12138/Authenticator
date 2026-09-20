@@ -8,7 +8,7 @@ import { DiagnosticLogService } from '../services/DiagnosticLogService';
 import { SteamConfirmationHistoryItem, SteamConfirmationHistoryRepository } from
   '../services/SteamConfirmationHistoryRepository';
 import { APP_TOKENS_KEY, AppStore } from '../data/AppStore';
-import { AppRouter } from '../navigation/AppRouter';
+import { AppRoute, AppRouter } from '../navigation/AppRouter';
 import { Localization } from '../core/Localization';
 import { SteamAccessTokenPair, SteamSessionService } from '../services/SteamSessionService';
 import { AppError } from '../core/AppError';
@@ -29,11 +29,9 @@ export struct SteamConfirmationsPage {
   @StorageLink(APP_TOKENS_KEY) tokens: StoredToken[] = [];
   tokenId: string = '';
   onClose: () => void = (): void => {};
-  @State private selectedTab: number = 0;
   @State private pendingCategory: number = 0;
   @State private confirmations: SteamConfirmation[] = [];
   @State private pendingLogins: SteamPendingLogin[] = [];
-  @State private history: SteamConfirmationHistoryItem[] = [];
   @State private loading: boolean = false;
   @State private submitting: boolean = false;
   @State private hasLoaded: boolean = false;
@@ -46,7 +44,6 @@ export struct SteamConfirmationsPage {
   /** 页面首次显示时并行读取本地历史与服务端待处理列表。 */
   aboutToAppear(): void {
     this.loadConfirmationNotice();
-    this.loadHistory();
     this.requestAll();
   }
 
@@ -183,17 +180,10 @@ export struct SteamConfirmationsPage {
     if (failed) this.showToast(this.localized($r('app.string.confirm_partial_failure')), 2800);
   }
 
-  /** 从本机加密仓库加载当前 Token 的操作历史。 */
-  private async loadHistory(): Promise<void> {
-    try { this.history = await new SteamConfirmationHistoryRepository().list(this.context(), this.tokenId); }
-    catch (error) { DiagnosticLogService.warn('SteamConfirmations', `History load failed: ${(error as Error).message}`); }
-  }
-
   /** 持久化远端已成功的操作；历史失败不得改变远端操作结果。 */
   private async saveHistory(items: SteamConfirmationHistoryItem[]): Promise<boolean> {
     try {
       await new SteamConfirmationHistoryRepository().append(this.context(), items);
-      await this.loadHistory();
       return true;
     } catch (error) {
       DiagnosticLogService.warn('SteamConfirmations',
@@ -284,15 +274,6 @@ export struct SteamConfirmationsPage {
     finally { this.submitting = false; }
   }
 
-  /** 清除当前 Token 的本地历史，不影响 Steam 服务端状态。 */
-  private async clearHistory(): Promise<void> {
-    try {
-      await new SteamConfirmationHistoryRepository().clear(this.context(), this.tokenId);
-      this.history = [];
-      this.showToast(this.localized($r('app.string.confirm_history_cleared')));
-    } catch (error) { this.showToast(this.localizedError(error as Object), 2800); }
-  }
-
   /** 为登录请求和移动确认提供一致的拒绝/批准按钮。 */
   @Builder private actionButtons(reject: () => void, approve: () => void) {
     Row({ space: 10 }) {
@@ -303,53 +284,46 @@ export struct SteamConfirmationsPage {
     }.width('100%')
   }
 
-  /** 构建待处理页的分区标题和数量徽标。 */
-  @Builder private sectionHeader(title: ResourceStr, description: ResourceStr, count: number) {
-    Row({ space: 10 }) {
-      Column({ space: 3 }) {
-        Text(title).fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-        Text(description).fontSize(12).fontColor($r('app.color.text_tertiary')).width('100%')
-      }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-      Text(`${count}`).fontSize(13).fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.brand_strong'))
-        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-        .backgroundColor($r('app.color.brand_surface_alt')).borderRadius(12)
-    }.width('100%')
-  }
-
   /** 在对应分区内直接显示请求失败原因，避免用户必须先导出日志才能判断问题。 */
   @Builder private inlineError(message: string) {
     Text(message).fontSize(12).fontColor($r('app.color.danger'))
       .lineHeight(18).padding(12).backgroundColor($r('app.color.danger_surface')).borderRadius(12).width('100%')
   }
 
-  /** 在待处理页内切换登录授权和移动确认，避免两组长列表纵向堆叠。 */
-  @Builder private pendingCategorySwitcher() {
-    Row({ space: 4 }) {
-      Button($r('app.string.confirm_login_tab', this.pendingLogins.length))
-        .layoutWeight(1).height(42).borderRadius(12)
-        .backgroundColor(this.pendingCategory === 0 ? $r('app.color.brand_strong') : Color.Transparent)
-        .fontColor(this.pendingCategory === 0 ? Color.White : $r('app.color.text_secondary'))
-        .onClick(() => this.pendingCategory = 0)
-      Button($r('app.string.confirm_mobile_tab', this.confirmations.length))
-        .layoutWeight(1).height(42).borderRadius(12)
-        .backgroundColor(this.pendingCategory === 1 ? $r('app.color.brand_strong') : Color.Transparent)
-        .fontColor(this.pendingCategory === 1 ? Color.White : $r('app.color.text_secondary'))
-        .onClick(() => this.pendingCategory = 1)
-    }.width('100%').padding(4).borderRadius(16)
-      .backgroundColor($r('app.color.surface_muted'))
+  /** 用弱化的信息条承载分类说明，避免辅助文字散落在内容区。 */
+  @Builder private categoryDescription(description: ResourceStr) {
+    Row({ space: 10 }) {
+      Divider().vertical(true).width(3).height(28)
+        .color($r('app.color.brand')).strokeWidth(3)
+      Text(description).fontSize(12).fontColor($r('app.color.text_secondary'))
+        .lineHeight(18).layoutWeight(1)
+    }.width('100%').padding({ left: 12, right: 12, top: 10, bottom: 10 })
+      .backgroundColor($r('app.color.brand_surface')).borderRadius(12)
+  }
+
+  /** 以轻量居中布局表达当前分类已无待处理事项。 */
+  @Builder private emptyPendingState(message: ResourceStr) {
+    Column({ space: 10 }) {
+      Stack() {
+        Row().width(48).height(48).borderRadius(24)
+          .backgroundColor($r('app.color.empty_icon_surface'))
+        SymbolGlyph($r('sys.symbol.list_checkmask')).fontSize(24)
+          .fontColor([$r('app.color.brand')])
+      }
+      Text(message).fontSize(13).fontColor($r('app.color.text_tertiary'))
+        .textAlign(TextAlign.Center)
+    }.width('100%').alignItems(HorizontalAlign.Center)
+      .padding({ top: 20, bottom: 16 })
   }
 
   /** 显示来自其他设备的登录授权请求及其风险信息。 */
   @Builder private loginRequests() {
     Column({ space: 12 }) {
-      this.sectionHeader($r('app.string.confirm_login_title'),
-        $r('app.string.confirm_login_description'), this.pendingLogins.length)
+      this.categoryDescription($r('app.string.confirm_login_description'))
       if (this.pendingError.length > 0) {
         this.inlineError(this.pendingError)
       } else if (this.pendingLogins.length === 0) {
-        Text($r('app.string.confirm_no_login')).fontSize(13).fontColor($r('app.color.text_tertiary'))
-          .padding({ top: 10, bottom: 10 }).width('100%')
+        this.emptyPendingState($r('app.string.confirm_no_login'))
       }
       ForEach(this.pendingLogins, (login: SteamPendingLogin) => {
         Column({ space: 7 }) {
@@ -376,13 +350,11 @@ export struct SteamConfirmationsPage {
   /** 显示交易、市场与账户操作确认，并在有多条时提供批量处理入口。 */
   @Builder private mobileConfirmations() {
     Column({ space: 12 }) {
-      this.sectionHeader($r('app.string.confirm_mobile_title'),
-        $r('app.string.confirm_mobile_description'), this.confirmations.length)
+      this.categoryDescription($r('app.string.confirm_mobile_description'))
       if (this.confirmationError.length > 0) {
         this.inlineError(this.confirmationError)
       } else if (this.confirmations.length === 0) {
-        Text($r('app.string.confirm_no_mobile')).fontSize(13).fontColor($r('app.color.text_tertiary'))
-          .padding({ top: 10, bottom: 10 }).width('100%')
+        this.emptyPendingState($r('app.string.confirm_no_mobile'))
       } else {
         Row({ space: 10 }) {
           Button($r('app.string.confirm_reject_all', this.confirmations.length)).layoutWeight(1)
@@ -407,7 +379,8 @@ export struct SteamConfirmationsPage {
     }.width('100%').alignItems(HorizontalAlign.Start)
   }
 
-  @Builder private pendingTab() {
+  /** 构建登录请求或交易确认内容；两类内容直接作为页面唯一一层 Tabs。 */
+  @Builder private pendingCategoryTab(showLoginRequests: boolean) {
     if (this.loading && !this.hasLoaded) {
       Column({ space: 12 }) {
         LoadingProgress().width(36).height(36)
@@ -435,8 +408,7 @@ export struct SteamConfirmationsPage {
             }.padding({ left: 16, right: 10, top: 10, bottom: 14 })
               .backgroundColor($r('app.color.brand_surface')).borderRadius(16).width('100%')
           }
-          this.pendingCategorySwitcher()
-          if (this.pendingCategory === 0) {
+          if (showLoginRequests) {
             this.loginRequests()
           } else {
             this.mobileConfirmations()
@@ -445,42 +417,6 @@ export struct SteamConfirmationsPage {
           .alignItems(HorizontalAlign.Start)
       }.width('100%').height('100%').align(Alignment.TopStart)
     }
-  }
-
-  @Builder private historyTab() {
-    Column({ space: 10 }) {
-      Row() {
-        Text($r('app.string.confirm_history_note')).fontSize(12)
-          .fontColor($r('app.color.text_tertiary')).layoutWeight(1)
-        Button($r('app.string.common_clear')).backgroundColor(Color.Transparent).fontColor($r('app.color.danger'))
-          .enabled(this.history.length > 0).onClick(() => this.clearHistory())
-      }.width('100%').padding({ left: 16, right: 16 })
-      if (this.history.length === 0) {
-        Column() { Text($r('app.string.confirm_no_history')).fontColor($r('app.color.text_tertiary')) }
-          .layoutWeight(1).justifyContent(FlexAlign.Center)
-      } else {
-        List({ space: 10 }) {
-          ForEach(this.history, (item: SteamConfirmationHistoryItem) => {
-            ListItem() {
-              Column({ space: 6 }) {
-                Row() {
-                  Text(item.title || $r('app.string.confirm_operation'))
-                    .fontSize(15).fontWeight(FontWeight.Bold).layoutWeight(1)
-                  Text(item.approved ? $r('app.string.confirm_approved') : $r('app.string.confirm_rejected')).fontSize(12)
-                    .fontColor(item.approved ? $r('app.color.success') : $r('app.color.danger'))
-                }.width('100%')
-                if (item.summary.length > 0) {
-                  Text(item.summary).fontSize(12).fontColor($r('app.color.text_secondary')).width('100%')
-                }
-                Text(new Date(item.handledAt).toLocaleString()).fontSize(11)
-                  .fontColor($r('app.color.text_disabled')).width('100%')
-              }.padding(14).backgroundColor($r('app.color.surface')).borderRadius(14).width('100%')
-                .border({ width: 1, color: $r('app.color.border') })
-            }
-          }, (item: SteamConfirmationHistoryItem): string => item.id)
-        }.layoutWeight(1).width('100%').height('100%').padding({ left: 16, right: 16, bottom: 20 })
-      }
-    }.width('100%').height('100%')
   }
 
   build() {
@@ -496,6 +432,14 @@ export struct SteamConfirmationsPage {
             .fontSize(13).fontColor($r('app.color.text_tertiary'))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
         Button() {
+          SymbolGlyph($r('sys.symbol.list_checkmask')).fontSize(22)
+            .fontColor([$r('app.color.text_secondary')])
+        }
+          .type(ButtonType.Circle).width(40).height(40)
+          .backgroundColor($r('app.color.surface_muted'))
+          .accessibilityText($r('app.string.confirm_history_title'))
+          .onClick(() => AppRouter.pushToken(AppRoute.STEAM_HISTORY, this.tokenId))
+        Button() {
           if (this.loading) {
             LoadingProgress().width(20).height(20).color(Color.White)
           } else {
@@ -505,12 +449,14 @@ export struct SteamConfirmationsPage {
           .type(ButtonType.Circle).width(40).height(40).backgroundColor($r('app.color.brand_strong'))
           .enabled(!this.loading && !this.submitting).onClick(() => this.requestAll())
       }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 8 })
-      Tabs({ barPosition: BarPosition.Start, index: this.selectedTab }) {
-        TabContent() { this.pendingTab() }.tabBar($r('app.string.confirm_pending'))
-        TabContent() { this.historyTab() }.tabBar($r('app.string.confirm_history'))
+      Tabs({ barPosition: BarPosition.Start, index: this.pendingCategory }) {
+        TabContent() { this.pendingCategoryTab(true) }
+          .tabBar($r('app.string.confirm_login_tab', this.pendingLogins.length))
+        TabContent() { this.pendingCategoryTab(false) }
+          .tabBar($r('app.string.confirm_mobile_tab', this.confirmations.length))
       }.barMode(BarMode.Fixed).barHeight(48).barBackgroundColor($r('app.color.surface'))
         .divider({ strokeWidth: 1, color: $r('app.color.divider') }).layoutWeight(1).width('100%')
-        .onChange((index: number) => this.selectedTab = index)
+        .onChange((index: number) => this.pendingCategory = index)
     }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
   }
 }
