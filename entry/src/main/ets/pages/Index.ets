@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit';
-import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
-import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { BusinessError, deviceInfo, pasteboard } from '@kit.BasicServicesKit';
+import { SymbolGlyphModifier, uiMaterial } from '@kit.ArkUI';
 import { DividerMode, HdsNavigation, HdsTabs } from '@kit.UIDesignKit';
 import { StoredToken, TokenCode, TokenKind } from '../domain/Token';
 import { APP_ACTIVE_ICON_PACK_KEY, APP_ICON_PACKS_KEY, APP_TOKENS_KEY, AppStore } from '../data/AppStore';
@@ -33,6 +33,26 @@ struct Index {
   @State private qrTokenIndex: number = -1;
   @State private now: number = Date.now();
   private navPathStack: NavPathStack = AppRouter.stack();
+
+  /** 为 API 26 设备启用二维码弹层材质，旧设备继续使用系统默认半模态样式。 */
+  private qrSheetOptions(): SheetOptions {
+    const options: SheetOptions = {
+      height: 500,
+      preferType: SheetType.BOTTOM,
+      dragBar: true,
+      title: { title: $r('app.string.token_qr_title') },
+      onDisappear: (): void => {
+        this.showTokenQr = false;
+      }
+    };
+    if (deviceInfo.apiAvailable('26.0.0')) {
+      options.backgroundColor = Color.Transparent;
+      options.systemMaterial = new uiMaterial.ImmersiveMaterial({
+        style: uiMaterial.ImmersiveStyle.ULTRA_THICK
+      });
+    }
+    return options;
+  }
 
   /** Toast 失败不应中断用户操作，但需要留下可定位的日志。 */
   private showToast(message: string, duration: number = 2000): void {
@@ -148,6 +168,28 @@ struct Index {
     }
   }
 
+  /** 二次确认后再删除本地 Token；Steam 验证器的远端撤销必须在管理页单独完成。 */
+  private async confirmRemoveToken(index: number): Promise<void> {
+    if (index < 0 || index >= this.tokens.length) return;
+    const token = this.tokens[index];
+    try {
+      const dialog = await this.getUIContext().getPromptAction().showDialog({
+        title: this.localized($r('app.string.home_delete_title')),
+        message: this.localized($r('app.string.home_delete_message'), token.issuer, token.account),
+        alignment: DialogAlignment.Bottom,
+        buttons: [
+          { text: this.localized($r('app.string.common_cancel')), color: $r('app.color.text_tertiary') },
+          { text: this.localized($r('app.string.home_delete_action')), color: $r('app.color.danger') }
+        ]
+      });
+      if (dialog.index !== 1) return;
+      const currentIndex = this.tokens.findIndex((item: StoredToken): boolean => item.id === token.id);
+      if (currentIndex >= 0) await this.removeToken(currentIndex);
+    } catch (error) {
+      this.showToast(this.localizedError(error as Object, $r('app.string.error_operation_failed')), 3000);
+    }
+  }
+
   /** 响应拖拽排序，移动 Token 后保存新的首页顺序。 */
   private async moveToken(from: number, to: number): Promise<void> {
     // 数组顺序就是首页顺序，拖拽结束后立即持久化，重启应用仍保持该顺序。
@@ -236,7 +278,8 @@ struct Index {
       .height('100%')
       .borderRadius(18)
       .backgroundColor($r('app.color.danger_strong'))
-      .onClick(() => this.removeToken(index))
+      .accessibilityText($r('app.string.home_delete_action'))
+      .onClick(() => this.confirmRemoveToken(index))
     }.width(124).height('100%').padding({ left: 8 }).backgroundColor(Color.Transparent)
   }
 
@@ -481,12 +524,6 @@ struct Index {
     }.width('100%').height('100%').backgroundColor($r('app.color.page_background'))
       // 根背景覆盖状态栏；HdsTabs 自身负责底部页签栏与手势导航安全区。
       .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-      .bindSheet(this.showTokenQr, this.tokenQrSheet(), {
-        height: 500,
-        preferType: SheetType.BOTTOM,
-        dragBar: true,
-        title: { title: $r('app.string.token_qr_title') },
-        onDisappear: () => this.showTokenQr = false
-      })
+      .bindSheet(this.showTokenQr, this.tokenQrSheet(), this.qrSheetOptions())
   }
 }
