@@ -368,6 +368,73 @@ struct Index {
     return `${token.id}:${token.issuer}:${token.account}:${token.iconPath}:${token.iconManual === true}`;
   }
 
+  /** 固定色层保证轮廓可见，上层材质只负责通透质感与交互反馈。 */
+  @Builder
+  private sortActionButton() {
+    if (deviceInfo.apiAvailable('26.0.0')) {
+      Stack() {
+        Row()
+          .width(42).height(42).borderRadius(21)
+          .backgroundColor($r('app.color.surface_muted'))
+        Row() {
+          SymbolGlyph($r('sys.symbol.sort')).fontSize(22)
+            .fontColor([$r('app.color.text_secondary')])
+        }
+          .width(42).height(42).borderRadius(21)
+          .justifyContent(FlexAlign.Center)
+          .systemMaterial(new uiMaterial.ImmersiveMaterial({
+            style: uiMaterial.ImmersiveStyle.ULTRA_THIN,
+            interactive: true,
+            lightEffect: { color: Color.White }
+          }))
+      }
+        .width(42).height(42)
+        .accessibilityText($r('app.string.home_sort_codes'))
+        .onClick(() => this.reorderMode = true)
+    } else {
+      Button() {
+        SymbolGlyph($r('sys.symbol.sort')).fontSize(22)
+          .fontColor([$r('app.color.text_secondary')])
+      }
+        .type(ButtonType.Circle).width(42).height(42)
+        .backgroundColor($r('app.color.surface_muted'))
+        .accessibilityText($r('app.string.home_sort_codes'))
+        .onClick(() => this.reorderMode = true)
+    }
+  }
+
+  /** 品牌色层维持主操作层级，上层材质提供按压形变与光感反馈。 */
+  @Builder
+  private addActionButton() {
+    if (deviceInfo.apiAvailable('26.0.0')) {
+      Stack() {
+        Row()
+          .width(42).height(42).borderRadius(21)
+          .backgroundColor($r('app.color.brand'))
+        Row() {
+          SymbolGlyph($r('sys.symbol.plus')).fontSize(24).fontColor([Color.White])
+        }
+          .width(42).height(42).borderRadius(21)
+          .justifyContent(FlexAlign.Center)
+          .systemMaterial(new uiMaterial.ImmersiveMaterial({
+            style: uiMaterial.ImmersiveStyle.ULTRA_THIN,
+            interactive: true,
+            lightEffect: { color: Color.White }
+          }))
+      }
+        .width(42).height(42)
+        .accessibilityText($r('app.string.home_add_account'))
+        .onClick(() => this.navigate(AppRoute.ADD))
+    } else {
+      Button() {
+        SymbolGlyph($r('sys.symbol.plus')).fontSize(24).fontColor([Color.White])
+      }
+        .type(ButtonType.Circle).width(42).height(42).backgroundColor('#4668E8')
+        .accessibilityText($r('app.string.home_add_account'))
+        .onClick(() => this.navigate(AppRoute.ADD))
+    }
+  }
+
   /** 构建支持左滑操作和拖拽排序的 Token 列表。 （包含头部）*/
   @Builder
   private tokenList() {
@@ -387,28 +454,9 @@ struct Index {
           Button($r('app.string.common_done')).backgroundColor('#4668E8').onClick(() => this.reorderMode = false)
         } else {
           if (this.tokens.length > 1) {
-            Button() {
-              SymbolGlyph($r('sys.symbol.sort')).fontSize(22)
-                .fontColor([$r('app.color.text_secondary')])
-            }
-              .type(ButtonType.Circle)
-              .width(42)
-              .height(42)
-              .backgroundColor($r('app.color.surface_muted'))
-              .accessibilityText($r('app.string.home_sort_codes'))
-              .onClick(() => this.reorderMode = true)
+            this.sortActionButton()
           }
-          Button() {
-            SymbolGlyph($r('sys.symbol.plus')).fontSize(24).fontColor([Color.White])
-          }
-            .type(ButtonType.Circle)
-            .width(42)
-            .height(42)
-            .backgroundColor('#4668E8')
-            .accessibilityText($r('app.string.home_add_account'))
-            .onClick(() => {
-              this.navigate(AppRoute.ADD);
-            })
+          this.addActionButton()
         }
       }
       .width('100%')
